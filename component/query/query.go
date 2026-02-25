@@ -17,6 +17,7 @@ type Query struct {
 	extra       map[string]any
 	display     *string
 	data        []map[string]any
+	collapsed   *bool
 }
 
 // NewQuery creates a new query component
@@ -102,6 +103,12 @@ func (q *Query) WithSaveStateId(saveStateId string) *Query {
 	return q
 }
 
+// Collapsed sets the initial collapsed state of the filter panel (optional)
+func (q *Query) Collapsed(collapsed bool) *Query {
+	q.collapsed = &collapsed
+	return q
+}
+
 // WithDisplay sets the display/layout class (optional)
 func (q *Query) WithDisplay(display string) *Query {
 	q.display = &display
@@ -118,6 +125,10 @@ func (q *Query) Print(translator core.TranslateFunc) map[string]any {
 		"saveState":   q.saveStateId != nil,
 		"saveStateId": q.saveStateId,
 		"extra":       q.extra,
+	}
+
+	if q.collapsed != nil {
+		data["collapsed"] = *q.collapsed
 	}
 
 	if q.url != nil {
