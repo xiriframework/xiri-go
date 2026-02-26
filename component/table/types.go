@@ -331,16 +331,6 @@ const (
 	FieldTypeID      FieldType = "id" // Special ID field type
 )
 
-// FieldColor represents theme colors for field components
-type FieldColor string
-
-const (
-	FieldColorPrimary  FieldColor = "primary"
-	FieldColorAccent   FieldColor = "accent"
-	FieldColorWarning  FieldColor = "warn"
-	FieldColorTertiary FieldColor = "tertiary"
-)
-
 // FieldButtonAction represents button action types
 type FieldButtonAction string
 

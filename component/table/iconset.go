@@ -1,6 +1,10 @@
 package table
 
-import "log/slog"
+import (
+	"log/slog"
+
+	"github.com/xiriframework/xiri-go/component/core"
+)
 
 // IconRef is an opaque reference to a registered icon definition.
 // It can only be created by IconSet.Add(), ensuring that only
@@ -35,9 +39,9 @@ func NewIconSet() *IconSet {
 // Example:
 //
 //	icons := table.NewIconSet()
-//	iconOnline  := icons.Add("online",  "check_circle", table.FieldColorAccent,  "Online")
-//	iconOffline := icons.Add("offline", "cancel",       table.FieldColorWarning, "Offline")
-func (s *IconSet) Add(value, icon string, color FieldColor, hint string) *IconRef {
+//	iconOnline  := icons.Add("online",  "check_circle", core.ColorAccent,  "Online")
+//	iconOffline := icons.Add("offline", "cancel",       core.ColorWarning, "Offline")
+func (s *IconSet) Add(value, icon string, color core.Color, hint string) *IconRef {
 	s.icons[value] = &IconDef{
 		Icon:    icon,
 		Color:   color,
@@ -49,7 +53,7 @@ func (s *IconSet) Add(value, icon string, color FieldColor, hint string) *IconRe
 }
 
 // AddWithOptions registers an icon definition with additional custom options.
-func (s *IconSet) AddWithOptions(value, icon string, color FieldColor, hint string, opts map[string]any) *IconRef {
+func (s *IconSet) AddWithOptions(value, icon string, color core.Color, hint string, opts map[string]any) *IconRef {
 	s.icons[value] = &IconDef{
 		Icon:    icon,
 		Color:   color,

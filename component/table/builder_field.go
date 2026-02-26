@@ -1,5 +1,7 @@
 package table
 
+import "github.com/xiriframework/xiri-go/component/core"
+
 // FieldBuilder provides a fluent API for configuring a single field
 type FieldBuilder[T any] struct {
 	field       *Field[T]
@@ -128,7 +130,7 @@ func (fb *FieldBuilder[T]) AddButton(
 	key int,
 	action FieldButtonAction,
 	icon string,
-	color FieldColor,
+	color core.Color,
 	hint string,
 ) *FieldBuilder[T] {
 	fb.field.AddButton(key, action, icon, color, hint)
@@ -276,7 +278,7 @@ func (fb *FieldBuilder[T]) WithAccess(access []string) *FieldBuilder[T] {
 // - non-empty string: URL/data for the menu item
 // - "": hide the menu item for this row
 // Returning nil hides the entire menu button for this row.
-func (fb *FieldBuilder[T]) AddMenu(key int, icon string, color FieldColor, hint string, accessor func(T) []string) *FieldBuilder[T] {
+func (fb *FieldBuilder[T]) AddMenu(key int, icon string, color core.Color, hint string, accessor func(T) []string) *FieldBuilder[T] {
 	fb.field.AddButton(key, FieldButtonActionMenu, icon, color, hint)
 
 	if fb.field.menuAccessors == nil {
@@ -294,7 +296,7 @@ func (fb *FieldBuilder[T]) AddMenu(key int, icon string, color FieldColor, hint 
 }
 
 // AddMenuItem adds a menu item definition to the last added menu button.
-func (fb *FieldBuilder[T]) AddMenuItem(action FieldButtonAction, icon string, color FieldColor, text string) *FieldBuilder[T] {
+func (fb *FieldBuilder[T]) AddMenuItem(action FieldButtonAction, icon string, color core.Color, text string) *FieldBuilder[T] {
 	if fb.field.menuItems == nil {
 		fb.field.menuItems = make(map[int][]*MenuItemDef)
 	}

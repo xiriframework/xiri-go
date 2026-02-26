@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/component/table"
 	xurl "github.com/xiriframework/xiri-go/component/url"
 	"github.com/xiriframework/xiri-go/form/field"
@@ -579,8 +580,8 @@ func TestExample10_IconField(t *testing.T) {
 
 	// Icon field with value -> icon/color/hint mappings
 	statusIcons := table.NewIconSet()
-	statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Device is online")
-	statusIcons.Add("offline", "cancel", table.FieldColorWarning, "Device is offline")
+	statusIcons.Add("online", "check_circle", core.ColorAccent, "Device is online")
+	statusIcons.Add("offline", "cancel", core.ColorWarning, "Device is offline")
 
 	builder.IconFieldFromSet("status", "device.status",
 		func(r DeviceTableRow) *table.IconRef {
@@ -625,8 +626,8 @@ func TestExample11_ButtonsField(t *testing.T) {
 			"1": fmt.Sprintf("/Portal/Device/Delete?id=%d", r.ID), // Delete button (index 1)
 		}
 	}).
-		AddButton(0, table.FieldButtonActionLink, "edit", table.FieldColorPrimary, "Edit device").
-		AddButton(1, table.FieldButtonActionDialog, "delete", table.FieldColorWarning, "Delete device")
+		AddButton(0, table.FieldButtonActionLink, "edit", core.ColorPrimary, "Edit device").
+		AddButton(1, table.FieldButtonActionDialog, "delete", core.ColorWarning, "Delete device")
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
@@ -1138,8 +1139,8 @@ func TestAdvanced01_FieldAlignment(t *testing.T) {
 
 	// Center-aligned field (useful for status indicators)
 	statusIcons := table.NewIconSet()
-	statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Device is online")
-	statusIcons.Add("offline", "cancel", table.FieldColorWarning, "Device is offline")
+	statusIcons.Add("online", "check_circle", core.ColorAccent, "Device is online")
+	statusIcons.Add("offline", "cancel", core.ColorWarning, "Device is offline")
 
 	builder.IconFieldFromSet("status", "device.status",
 		func(r DeviceTableRow) *table.IconRef {
@@ -1397,8 +1398,8 @@ func TestAdvanced07_ColumnOrdering(t *testing.T) {
 	}).WithColumnOrder(1) // Second column
 
 	statusIcons := table.NewIconSet()
-	statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Online")
-	statusIcons.Add("offline", "cancel", table.FieldColorWarning, "Offline")
+	statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
+	statusIcons.Add("offline", "cancel", core.ColorWarning, "Offline")
 
 	builder.IconFieldFromSet("status", "device.status",
 		func(r DeviceTableRow) *table.IconRef {
@@ -1676,7 +1677,7 @@ func TestIntegration05_MultiFormatOutput(t *testing.T) {
 			"0": fmt.Sprintf("/Portal/Device/Edit?id=%d", r.ID),
 		}
 	}).
-		AddButton(0, table.FieldButtonActionLink, "edit", table.FieldColorPrimary, "Edit device").
+		AddButton(0, table.FieldButtonActionLink, "edit", core.ColorPrimary, "Edit device").
 		HideInCSV() // Exclude from CSV/PDF/Excel
 
 	tbl := builder.Build()
@@ -1752,7 +1753,7 @@ func TestIntegration06_DynamicFieldVisibility(t *testing.T) {
 			return map[string]string{
 				"0": fmt.Sprintf("/Portal/Device/Edit?id=%d", r.ID),
 			}
-		}).AddButton(0, table.FieldButtonActionLink, "edit", table.FieldColorPrimary, "Edit")
+		}).AddButton(0, table.FieldButtonActionLink, "edit", core.ColorPrimary, "Edit")
 	}
 
 	tbl := builder.Build()
@@ -1808,8 +1809,8 @@ func TestJSON_ComponentStructure(t *testing.T) {
 
 	// Icon field with status mapping
 	statusIcons := table.NewIconSet()
-	statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Device is online")
-	statusIcons.Add("offline", "cancel", table.FieldColorWarning, "Device is offline")
+	statusIcons.Add("online", "check_circle", core.ColorAccent, "Device is online")
+	statusIcons.Add("offline", "cancel", core.ColorWarning, "Device is offline")
 
 	builder.IconFieldFromSet("status", "device.status",
 		func(r DeviceTableRow) *table.IconRef {
@@ -1831,8 +1832,8 @@ func TestJSON_ComponentStructure(t *testing.T) {
 			"1": fmt.Sprintf("/Portal/Device/Delete?id=%d", r.ID), // Delete button
 		}
 	}).
-		AddButton(0, table.FieldButtonActionLink, "edit", table.FieldColorPrimary, "Edit device").
-		AddButton(1, table.FieldButtonActionDialog, "delete", table.FieldColorWarning, "Delete device").
+		AddButton(0, table.FieldButtonActionLink, "edit", core.ColorPrimary, "Edit device").
+		AddButton(1, table.FieldButtonActionDialog, "delete", core.ColorWarning, "Delete device").
 		HideInCSV()
 
 	// Table options for demonstration
@@ -1914,8 +1915,8 @@ func TestJSON_TableDataStructure(t *testing.T) {
 
 	// Icon field - returns mapped icon value
 	statusIcons := table.NewIconSet()
-	statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Device is online")
-	statusIcons.Add("offline", "cancel", table.FieldColorWarning, "Device is offline")
+	statusIcons.Add("online", "check_circle", core.ColorAccent, "Device is online")
+	statusIcons.Add("offline", "cancel", core.ColorWarning, "Device is offline")
 
 	builder.IconFieldFromSet("status", "device.status",
 		func(r DeviceTableRow) *table.IconRef {
@@ -1947,8 +1948,8 @@ func TestJSON_TableDataStructure(t *testing.T) {
 			"1": fmt.Sprintf("/Portal/Device/Delete?id=%d", r.ID), // Delete button
 		}
 	}).
-		AddButton(0, table.FieldButtonActionLink, "edit", table.FieldColorPrimary, "Edit").
-		AddButton(1, table.FieldButtonActionDialog, "delete", table.FieldColorWarning, "Delete")
+		AddButton(0, table.FieldButtonActionLink, "edit", core.ColorPrimary, "Edit").
+		AddButton(1, table.FieldButtonActionDialog, "delete", core.ColorWarning, "Delete")
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
@@ -2003,8 +2004,8 @@ func TestExample_IconFieldFromSet(t *testing.T) {
 
 	// Step 1: Define all possible icons upfront in an IconSet
 	statusIcons := table.NewIconSet()
-	iconOnline := statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Device is online")
-	iconOffline := statusIcons.Add("offline", "cancel", table.FieldColorWarning, "Device is offline")
+	iconOnline := statusIcons.Add("online", "check_circle", core.ColorAccent, "Device is online")
+	iconOffline := statusIcons.Add("offline", "cancel", core.ColorWarning, "Device is offline")
 
 	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
 
@@ -2043,8 +2044,8 @@ func TestExample_IconFieldFromSet_Resolve(t *testing.T) {
 	rows := generateDeviceData()
 
 	statusIcons := table.NewIconSet()
-	statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Device is online")
-	statusIcons.Add("offline", "cancel", table.FieldColorWarning, "Device is offline")
+	statusIcons.Add("online", "check_circle", core.ColorAccent, "Device is online")
+	statusIcons.Add("offline", "cancel", core.ColorWarning, "Device is offline")
 
 	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
 

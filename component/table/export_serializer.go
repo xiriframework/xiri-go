@@ -23,13 +23,13 @@ import "github.com/xiriframework/xiri-go/component/core"
 // Used for visual cues in the Angular frontend (status icons, action buttons, etc.).
 type fieldIcon struct {
 	Icon    string         // Icon name (e.g., "done", "error", "warning")
-	Color   FieldColor     // Color enum (primary, accent, warn, tertiary)
+	Color   core.Color     // Color enum (primary, accent, warn, tertiary)
 	Hint    string         // Tooltip text shown on hover
 	Options map[string]any // Additional custom properties for frontend
 }
 
 // newFieldIcon creates a new fieldIcon with required fields.
-func newFieldIcon(icon string, color FieldColor, hint string) *fieldIcon {
+func newFieldIcon(icon string, color core.Color, hint string) *fieldIcon {
 	return &fieldIcon{
 		Icon:    icon,
 		Color:   color,

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"testing"
 
+	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/component/table"
 )
 
@@ -15,7 +16,7 @@ import (
 func TestIconSet_Add(t *testing.T) {
 	icons := table.NewIconSet()
 
-	ref := icons.Add("online", "check_circle", table.FieldColorAccent, "Online")
+	ref := icons.Add("online", "check_circle", core.ColorAccent, "Online")
 	if ref == nil {
 		t.Fatal("Add() returned nil")
 	}
@@ -23,7 +24,7 @@ func TestIconSet_Add(t *testing.T) {
 		t.Fatalf("expected Len() = 1, got %d", icons.Len())
 	}
 
-	ref2 := icons.Add("offline", "cancel", table.FieldColorWarning, "Offline")
+	ref2 := icons.Add("offline", "cancel", core.ColorWarning, "Offline")
 	if ref2 == nil {
 		t.Fatal("Add() returned nil for second icon")
 	}
@@ -36,7 +37,7 @@ func TestIconSet_AddWithOptions(t *testing.T) {
 	icons := table.NewIconSet()
 
 	opts := map[string]any{"pulse": true}
-	ref := icons.AddWithOptions("warning", "warning", table.FieldColorWarning, "Warning", opts)
+	ref := icons.AddWithOptions("warning", "warning", core.ColorWarning, "Warning", opts)
 	if ref == nil {
 		t.Fatal("AddWithOptions() returned nil")
 	}
@@ -47,8 +48,8 @@ func TestIconSet_AddWithOptions(t *testing.T) {
 
 func TestIconSet_Resolve_Known(t *testing.T) {
 	icons := table.NewIconSet()
-	icons.Add("online", "check_circle", table.FieldColorAccent, "Online")
-	icons.Add("offline", "cancel", table.FieldColorWarning, "Offline")
+	icons.Add("online", "check_circle", core.ColorAccent, "Online")
+	icons.Add("offline", "cancel", core.ColorWarning, "Offline")
 
 	ref := icons.Resolve("online")
 	if ref == nil {
@@ -63,7 +64,7 @@ func TestIconSet_Resolve_Known(t *testing.T) {
 
 func TestIconSet_Resolve_Unknown(t *testing.T) {
 	icons := table.NewIconSet()
-	icons.Add("online", "check_circle", table.FieldColorAccent, "Online")
+	icons.Add("online", "check_circle", core.ColorAccent, "Online")
 
 	ref := icons.Resolve("unknown_value")
 	if ref != nil {
@@ -85,7 +86,7 @@ func TestIconSet_Resolve_WarnsOnUnknownValue(t *testing.T) {
 	t.Cleanup(func() { slog.SetDefault(old) })
 
 	icons := table.NewIconSet()
-	icons.Add("online", "check_circle", table.FieldColorAccent, "Online")
+	icons.Add("online", "check_circle", core.ColorAccent, "Online")
 
 	ref := icons.Resolve("unknown_value")
 	if ref != nil {
@@ -121,8 +122,8 @@ func TestIconFieldFromSet_DirectRefs(t *testing.T) {
 	ctx := exampleContext()
 
 	statusIcons := table.NewIconSet()
-	iconOnline := statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Online")
-	iconOffline := statusIcons.Add("offline", "cancel", table.FieldColorWarning, "Offline")
+	iconOnline := statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
+	iconOffline := statusIcons.Add("offline", "cancel", core.ColorWarning, "Offline")
 
 	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
 	builder.IconFieldFromSet("status", "device.status",
@@ -162,8 +163,8 @@ func TestIconFieldFromSet_Resolve(t *testing.T) {
 	ctx := exampleContext()
 
 	statusIcons := table.NewIconSet()
-	statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Online")
-	statusIcons.Add("offline", "cancel", table.FieldColorWarning, "Offline")
+	statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
+	statusIcons.Add("offline", "cancel", core.ColorWarning, "Offline")
 
 	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
 	builder.IconFieldFromSet("status", "device.status",
@@ -198,7 +199,7 @@ func TestIconFieldFromSet_NilRef(t *testing.T) {
 	ctx := exampleContext()
 
 	statusIcons := table.NewIconSet()
-	statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Online")
+	statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
 
 	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
 	builder.IconFieldFromSet("status", "device.status",
@@ -222,7 +223,7 @@ func TestIconFieldFromSet_IconDefinitionsCopied(t *testing.T) {
 	ctx := exampleContext()
 
 	statusIcons := table.NewIconSet()
-	iconOnline := statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Online")
+	iconOnline := statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
 
 	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
 	builder.IconFieldFromSet("status", "device.status",
@@ -256,7 +257,7 @@ func TestIconFieldFromSet_WithOptions(t *testing.T) {
 	ctx := exampleContext()
 
 	statusIcons := table.NewIconSet()
-	iconOnline := statusIcons.AddWithOptions("online", "check_circle", table.FieldColorAccent, "Online", map[string]any{"pulse": true})
+	iconOnline := statusIcons.AddWithOptions("online", "check_circle", core.ColorAccent, "Online", map[string]any{"pulse": true})
 
 	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
 	builder.IconFieldFromSet("status", "device.status",
@@ -283,7 +284,7 @@ func TestIconFieldFromSet_BuilderChaining(t *testing.T) {
 	ctx := exampleContext()
 
 	statusIcons := table.NewIconSet()
-	iconOnline := statusIcons.Add("online", "check_circle", table.FieldColorAccent, "Online")
+	iconOnline := statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
 
 	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
 

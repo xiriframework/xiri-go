@@ -146,7 +146,7 @@ type ListSectionItem struct {
 	info         string
 	url          *url.Url
 	icon         string
-	iconColor    core.ListItemColor
+	iconColor    core.Color
 	iconSet      *string
 	hasFavorite  bool
 	isFavorite   bool
@@ -160,7 +160,7 @@ func NewListSectionItem(
 	info string,
 	u *url.Url,
 	icon string,
-	iconColor core.ListItemColor,
+	iconColor core.Color,
 	iconSet *string,
 	hasFavorite bool,
 	isFavorite bool,
@@ -182,7 +182,7 @@ func NewListSectionItem(
 }
 
 // NewSimpleListSectionItem creates a list section item without favorite support
-func NewSimpleListSectionItem(name, info string, u *url.Url, icon string, iconColor core.ListItemColor) *ListSectionItem {
+func NewSimpleListSectionItem(name, info string, u *url.Url, icon string, iconColor core.Color) *ListSectionItem {
 	return &ListSectionItem{
 		name:      name,
 		info:      info,

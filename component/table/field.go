@@ -1,6 +1,7 @@
 package table
 
 import (
+	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/uicontext"
 )
 
@@ -71,7 +72,7 @@ type Field[T any] struct {
 type ButtonDef struct {
 	Action  FieldButtonAction
 	Icon    string
-	Color   FieldColor
+	Color   core.Color
 	Hint    string
 	Options map[string]any // Additional custom options
 }
@@ -79,7 +80,7 @@ type ButtonDef struct {
 // IconDef defines an icon mapping in an icon-type field
 type IconDef struct {
 	Icon    string
-	Color   FieldColor
+	Color   core.Color
 	Hint    string
 	Options map[string]any // Additional custom options
 }
@@ -88,7 +89,7 @@ type IconDef struct {
 type MenuItemDef struct {
 	Action FieldButtonAction // "link", "href", or "dialog"
 	Icon   string
-	Color  FieldColor
+	Color  core.Color
 	Text   string // Translation key
 }
 
@@ -126,7 +127,7 @@ func (f *Field[T]) Format(value any, row Row, output OutputType, ctx *uicontext.
 //   - icon: Icon name
 //   - color: Icon color
 //   - hint: Tooltip text (translation key)
-func (f *Field[T]) AddButton(key int, action FieldButtonAction, icon string, color FieldColor, hint string) {
+func (f *Field[T]) AddButton(key int, action FieldButtonAction, icon string, color core.Color, hint string) {
 	if f.buttons == nil {
 		f.buttons = make(map[int]*ButtonDef)
 	}
@@ -146,7 +147,7 @@ func (f *Field[T]) AddButton(key int, action FieldButtonAction, icon string, col
 //   - icon: Icon name
 //   - color: Icon color
 //   - hint: Tooltip text (translation key)
-func (f *Field[T]) addIcon(value string, icon string, color FieldColor, hint string) {
+func (f *Field[T]) addIcon(value string, icon string, color core.Color, hint string) {
 	if f.icons == nil {
 		f.icons = make(map[string]*IconDef)
 	}

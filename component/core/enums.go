@@ -78,21 +78,6 @@ const (
 	DialogTypeTable    DialogType = "table"
 )
 
-// ListItemColor represents colors for list items
-type ListItemColor string
-
-const (
-	ListItemColorPrimary ListItemColor = "primary"
-	ListItemColorWarn    ListItemColor = "warn"
-	ListItemColorError   ListItemColor = "error"
-	ListItemColorSuccess ListItemColor = "success"
-	ListItemColorRed     ListItemColor = "red"
-	ListItemColorGreen   ListItemColor = "green"
-	ListItemColorYellow  ListItemColor = "yellow"
-	ListItemColorGray    ListItemColor = "gray"
-	ListItemColorOrange  ListItemColor = "orange"
-)
-
 // TabHeaderPosition represents where tab headers are positioned
 // Angular: XiriTabsSettings.headerPosition
 type TabHeaderPosition string

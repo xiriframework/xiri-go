@@ -486,7 +486,7 @@ func (b *TableBuilder[T]) SpeedField(id, name string, accessor func(T) float64) 
 //	        "0": fmt.Sprintf("/Portal/Device/Edit?id=%d", r.ID),
 //	        "1": fmt.Sprintf("/Portal/Device/Delete?id=%d", r.ID),
 //	    }
-//	}).AddButton(0, FieldButtonActionLink, "edit", FieldColorPrimary, "common.edit")
+//	}).AddButton(0, FieldButtonActionLink, "edit", core.ColorPrimary, "common.edit")
 func (b *TableBuilder[T]) ButtonsField(id, name string, accessor func(T) map[string]string) *FieldBuilder[T] {
 	return b.fieldInternal(id, name, Buttons, func(row T) any {
 		// Convert map[string]string to map[string]any
@@ -515,8 +515,8 @@ func (b *TableBuilder[T]) ButtonsField(id, name string, accessor func(T) map[str
 // Example:
 //
 //	statusIcons := table.NewIconSet()
-//	iconOnline  := statusIcons.Add("online",  "check_circle", table.FieldColorAccent,  "Online")
-//	iconOffline := statusIcons.Add("offline", "cancel",       table.FieldColorWarning, "Offline")
+//	iconOnline  := statusIcons.Add("online",  "check_circle", core.ColorAccent,  "Online")
+//	iconOffline := statusIcons.Add("offline", "cancel",       core.ColorWarning, "Offline")
 //
 //	builder.IconFieldFromSet("status", "device.status",
 //	    func(r DeviceRow) *table.IconRef {
