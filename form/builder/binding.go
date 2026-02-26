@@ -54,8 +54,14 @@ import (
 // Returns:
 //   - error: Validation error if any field fails validation
 func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
-	// Get all declared field IDs from FormGroup
-	fieldIDs := fg.GetFieldIDs()
+	// Get only Form=true field IDs (excludes hidden fields from request extraction)
+	allFields := fg.GetFields()
+	fieldIDs := make([]string, 0, len(allFields))
+	for _, f := range allFields {
+		if f.GetForm() {
+			fieldIDs = append(fieldIDs, f.GetID())
+		}
+	}
 
 	// Extract ONLY declared fields from request
 	formData := make(map[string]interface{})
@@ -113,7 +119,12 @@ func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
 // After this function returns, access values via field.Value (type-safe).
 func BindFromMap(formData map[string]interface{}, fg *group.FormGroup) error {
 	for _, f := range fg.GetFields() {
-		rawValue := resolveFieldValue(f, formData)
+		var rawValue interface{}
+		if f.GetForm() {
+			rawValue = resolveFieldValue(f, formData)
+		} else {
+			rawValue = f.GetDefault()
+		}
 		if err := bindFieldValue(f, rawValue); err != nil {
 			return err
 		}

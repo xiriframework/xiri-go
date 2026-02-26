@@ -10,6 +10,13 @@ func (fg *FormGroup) ParseValues(raw map[string]interface{}) (map[string]interfa
 
 	// Parse each field value
 	for _, f := range fg.fields {
+		if !f.GetForm() {
+			if def := f.GetDefault(); def != nil {
+				parsed[f.GetID()] = def
+			}
+			continue
+		}
+
 		rawValue, exists := raw[f.GetID()]
 
 		// If value doesn't exist, use default
@@ -43,7 +50,7 @@ func (fg *FormGroup) ValidateValues(values map[string]interface{}) error {
 		value, exists := values[f.GetID()]
 
 		// Check required fields
-		if !exists && f.IsRequired() {
+		if !exists && f.IsRequired() && f.GetForm() {
 			return fmt.Errorf("required field %s is missing", f.GetID())
 		}
 

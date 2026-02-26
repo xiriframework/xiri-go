@@ -725,43 +725,26 @@ func (t *Table[T]) Print(translator core.TranslateFunc) map[string]any {
 
 	// If filter exists, automatically wrap table in Query component
 	if t.filter != nil {
-		// Export filter form fields
-		filterForm := t.filter.ExportForFrontend()
-
-		// Get all fields from filter group to check Form property
+		// Extra-Daten aus Form=false-Feldern sammeln
 		fields := t.filter.GetFields()
 		extraData := make(map[string]any)
-		visibleFilterForm := make([]map[string]any, 0)
-
-		// Separate visible fields from hidden (form=false) fields
-		for i, fieldExport := range filterForm {
-			if i < len(fields) {
-				field := fields[i]
-				if !field.GetForm() {
-					// Hidden field - add to extra data with default value
-					extraData[field.GetID()] = field.GetDefault()
-				} else {
-					// Visible field - keep in filter form
-					visibleFilterForm = append(visibleFilterForm, fieldExport)
-				}
-			} else {
-				// Fallback: if field count mismatch, keep in form
-				visibleFilterForm = append(visibleFilterForm, fieldExport)
+		for _, f := range fields {
+			if !f.GetForm() {
+				extraData[f.GetID()] = f.GetDefault()
 			}
 		}
 
-		// Create Query component with visible fields only
-		saveStateId := t.options.SaveStateId
-		query := query.NewQuery(visibleFilterForm, saveStateId, t.options.Display)
+		// Sichtbare Felder exportieren (ExportForFrontend überspringt Form=false)
+		filterForm := t.filter.ExportForFrontend()
 
-		// Set extra data if any hidden fields exist
+		saveStateId := t.options.SaveStateId
+		query := query.NewQuery(filterForm, saveStateId, t.options.Display)
+
 		if len(extraData) > 0 {
 			query.SetExtraData(extraData)
 		}
 
-		// Add table as nested component in query
 		query.AddArray(result)
-
 		return query.Print(trans)
 	}
 

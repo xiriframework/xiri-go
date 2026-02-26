@@ -12,6 +12,10 @@ func (fg *FormGroup) ExportForFrontendWithValues(values map[string]interface{}) 
 	result := make([]map[string]interface{}, 0, len(fg.fields))
 
 	for _, f := range fg.fields {
+		if !f.GetForm() {
+			continue
+		}
+
 		// Get value for this field (from values map or default)
 		var value interface{}
 		if values != nil {
