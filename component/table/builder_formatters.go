@@ -433,6 +433,333 @@ func createText2TimeLengthFormatter() OutputFormatter {
 	})
 }
 
+// ============================================================================
+// N-line (variable length) formatter functions
+// These create formatters for fields with a variable number of lines (slices).
+// ============================================================================
+
+// createTextNFormatter returns a formatter for variable-line text fields.
+// Expects []string slice.
+func createTextNFormatter() OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+		if value == nil {
+			return []string{}
+		}
+		arr, ok := value.([]string)
+		if !ok {
+			return []string{}
+		}
+		if output == OutputCSV || output == OutputExcel {
+			return arr
+		}
+		return arr
+	})
+}
+
+// createIntegerNFormatter returns a formatter for variable-line integer fields.
+// Expects []int slice.
+func createIntegerNFormatter() OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+		if value == nil {
+			return []string{}
+		}
+		arr, ok := value.([]int)
+		if !ok {
+			return []string{}
+		}
+		switch output {
+		case OutputWeb, OutputPDF:
+			result := make([]string, len(arr))
+			for i, v := range arr {
+				result[i] = formatter.FormatNumberLocale(float64(v), 0, ctx.Locale)
+			}
+			return result
+		case OutputCSV, OutputExcel:
+			strs := make([]string, len(arr))
+			for i, v := range arr {
+				strs[i] = fmt.Sprint(v)
+			}
+			return strs
+		}
+		result := make([]string, len(arr))
+		for i, v := range arr {
+			result[i] = fmt.Sprint(v)
+		}
+		return result
+	})
+}
+
+// createFloatNFormatter returns a formatter for variable-line float fields.
+// Expects []float64 slice.
+func createFloatNFormatter(decimals int) OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+		if value == nil {
+			return []string{}
+		}
+		arr, ok := value.([]float64)
+		if !ok {
+			return []string{}
+		}
+		format := "%." + strconv.Itoa(decimals) + "f"
+		switch output {
+		case OutputWeb, OutputPDF:
+			result := make([]string, len(arr))
+			for i, v := range arr {
+				result[i] = formatter.FormatNumberLocale(v, decimals, ctx.Locale)
+			}
+			return result
+		case OutputCSV, OutputExcel:
+			strs := make([]string, len(arr))
+			for i, v := range arr {
+				strs[i] = fmt.Sprintf(format, v)
+			}
+			return strs
+		}
+		result := make([]string, len(arr))
+		for i, v := range arr {
+			result[i] = fmt.Sprintf(format, v)
+		}
+		return result
+	})
+}
+
+// createDateTimeNFormatter returns a formatter for variable-line datetime fields.
+// Expects []time.Time slice.
+func createDateTimeNFormatter() OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+		if value == nil {
+			return []string{}
+		}
+		arr, ok := value.([]time.Time)
+		if !ok {
+			return []string{}
+		}
+
+		loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+		if err != nil {
+			loc = time.UTC
+		}
+
+		switch output {
+		case OutputWeb, OutputPDF:
+			result := make([]string, len(arr))
+			for i, v := range arr {
+				if !v.IsZero() {
+					result[i] = formatter.FormatTimestampDateTime(v.Unix(), ctx)
+				}
+			}
+			return result
+		case OutputCSV, OutputExcel:
+			strs := make([]string, len(arr))
+			for i, v := range arr {
+				if !v.IsZero() {
+					strs[i] = v.In(loc).Format("2006-01-02 15:04:05")
+				}
+			}
+			return strs
+		}
+		result := make([]string, len(arr))
+		for i, v := range arr {
+			if !v.IsZero() {
+				result[i] = v.In(loc).Format("2006-01-02 15:04:05")
+			}
+		}
+		return result
+	})
+}
+
+// createDateNFormatter returns a formatter for variable-line date fields.
+// Expects []time.Time slice.
+func createDateNFormatter() OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+		if value == nil {
+			return []string{}
+		}
+		arr, ok := value.([]time.Time)
+		if !ok {
+			return []string{}
+		}
+
+		loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+		if err != nil {
+			loc = time.UTC
+		}
+
+		switch output {
+		case OutputWeb, OutputPDF:
+			result := make([]string, len(arr))
+			for i, v := range arr {
+				if !v.IsZero() {
+					result[i] = formatter.FormatTimestampDate(v.Unix(), ctx)
+				}
+			}
+			return result
+		case OutputCSV, OutputExcel:
+			strs := make([]string, len(arr))
+			for i, v := range arr {
+				if !v.IsZero() {
+					strs[i] = v.In(loc).Format("2006-01-02")
+				}
+			}
+			return strs
+		}
+		result := make([]string, len(arr))
+		for i, v := range arr {
+			if !v.IsZero() {
+				result[i] = v.In(loc).Format("2006-01-02")
+			}
+		}
+		return result
+	})
+}
+
+// createDistanceNFormatter returns a formatter for variable-line distance fields.
+// Expects []float64 slice (values in kilometers).
+func createDistanceNFormatter(decimals int) OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+		if value == nil {
+			return []string{}
+		}
+		arr, ok := value.([]float64)
+		if !ok {
+			return []string{}
+		}
+
+		distanceUnit := ctx.Distance
+
+		switch output {
+		case OutputWeb, OutputPDF:
+			result := make([]string, len(arr))
+			for i, v := range arr {
+				result[i] = formatter.FormatDistanceLocaleWithDecimals(v, distanceUnit, ctx.Locale, decimals)
+			}
+			return result
+		case OutputCSV, OutputExcel:
+			format := "%." + strconv.Itoa(decimals) + "f"
+			strs := make([]string, len(arr))
+			for i, v := range arr {
+				strs[i] = fmt.Sprintf(format, convertDistanceValue(v, distanceUnit))
+			}
+			return strs
+		}
+		format := "%." + strconv.Itoa(decimals) + "f"
+		result := make([]string, len(arr))
+		for i, v := range arr {
+			result[i] = fmt.Sprintf(format, convertDistanceValue(v, distanceUnit))
+		}
+		return result
+	})
+}
+
+// createSpeedNFormatter returns a formatter for variable-line speed fields.
+// Expects []float64 slice (values in km/h).
+func createSpeedNFormatter(decimals int) OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+		if value == nil {
+			return []string{}
+		}
+		arr, ok := value.([]float64)
+		if !ok {
+			return []string{}
+		}
+
+		distanceUnit := ctx.Distance
+
+		unit := " km/h"
+		switch distanceUnit {
+		case distance.Miles:
+			unit = " mph"
+		case distance.Seemiles:
+			unit = " kn"
+		}
+
+		switch output {
+		case OutputWeb, OutputPDF:
+			result := make([]string, len(arr))
+			for i, v := range arr {
+				result[i] = formatter.FormatNumberLocale(convertSpeedValue(v, distanceUnit), decimals, ctx.Locale) + unit
+			}
+			return result
+		case OutputCSV, OutputExcel:
+			format := "%." + strconv.Itoa(decimals) + "f"
+			strs := make([]string, len(arr))
+			for i, v := range arr {
+				strs[i] = fmt.Sprintf(format, convertSpeedValue(v, distanceUnit))
+			}
+			return strs
+		}
+		format := "%." + strconv.Itoa(decimals) + "f"
+		result := make([]string, len(arr))
+		for i, v := range arr {
+			result[i] = fmt.Sprintf(format, convertSpeedValue(v, distanceUnit))
+		}
+		return result
+	})
+}
+
+// createBoolNFormatter returns a formatter for variable-line boolean fields.
+// Expects []bool slice.
+func createBoolNFormatter() OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+		if value == nil {
+			return []string{}
+		}
+		arr, ok := value.([]bool)
+		if !ok {
+			return []string{}
+		}
+
+		result := make([]string, len(arr))
+		for i, v := range arr {
+			if v {
+				result[i] = "Yes"
+			} else {
+				result[i] = "No"
+			}
+		}
+
+		switch output {
+		case OutputCSV, OutputExcel:
+			return result
+		}
+		return result
+	})
+}
+
+// createTimeLengthNFormatter returns a formatter for variable-line time duration fields.
+// Expects []int64 slice (values in seconds).
+func createTimeLengthNFormatter() OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+		if value == nil {
+			return []string{}
+		}
+		arr, ok := value.([]int64)
+		if !ok {
+			return []string{}
+		}
+
+		switch output {
+		case OutputWeb, OutputPDF:
+			result := make([]string, len(arr))
+			for i, v := range arr {
+				result[i] = formatTimeLength(v)
+			}
+			return result
+		case OutputCSV, OutputExcel:
+			strs := make([]string, len(arr))
+			for i, v := range arr {
+				strs[i] = fmt.Sprintf("%d", v/60)
+			}
+			return strs
+		}
+		result := make([]string, len(arr))
+		for i, v := range arr {
+			result[i] = fmt.Sprintf("%d", v/60)
+		}
+		return result
+	})
+}
+
 // formatTimeLength formats seconds as "HH:MM" or "Xd HH:MM"
 func formatTimeLength(seconds int64) string {
 	if seconds < 0 {

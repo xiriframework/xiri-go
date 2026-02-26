@@ -162,6 +162,12 @@ func (fb *FieldBuilder[T]) WithDecimals(decimals int) *FieldBuilder[T] {
 		fb.field.defaultFormatter = createText2DistanceFormatter(decimals)
 	case Text2Speed:
 		fb.field.defaultFormatter = createText2SpeedFormatter(decimals)
+	case FloatN:
+		fb.field.defaultFormatter = createFloatNFormatter(decimals)
+	case DistanceN:
+		fb.field.defaultFormatter = createDistanceNFormatter(decimals)
+	case SpeedN:
+		fb.field.defaultFormatter = createSpeedNFormatter(decimals)
 	}
 	return fb
 }

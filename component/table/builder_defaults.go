@@ -39,8 +39,17 @@ var fieldDefaults = map[FieldTypeHint]fieldDefault{
 	Text2Distance:   {FieldTypeText2, alignPtr(FieldAlignRight), 2, true, true, true},
 	Text2Speed:      {FieldTypeText2, alignPtr(FieldAlignRight), 1, true, true, true},
 	Text2Bool:       {FieldTypeText2, alignPtr(FieldAlignLeft), 0, true, true, true},
-	TimeLength:      {FieldTypeText, alignPtr(FieldAlignLeft), 0, true, true, true},
-	Text2TimeLength: {FieldTypeText2, alignPtr(FieldAlignLeft), 0, true, true, true},
+	TimeLength:      {FieldTypeText, alignPtr(FieldAlignRight), 0, true, true, true},
+	Text2TimeLength: {FieldTypeText2, alignPtr(FieldAlignRight), 0, true, true, true},
+	TextN:           {FieldTypeTextN, alignPtr(FieldAlignLeft), 0, true, true, true},
+	IntegerN:        {FieldTypeTextN, alignPtr(FieldAlignRight), 0, true, true, true},
+	FloatN:          {FieldTypeTextN, alignPtr(FieldAlignRight), 2, true, true, true},
+	DateTimeN:       {FieldTypeTextN, alignPtr(FieldAlignLeft), 0, true, true, true},
+	DateN:           {FieldTypeTextN, alignPtr(FieldAlignLeft), 0, true, true, true},
+	DistanceN:       {FieldTypeTextN, alignPtr(FieldAlignRight), 2, true, true, true},
+	SpeedN:          {FieldTypeTextN, alignPtr(FieldAlignRight), 1, true, true, true},
+	BoolN:           {FieldTypeTextN, alignPtr(FieldAlignLeft), 0, true, true, true},
+	TimeLengthN:     {FieldTypeTextN, alignPtr(FieldAlignRight), 0, true, true, true},
 	Header:          {FieldTypeHeader, alignPtr(FieldAlignLeft), 0, false, false, false},
 }
 
@@ -116,6 +125,24 @@ func applyFieldTypeDefaults[T any](builder *FieldBuilder[T], fieldType FieldType
 		builder.field.defaultFormatter = createTimeLengthFormatter()
 	case Text2TimeLength:
 		builder.field.defaultFormatter = createText2TimeLengthFormatter()
+	case TextN:
+		builder.field.defaultFormatter = createTextNFormatter()
+	case IntegerN:
+		builder.field.defaultFormatter = createIntegerNFormatter()
+	case FloatN:
+		builder.field.defaultFormatter = createFloatNFormatter(def.decimals)
+	case DateTimeN:
+		builder.field.defaultFormatter = createDateTimeNFormatter()
+	case DateN:
+		builder.field.defaultFormatter = createDateNFormatter()
+	case DistanceN:
+		builder.field.defaultFormatter = createDistanceNFormatter(def.decimals)
+	case SpeedN:
+		builder.field.defaultFormatter = createSpeedNFormatter(def.decimals)
+	case BoolN:
+		builder.field.defaultFormatter = createBoolNFormatter()
+	case TimeLengthN:
+		builder.field.defaultFormatter = createTimeLengthNFormatter()
 	default:
 		builder.field.defaultFormatter = createTextFormatter()
 	}

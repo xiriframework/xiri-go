@@ -292,6 +292,12 @@ func (t *Table[T]) GetFilterData() map[string]any {
 	return t.filterData
 }
 
+// AddButtonTop adds a button to the table's top toolbar.
+// Useful for adding action buttons (PDF, Excel, etc.) after building the table.
+func (t *Table[T]) AddButtonTop(btn *button.TableButton) {
+	t.options.ButtonsTop = append(t.options.ButtonsTop, btn)
+}
+
 // SetFlags sets UI-only filter fields that should be excluded from parsed data.
 // Flags are typically used for frontend state that shouldn't be sent to the backend.
 func (t *Table[T]) SetFlags(flags ...string) *Table[T] {

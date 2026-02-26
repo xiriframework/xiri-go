@@ -2067,3 +2067,365 @@ func TestExample_IconFieldFromSet_Resolve(t *testing.T) {
 	fmt.Printf("Device 1 (status=%s): %v\n", rows[0].Status, data[0]["status"])
 	fmt.Printf("Device 2 (status=%s): %v\n", rows[1].Status, data[1]["status"])
 }
+
+// ============================================================================
+// N-LINE (VARIABLE LENGTH) FIELD EXAMPLES
+// ============================================================================
+
+// TestExample_TextNField demonstrates variable-line text field
+func TestExample_TextNField(t *testing.T) {
+	ctx := exampleContext()
+
+	rows := []DeviceTableRow{
+		{ID: 1, Name: "Device 1", NameLine2: "Fleet A", GroupName: "Primary"},
+	}
+
+	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+
+	builder.TextNField("info", "device.info", func(r DeviceTableRow) []string {
+		return []string{r.Name, r.NameLine2, r.GroupName}
+	})
+
+	tbl := builder.Build()
+	tbl.SetData(rows)
+	data := tbl.GetData(table.OutputWeb)
+
+	info := data[0]["info"].([]string)
+	fmt.Printf("TextNField output: %v\n", info)
+	// Output: [Device 1 Fleet A Primary]
+
+	if len(info) != 3 {
+		t.Errorf("expected 3 lines, got %d", len(info))
+	}
+	if info[0] != "Device 1" {
+		t.Errorf("expected 'Device 1', got %q", info[0])
+	}
+
+	csvData := tbl.GetData(table.OutputCSV)
+	csvInfo := csvData[0]["info"].([]string)
+	fmt.Printf("TextNField CSV: %v\n", csvInfo)
+	// Output: ["Device 1", "Fleet A", "Primary"]
+	if len(csvInfo) != 3 {
+		t.Errorf("expected 3 values, got %d", len(csvInfo))
+	}
+	if csvInfo[0] != "Device 1" {
+		t.Errorf("expected 'Device 1', got %q", csvInfo[0])
+	}
+	if csvInfo[1] != "Fleet A" {
+		t.Errorf("expected 'Fleet A', got %q", csvInfo[1])
+	}
+	if csvInfo[2] != "Primary" {
+		t.Errorf("expected 'Primary', got %q", csvInfo[2])
+	}
+}
+
+// TestExample_IntNField demonstrates variable-line integer field
+func TestExample_IntNField(t *testing.T) {
+	ctx := exampleContext() // German locale
+
+	rows := []DeviceTableRow{
+		{ID: 1, TripsToday: 5, TotalTrips: 1234},
+	}
+
+	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+
+	builder.IntNField("stats", "device.stats", func(r DeviceTableRow) []int {
+		return []int{r.TripsToday, r.TotalTrips, 0}
+	})
+
+	tbl := builder.Build()
+	tbl.SetData(rows)
+	data := tbl.GetData(table.OutputWeb)
+
+	stats := data[0]["stats"].([]string)
+	fmt.Printf("IntNField output: %v\n", stats)
+
+	if len(stats) != 3 {
+		t.Errorf("expected 3 lines, got %d", len(stats))
+	}
+
+	csvData := tbl.GetData(table.OutputCSV)
+	csvStats := csvData[0]["stats"].([]string)
+	fmt.Printf("IntNField CSV: %v\n", csvStats)
+	// Output: ["5", "1234", "0"]
+	if len(csvStats) != 3 {
+		t.Errorf("expected 3 values, got %d", len(csvStats))
+	}
+	if csvStats[0] != "5" {
+		t.Errorf("expected '5', got %q", csvStats[0])
+	}
+	if csvStats[1] != "1234" {
+		t.Errorf("expected '1234', got %q", csvStats[1])
+	}
+}
+
+// TestExample_FloatNField demonstrates variable-line float field
+func TestExample_FloatNField(t *testing.T) {
+	ctx := exampleContext()
+
+	rows := []DeviceTableRow{
+		{ID: 1, FuelCurrent: 45.5, FuelAverage: 52.3},
+	}
+
+	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+
+	builder.FloatNField("fuel", "device.fuel", func(r DeviceTableRow) []float64 {
+		return []float64{r.FuelCurrent, r.FuelAverage}
+	}).WithDecimals(1)
+
+	tbl := builder.Build()
+	tbl.SetData(rows)
+	data := tbl.GetData(table.OutputWeb)
+
+	fuel := data[0]["fuel"].([]string)
+	fmt.Printf("FloatNField output: %v\n", fuel)
+
+	if len(fuel) != 2 {
+		t.Errorf("expected 2 lines, got %d", len(fuel))
+	}
+
+	csvData := tbl.GetData(table.OutputCSV)
+	csvFuel := csvData[0]["fuel"].([]string)
+	fmt.Printf("FloatNField CSV: %v\n", csvFuel)
+	if len(csvFuel) != 2 {
+		t.Errorf("expected 2 values, got %d", len(csvFuel))
+	}
+	if csvFuel[0] != "45.5" {
+		t.Errorf("expected '45.5', got %q", csvFuel[0])
+	}
+}
+
+// TestExample_DateTimeNField demonstrates variable-line datetime field
+func TestExample_DateTimeNField(t *testing.T) {
+	ctx := exampleContext()
+
+	lastSeen := time.Unix(1640000000, 0)
+	created := time.Unix(1630000000, 0)
+	updated := time.Unix(1635000000, 0)
+
+	rows := []DeviceTableRow{
+		{ID: 1, LastSeen: lastSeen, CreatedDate: created},
+	}
+
+	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+
+	builder.DateTimeNField("times", "device.times", func(r DeviceTableRow) []time.Time {
+		return []time.Time{r.LastSeen, r.CreatedDate, updated}
+	})
+
+	tbl := builder.Build()
+	tbl.SetData(rows)
+	data := tbl.GetData(table.OutputWeb)
+
+	times := data[0]["times"].([]string)
+	fmt.Printf("DateTimeNField output: %v\n", times)
+
+	if len(times) != 3 {
+		t.Errorf("expected 3 lines, got %d", len(times))
+	}
+	for i, v := range times {
+		if v == "" {
+			t.Errorf("expected non-empty datetime at index %d", i)
+		}
+	}
+}
+
+// TestExample_DateNField demonstrates variable-line date field
+func TestExample_DateNField(t *testing.T) {
+	ctx := exampleContext()
+
+	date1 := time.Unix(1640000000, 0)
+	date2 := time.Unix(1630000000, 0)
+
+	rows := []DeviceTableRow{
+		{ID: 1, LastSeen: date1, CreatedDate: date2},
+	}
+
+	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+
+	builder.DateNField("dates", "device.dates", func(r DeviceTableRow) []time.Time {
+		return []time.Time{r.LastSeen, r.CreatedDate}
+	})
+
+	tbl := builder.Build()
+	tbl.SetData(rows)
+	data := tbl.GetData(table.OutputWeb)
+
+	dates := data[0]["dates"].([]string)
+	fmt.Printf("DateNField output: %v\n", dates)
+
+	if len(dates) != 2 {
+		t.Errorf("expected 2 lines, got %d", len(dates))
+	}
+}
+
+// TestExample_DistanceNField demonstrates variable-line distance field
+func TestExample_DistanceNField(t *testing.T) {
+	ctx := exampleContext()
+
+	rows := []DeviceTableRow{
+		{ID: 1, TodayKm: 123.45, TotalKm: 9876.54},
+	}
+
+	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+
+	builder.DistanceNField("distances", "device.distances", func(r DeviceTableRow) []float64 {
+		return []float64{r.TodayKm, r.TotalKm, 42.0}
+	}).WithDecimals(1)
+
+	tbl := builder.Build()
+	tbl.SetData(rows)
+	data := tbl.GetData(table.OutputWeb)
+
+	distances := data[0]["distances"].([]string)
+	fmt.Printf("DistanceNField output: %v\n", distances)
+
+	if len(distances) != 3 {
+		t.Errorf("expected 3 lines, got %d", len(distances))
+	}
+
+	csvData := tbl.GetData(table.OutputCSV)
+	csvDistances := csvData[0]["distances"].([]string)
+	fmt.Printf("DistanceNField CSV: %v\n", csvDistances)
+	if len(csvDistances) != 3 {
+		t.Errorf("expected 3 values, got %d", len(csvDistances))
+	}
+}
+
+// TestExample_SpeedNField demonstrates variable-line speed field
+func TestExample_SpeedNField(t *testing.T) {
+	ctx := exampleContext()
+
+	rows := []DeviceTableRow{
+		{ID: 1, MaxSpeed: 120.5, AvgSpeed: 85.3},
+	}
+
+	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+
+	builder.SpeedNField("speeds", "device.speeds", func(r DeviceTableRow) []float64 {
+		return []float64{r.MaxSpeed, r.AvgSpeed}
+	}).WithDecimals(1)
+
+	tbl := builder.Build()
+	tbl.SetData(rows)
+	data := tbl.GetData(table.OutputWeb)
+
+	speeds := data[0]["speeds"].([]string)
+	fmt.Printf("SpeedNField output: %v\n", speeds)
+
+	if len(speeds) != 2 {
+		t.Errorf("expected 2 lines, got %d", len(speeds))
+	}
+
+	csvData := tbl.GetData(table.OutputCSV)
+	csvSpeeds := csvData[0]["speeds"].([]string)
+	fmt.Printf("SpeedNField CSV: %v\n", csvSpeeds)
+	if len(csvSpeeds) != 2 {
+		t.Errorf("expected 2 values, got %d", len(csvSpeeds))
+	}
+}
+
+// TestExample_BoolNField demonstrates variable-line boolean field
+func TestExample_BoolNField(t *testing.T) {
+	ctx := exampleContext()
+
+	rows := []DeviceTableRow{
+		{ID: 1, Active: true, Online: false},
+	}
+
+	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+
+	builder.BoolNField("flags", "device.flags", func(r DeviceTableRow) []bool {
+		return []bool{r.Active, r.Online, true}
+	})
+
+	tbl := builder.Build()
+	tbl.SetData(rows)
+	data := tbl.GetData(table.OutputWeb)
+
+	flags := data[0]["flags"].([]string)
+	fmt.Printf("BoolNField output: %v\n", flags)
+
+	if len(flags) != 3 {
+		t.Errorf("expected 3 lines, got %d", len(flags))
+	}
+	if flags[0] != "Yes" {
+		t.Errorf("expected 'Yes', got %q", flags[0])
+	}
+	if flags[1] != "No" {
+		t.Errorf("expected 'No', got %q", flags[1])
+	}
+
+	csvData := tbl.GetData(table.OutputCSV)
+	csvFlags := csvData[0]["flags"].([]string)
+	fmt.Printf("BoolNField CSV: %v\n", csvFlags)
+	if len(csvFlags) != 3 {
+		t.Errorf("expected 3 values, got %d", len(csvFlags))
+	}
+	if csvFlags[0] != "Yes" {
+		t.Errorf("expected 'Yes', got %q", csvFlags[0])
+	}
+	if csvFlags[1] != "No" {
+		t.Errorf("expected 'No', got %q", csvFlags[1])
+	}
+	if csvFlags[2] != "Yes" {
+		t.Errorf("expected 'Yes', got %q", csvFlags[2])
+	}
+}
+
+// TestExample_TimeLengthNField demonstrates variable-line time duration field
+func TestExample_TimeLengthNField(t *testing.T) {
+	ctx := exampleContext()
+
+	rows := []TripTableRow{
+		{
+			ID:             1,
+			DurationShort:  2700,   // 45 minutes
+			DurationMedium: 19800,  // 5 hours 30 minutes
+			DurationLong:   183900, // 2 days 3 hours 5 minutes
+		},
+	}
+
+	builder := table.NewBuilder[TripTableRow](ctx, exampleTranslator)
+
+	builder.TimeLengthNField("durations", "trip.durations", func(r TripTableRow) []int64 {
+		return []int64{r.DurationShort, r.DurationMedium, r.DurationLong}
+	})
+
+	tbl := builder.Build()
+	tbl.SetData(rows)
+	data := tbl.GetData(table.OutputWeb)
+
+	durations := data[0]["durations"].([]string)
+	fmt.Printf("TimeLengthNField output: %v\n", durations)
+
+	if len(durations) != 3 {
+		t.Errorf("expected 3 lines, got %d", len(durations))
+	}
+	if durations[0] != "00:45" {
+		t.Errorf("expected '00:45', got %q", durations[0])
+	}
+	if durations[1] != "05:30" {
+		t.Errorf("expected '05:30', got %q", durations[1])
+	}
+	if durations[2] != "2d 03:05" {
+		t.Errorf("expected '2d 03:05', got %q", durations[2])
+	}
+
+	csvData := tbl.GetData(table.OutputCSV)
+	csvDurations := csvData[0]["durations"].([]string)
+	fmt.Printf("TimeLengthNField CSV: %v\n", csvDurations)
+	// Output: ["45", "330", "3065"]
+	if len(csvDurations) != 3 {
+		t.Errorf("expected 3 values, got %d", len(csvDurations))
+	}
+	if csvDurations[0] != "45" {
+		t.Errorf("expected '45', got %q", csvDurations[0])
+	}
+	if csvDurations[1] != "330" {
+		t.Errorf("expected '330', got %q", csvDurations[1])
+	}
+	if csvDurations[2] != "3065" {
+		t.Errorf("expected '3065', got %q", csvDurations[2])
+	}
+}

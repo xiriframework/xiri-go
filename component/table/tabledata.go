@@ -219,10 +219,104 @@ func (td *TableDataResponse) DataResponse(translator core.TranslateFunc) respons
 	return response.DataResult{Type: response.ResponseJSON, Body: printed}
 }
 
+// expandNFieldColumns expands []string values from N-field formatters into separate columns.
+// For each field where any row contains a []string value, it determines the maximum slice length
+// and creates that many individual columns. The first column keeps the original field ID/name,
+// subsequent columns get "_2", "_3" suffixes (e.g., "distance", "distance_2", "distance_3").
+func (td *TableDataResponse) expandNFieldColumns() {
+	fieldsToUse := td.fieldsForCSV
+	if fieldsToUse == nil {
+		fieldsToUse = td.fields
+	}
+	if len(fieldsToUse) == 0 || len(td.data) == 0 {
+		return
+	}
+
+	// Pass 1: Find maximum N for each field that has []string values
+	maxN := make(map[string]int)
+	for _, row := range td.data {
+		for key, val := range row {
+			if strs, ok := val.([]string); ok {
+				if len(strs) > maxN[key] {
+					maxN[key] = len(strs)
+				}
+			}
+		}
+	}
+
+	if len(maxN) == 0 {
+		return
+	}
+
+	// Pass 2: Expand field definitions
+	expandedFields := make([]map[string]any, 0, len(fieldsToUse))
+	for _, fieldDef := range fieldsToUse {
+		fieldID, hasID := fieldDef["id"].(string)
+		fieldName, _ := fieldDef["name"].(string)
+		n, isNField := maxN[fieldID]
+		if !hasID || !isNField || n <= 1 {
+			expandedFields = append(expandedFields, fieldDef)
+			continue
+		}
+		// Expand into N columns
+		for i := range n {
+			newDef := make(map[string]any, len(fieldDef))
+			for k, v := range fieldDef {
+				newDef[k] = v
+			}
+			if i == 0 {
+				// First column keeps original ID and name
+			} else {
+				newDef["id"] = fmt.Sprintf("%s_%d", fieldID, i+1)
+				newDef["name"] = fmt.Sprintf("%s %d", fieldName, i+1)
+			}
+			expandedFields = append(expandedFields, newDef)
+		}
+	}
+
+	// Pass 3: Expand data rows
+	for _, row := range td.data {
+		for fieldID, n := range maxN {
+			val, exists := row[fieldID]
+			if !exists {
+				continue
+			}
+			strs, ok := val.([]string)
+			if !ok {
+				continue
+			}
+			// Set first value
+			if len(strs) > 0 {
+				row[fieldID] = strs[0]
+			} else {
+				row[fieldID] = ""
+			}
+			// Set subsequent values
+			for i := 1; i < n; i++ {
+				expandedID := fmt.Sprintf("%s_%d", fieldID, i+1)
+				if i < len(strs) {
+					row[expandedID] = strs[i]
+				} else {
+					row[expandedID] = ""
+				}
+			}
+		}
+	}
+
+	// Update field definitions
+	if td.fieldsForCSV != nil {
+		td.fieldsForCSV = expandedFields
+	} else {
+		td.fields = expandedFields
+	}
+}
+
 // generateCSV creates a CSV string from the table data.
 // Uses semicolon (;) delimiter for Excel compatibility.
 // Only includes fields that are marked as CSV-enabled.
 func (td *TableDataResponse) generateCSV(translator core.TranslateFunc) string {
+	td.expandNFieldColumns()
+
 	buf := new(bytes.Buffer)
 	writer := csv.NewWriter(buf)
 	writer.Comma = ';' // Semicolon separator for Excel compatibility (European locale)
@@ -313,6 +407,8 @@ func (td *TableDataResponse) generateCSV(translator core.TranslateFunc) string {
 // Uses excelize library to create a properly formatted Excel workbook.
 // Only includes fields that are marked as CSV-enabled (same logic as CSV).
 func (td *TableDataResponse) generateExcel(translator core.TranslateFunc) ([]byte, error) {
+	td.expandNFieldColumns()
+
 	// If no data, return empty Excel file
 	if len(td.data) == 0 {
 		f := excelize.NewFile()

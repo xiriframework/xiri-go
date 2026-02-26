@@ -113,6 +113,8 @@ const (
 	// - CSV/Excel output: current value
 	Input FieldTypeHint = "input"
 
+	// Deprecated: Use [TextN] instead.
+	//
 	// Text2 creates a text2-type field (alternative text style).
 	// - Sets field type to FieldTypeText2
 	// - Alternative text rendering with different styling
@@ -120,6 +122,8 @@ const (
 	// - All outputs: plain text with alternative formatting
 	Text2 FieldTypeHint = "text2"
 
+	// Deprecated: Use [IntegerN] instead.
+	//
 	// Text2Int creates a text2-type field with integer formatting.
 	// - Sets field type to FieldTypeText2
 	// - Expects [2]int accessor
@@ -127,6 +131,8 @@ const (
 	// - CSV/Excel output: formatted numbers combined with " - "
 	Text2Int FieldTypeHint = "text2int"
 
+	// Deprecated: Use [FloatN] instead.
+	//
 	// Text2Float creates a text2-type field with float formatting.
 	// - Sets field type to FieldTypeText2
 	// - Expects [2]float64 accessor
@@ -135,6 +141,8 @@ const (
 	// - CSV/Excel output: formatted numbers combined with " - "
 	Text2Float FieldTypeHint = "text2float"
 
+	// Deprecated: Use [DateTimeN] instead.
+	//
 	// Text2DateTime creates a text2-type field with datetime formatting.
 	// - Sets field type to FieldTypeText2
 	// - Expects [2]time.Time accessor
@@ -142,6 +150,8 @@ const (
 	// - CSV/Excel output: ISO datetime format combined with " - "
 	Text2DateTime FieldTypeHint = "text2datetime"
 
+	// Deprecated: Use [DateN] instead.
+	//
 	// Text2Date creates a text2-type field with date-only formatting.
 	// - Sets field type to FieldTypeText2
 	// - Expects [2]time.Time accessor
@@ -149,6 +159,8 @@ const (
 	// - CSV/Excel output: ISO date format combined with " - "
 	Text2Date FieldTypeHint = "text2date"
 
+	// Deprecated: Use [DistanceN] instead.
+	//
 	// Text2Distance creates a text2-type field with distance formatting and unit conversion.
 	// - Sets field type to FieldTypeText2
 	// - Expects [2]float64 accessor (values in kilometers)
@@ -158,6 +170,8 @@ const (
 	// - CSV/Excel output: converted numeric values combined with " - "
 	Text2Distance FieldTypeHint = "text2distance"
 
+	// Deprecated: Use [SpeedN] instead.
+	//
 	// Text2Speed creates a text2-type field with speed formatting and unit conversion.
 	// - Sets field type to FieldTypeText2
 	// - Expects [2]float64 accessor (values in km/h)
@@ -167,6 +181,8 @@ const (
 	// - CSV/Excel output: converted numeric values combined with " - "
 	Text2Speed FieldTypeHint = "text2speed"
 
+	// Deprecated: Use [BoolN] instead.
+	//
 	// Text2Bool creates a text2-type field with boolean formatting.
 	// - Sets field type to FieldTypeText2
 	// - Expects [2]bool accessor
@@ -181,12 +197,82 @@ const (
 	// - CSV/Excel output: integer minutes (no decimals)
 	TimeLength FieldTypeHint = "timelength"
 
+	// Deprecated: Use [TimeLengthN] instead.
+	//
 	// Text2TimeLength creates a text2-type field with time duration formatting.
 	// - Sets field type to FieldTypeText2
 	// - Expects [2]int64 accessor (values in seconds)
 	// - Web/PDF output: "HH:MM" or "Xd HH:MM" format for both lines
 	// - CSV/Excel output: integer minutes combined with " - "
 	Text2TimeLength FieldTypeHint = "text2timelength"
+
+	// TextN creates a textn-type field with variable number of lines.
+	// - Sets field type to FieldTypeTextN
+	// - Expects []string accessor
+	// - Web/PDF output: []string slice
+	// - CSV/Excel output: []string, expanded into N separate columns
+	TextN FieldTypeHint = "textn"
+
+	// IntegerN creates a textn-type field with integer formatting for variable lines.
+	// - Sets field type to FieldTypeTextN
+	// - Expects []int accessor
+	// - Web/PDF output: []string with locale-aware number formatting
+	// - CSV/Excel output: []string with plain numbers, expanded into N separate columns
+	IntegerN FieldTypeHint = "integern"
+
+	// FloatN creates a textn-type field with float formatting for variable lines.
+	// - Sets field type to FieldTypeTextN
+	// - Expects []float64 accessor
+	// - Default decimals: 2 (override with .WithDecimals(n))
+	// - Web/PDF output: []string with locale-aware decimal formatting
+	// - CSV/Excel output: []string with formatted numbers, expanded into N separate columns
+	FloatN FieldTypeHint = "floatn"
+
+	// DateTimeN creates a textn-type field with datetime formatting for variable lines.
+	// - Sets field type to FieldTypeTextN
+	// - Expects []time.Time accessor
+	// - Web/PDF output: []string with user timezone and locale
+	// - CSV/Excel output: []string with ISO datetime format, expanded into N separate columns
+	DateTimeN FieldTypeHint = "datetimen"
+
+	// DateN creates a textn-type field with date-only formatting for variable lines.
+	// - Sets field type to FieldTypeTextN
+	// - Expects []time.Time accessor
+	// - Web/PDF output: []string with date-only format in user timezone
+	// - CSV/Excel output: []string with ISO date format, expanded into N separate columns
+	DateN FieldTypeHint = "daten"
+
+	// DistanceN creates a textn-type field with distance formatting for variable lines.
+	// - Sets field type to FieldTypeTextN
+	// - Expects []float64 accessor (values in kilometers)
+	// - Default decimals: 2 (override with .WithDecimals(n))
+	// - Automatically converts to miles or nautical miles based on user/device preference
+	// - Web/PDF output: []string with formatted values and unit
+	// - CSV/Excel output: []string with converted numeric values, expanded into N separate columns
+	DistanceN FieldTypeHint = "distancen"
+
+	// SpeedN creates a textn-type field with speed formatting for variable lines.
+	// - Sets field type to FieldTypeTextN
+	// - Expects []float64 accessor (values in km/h)
+	// - Default decimals: 1 (override with .WithDecimals(n))
+	// - Automatically converts to mph or knots based on user/device preference
+	// - Web/PDF output: []string with formatted values and unit
+	// - CSV/Excel output: []string with converted numeric values, expanded into N separate columns
+	SpeedN FieldTypeHint = "speedn"
+
+	// BoolN creates a textn-type field with boolean formatting for variable lines.
+	// - Sets field type to FieldTypeTextN
+	// - Expects []bool accessor
+	// - Web/PDF output: []string with "Yes"/"No"
+	// - CSV/Excel output: []string with "Yes"/"No" values, expanded into N separate columns
+	BoolN FieldTypeHint = "booln"
+
+	// TimeLengthN creates a textn-type field with time duration formatting for variable lines.
+	// - Sets field type to FieldTypeTextN
+	// - Expects []int64 accessor (values in seconds)
+	// - Web/PDF output: []string with "HH:MM" or "Xd HH:MM" format
+	// - CSV/Excel output: []string with integer minutes, expanded into N separate columns
+	TimeLengthN FieldTypeHint = "timelenthn"
 
 	// Header creates a header-type field (section divider).
 	// - Sets field type to FieldTypeHeader
@@ -239,6 +325,7 @@ const (
 	FieldTypeLink    FieldType = "link"
 	FieldTypeInput   FieldType = "input"
 	FieldTypeText2   FieldType = "text2"
+	FieldTypeTextN   FieldType = "textn"
 	FieldTypeHeader  FieldType = "header"
 	FieldTypeNumber  FieldType = "number"
 	FieldTypeID      FieldType = "id" // Special ID field type

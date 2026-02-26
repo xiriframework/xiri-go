@@ -93,6 +93,8 @@ func (b *TableBuilder[T]) TextField(id, name string, accessor func(T) string) *F
 	})
 }
 
+// Deprecated: Use [TableBuilder.TextNField] instead.
+//
 // Text2Field adds a two-line text field.
 // Accessor returns [2]string: [0] = primary text, [1] = secondary text
 //
@@ -107,6 +109,8 @@ func (b *TableBuilder[T]) Text2Field(id, name string, accessor func(T) [2]string
 	})
 }
 
+// Deprecated: Use [TableBuilder.IntNField] instead.
+//
 // Text2IntField adds a two-line integer field with locale-aware formatting.
 // Accessor returns [2]int: [0] = primary value, [1] = secondary value
 //
@@ -121,6 +125,8 @@ func (b *TableBuilder[T]) Text2IntField(id, name string, accessor func(T) [2]int
 	})
 }
 
+// Deprecated: Use [TableBuilder.FloatNField] instead.
+//
 // Text2FloatField adds a two-line float field with locale-aware decimal formatting.
 // Accessor returns [2]float64: [0] = primary value, [1] = secondary value
 // Default decimals: 2 (override with .WithDecimals(n))
@@ -136,6 +142,8 @@ func (b *TableBuilder[T]) Text2FloatField(id, name string, accessor func(T) [2]f
 	})
 }
 
+// Deprecated: Use [TableBuilder.DateTimeNField] instead.
+//
 // Text2DateTimeField adds a two-line datetime field with timezone-aware formatting.
 // Accessor returns [2]time.Time: [0] = primary time, [1] = secondary time
 //
@@ -150,6 +158,8 @@ func (b *TableBuilder[T]) Text2DateTimeField(id, name string, accessor func(T) [
 	})
 }
 
+// Deprecated: Use [TableBuilder.DateNField] instead.
+//
 // Text2DateField adds a two-line date field with date-only formatting (no time).
 // Accessor returns [2]time.Time: [0] = primary date, [1] = secondary date
 //
@@ -164,6 +174,8 @@ func (b *TableBuilder[T]) Text2DateField(id, name string, accessor func(T) [2]ti
 	})
 }
 
+// Deprecated: Use [TableBuilder.DistanceNField] instead.
+//
 // Text2DistanceField adds a two-line distance field with automatic unit conversion.
 // Accessor returns [2]float64 (values in kilometers): [0] = primary, [1] = secondary
 // Default decimals: 2 (override with .WithDecimals(n))
@@ -179,6 +191,8 @@ func (b *TableBuilder[T]) Text2DistanceField(id, name string, accessor func(T) [
 	})
 }
 
+// Deprecated: Use [TableBuilder.SpeedNField] instead.
+//
 // Text2SpeedField adds a two-line speed field with automatic unit conversion.
 // Accessor returns [2]float64 (values in km/h): [0] = primary, [1] = secondary
 // Default decimals: 1 (override with .WithDecimals(n))
@@ -194,6 +208,8 @@ func (b *TableBuilder[T]) Text2SpeedField(id, name string, accessor func(T) [2]f
 	})
 }
 
+// Deprecated: Use [TableBuilder.BoolNField] instead.
+//
 // Text2BoolField adds a two-line boolean field.
 // Accessor returns [2]bool: [0] = primary value, [1] = secondary value
 // Formatted as "Yes"/"No" for each line.
@@ -225,6 +241,8 @@ func (b *TableBuilder[T]) TimeLengthField(id, name string, accessor func(T) int6
 	})
 }
 
+// Deprecated: Use [TableBuilder.TimeLengthNField] instead.
+//
 // Text2TimeLengthField adds a two-line time duration field.
 // Accessor returns [2]int64 (values in seconds): [0] = primary, [1] = secondary
 // Web/PDF output: "HH:MM" or "Xd HH:MM" format for both lines
@@ -237,6 +255,138 @@ func (b *TableBuilder[T]) TimeLengthField(id, name string, accessor func(T) int6
 //	})
 func (b *TableBuilder[T]) Text2TimeLengthField(id, name string, accessor func(T) [2]int64) *FieldBuilder[T] {
 	return b.fieldInternal(id, name, Text2TimeLength, func(row T) any {
+		return accessor(row)
+	})
+}
+
+// TextNField adds a variable-line text field.
+// Accessor returns []string: each element is one line of text.
+//
+// Example:
+//
+//	builder.TextNField("info", "device.info", func(r DeviceRow) []string {
+//	    return []string{r.Name, r.Model, r.Serial}
+//	})
+func (b *TableBuilder[T]) TextNField(id, name string, accessor func(T) []string) *FieldBuilder[T] {
+	return b.fieldInternal(id, name, TextN, func(row T) any {
+		return accessor(row)
+	})
+}
+
+// IntNField adds a variable-line integer field with locale-aware formatting.
+// Accessor returns []int: each element is one line value.
+//
+// Example:
+//
+//	builder.IntNField("stats", "device.stats", func(r DeviceRow) []int {
+//	    return []int{r.TripsToday, r.TripsWeek, r.TotalTrips}
+//	})
+func (b *TableBuilder[T]) IntNField(id, name string, accessor func(T) []int) *FieldBuilder[T] {
+	return b.fieldInternal(id, name, IntegerN, func(row T) any {
+		return accessor(row)
+	})
+}
+
+// FloatNField adds a variable-line float field with locale-aware decimal formatting.
+// Accessor returns []float64: each element is one line value.
+// Default decimals: 2 (override with .WithDecimals(n))
+//
+// Example:
+//
+//	builder.FloatNField("fuel", "device.fuel", func(r DeviceRow) []float64 {
+//	    return []float64{r.FuelCurrent, r.FuelAverage, r.FuelMax}
+//	}).WithDecimals(2)
+func (b *TableBuilder[T]) FloatNField(id, name string, accessor func(T) []float64) *FieldBuilder[T] {
+	return b.fieldInternal(id, name, FloatN, func(row T) any {
+		return accessor(row)
+	})
+}
+
+// DateTimeNField adds a variable-line datetime field with timezone-aware formatting.
+// Accessor returns []time.Time: each element is one line timestamp.
+//
+// Example:
+//
+//	builder.DateTimeNField("times", "device.times", func(r DeviceRow) []time.Time {
+//	    return []time.Time{r.LastSeen, r.Created, r.Updated}
+//	})
+func (b *TableBuilder[T]) DateTimeNField(id, name string, accessor func(T) []time.Time) *FieldBuilder[T] {
+	return b.fieldInternal(id, name, DateTimeN, func(row T) any {
+		return accessor(row)
+	})
+}
+
+// DateNField adds a variable-line date field with date-only formatting (no time).
+// Accessor returns []time.Time: each element is one line date.
+//
+// Example:
+//
+//	builder.DateNField("dates", "device.dates", func(r DeviceRow) []time.Time {
+//	    return []time.Time{r.RegistrationDate, r.ExpiryDate, r.InspectionDate}
+//	})
+func (b *TableBuilder[T]) DateNField(id, name string, accessor func(T) []time.Time) *FieldBuilder[T] {
+	return b.fieldInternal(id, name, DateN, func(row T) any {
+		return accessor(row)
+	})
+}
+
+// DistanceNField adds a variable-line distance field with automatic unit conversion.
+// Accessor returns []float64 (values in kilometers): each element is one line.
+// Default decimals: 2 (override with .WithDecimals(n))
+//
+// Example:
+//
+//	builder.DistanceNField("distances", "device.distances", func(r DeviceRow) []float64 {
+//	    return []float64{r.TodayKm, r.WeekKm, r.TotalKm}
+//	}).WithDecimals(1)
+func (b *TableBuilder[T]) DistanceNField(id, name string, accessor func(T) []float64) *FieldBuilder[T] {
+	return b.fieldInternal(id, name, DistanceN, func(row T) any {
+		return accessor(row)
+	})
+}
+
+// SpeedNField adds a variable-line speed field with automatic unit conversion.
+// Accessor returns []float64 (values in km/h): each element is one line.
+// Default decimals: 1 (override with .WithDecimals(n))
+//
+// Example:
+//
+//	builder.SpeedNField("speeds", "device.speeds", func(r DeviceRow) []float64 {
+//	    return []float64{r.MaxSpeed, r.AvgSpeed, r.MinSpeed}
+//	}).WithDecimals(1)
+func (b *TableBuilder[T]) SpeedNField(id, name string, accessor func(T) []float64) *FieldBuilder[T] {
+	return b.fieldInternal(id, name, SpeedN, func(row T) any {
+		return accessor(row)
+	})
+}
+
+// BoolNField adds a variable-line boolean field.
+// Accessor returns []bool: each element is one line value.
+// Formatted as "Yes"/"No" for each line.
+//
+// Example:
+//
+//	builder.BoolNField("flags", "device.flags", func(r DeviceRow) []bool {
+//	    return []bool{r.Active, r.Online, r.Licensed}
+//	})
+func (b *TableBuilder[T]) BoolNField(id, name string, accessor func(T) []bool) *FieldBuilder[T] {
+	return b.fieldInternal(id, name, BoolN, func(row T) any {
+		return accessor(row)
+	})
+}
+
+// TimeLengthNField adds a variable-line time duration field.
+// Accessor returns []int64 (values in seconds): each element is one line.
+// Web/PDF output: "HH:MM" or "Xd HH:MM" format for each line
+// CSV/Excel output: integer minutes joined with " - "
+//
+// Example:
+//
+//	builder.TimeLengthNField("durations", "trip.durations", func(r TripRow) []int64 {
+//	    return []int64{r.DriveTime, r.IdleTime, r.StopTime}
+//	})
+func (b *TableBuilder[T]) TimeLengthNField(id, name string, accessor func(T) []int64) *FieldBuilder[T] {
+	return b.fieldInternal(id, name, TimeLengthN, func(row T) any {
 		return accessor(row)
 	})
 }

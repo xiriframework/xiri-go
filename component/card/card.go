@@ -23,6 +23,9 @@ type Card struct {
 	buttonsBottom   []*button.Button
 	url             *url.Url
 	reload          *bool
+	collapsible     *bool
+	collapsed       *bool
+	maxHeight       *string
 }
 
 // NewCard creates a new card component with full control over all parameters.
@@ -119,6 +122,25 @@ func (c *Card) WithReload(reload bool) *Card {
 	return c
 }
 
+// WithCollapsible enables the card to be collapsed/expanded by the user.
+func (c *Card) WithCollapsible(collapsible bool) *Card {
+	c.collapsible = &collapsible
+	return c
+}
+
+// WithCollapsed sets whether the card starts in collapsed state.
+func (c *Card) WithCollapsed(collapsed bool) *Card {
+	c.collapsed = &collapsed
+	return c
+}
+
+// WithMaxHeight sets the max-height of the card content area (e.g. "300px", "80vh").
+// The frontend default is "50vh".
+func (c *Card) WithMaxHeight(maxHeight string) *Card {
+	c.maxHeight = &maxHeight
+	return c
+}
+
 // Print returns the JSON representation of the card
 func (c *Card) Print(translator core.TranslateFunc) map[string]any {
 	var data map[string]any
@@ -184,6 +206,16 @@ func (c *Card) printHeader(translator core.TranslateFunc) map[string]any {
 			btnLine.Add(btn)
 		}
 		data["buttonsBottom"] = btnLine.PrintData(translator)
+	}
+
+	if c.collapsible != nil {
+		data["collapsible"] = *c.collapsible
+	}
+	if c.collapsed != nil {
+		data["collapsed"] = *c.collapsed
+	}
+	if c.maxHeight != nil {
+		data["maxHeight"] = *c.maxHeight
 	}
 
 	return data

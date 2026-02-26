@@ -40,6 +40,10 @@ fi
 echo "Running tests..."
 go test ./...
 
+# Push current branch first
+echo "Pushing current branch to origin..."
+git push origin HEAD
+
 # Create and push tag
 echo "Creating tag $VERSION..."
 git tag "$VERSION"
