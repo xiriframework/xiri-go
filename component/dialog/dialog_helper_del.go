@@ -1,6 +1,7 @@
 package dialog
 
 import (
+	"log/slog"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -36,8 +37,9 @@ func HandleDelRequest(
 	}
 
 	if err := deleteFunc(); err != nil {
+		slog.Error("delete failed", "error", err)
 		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": err.Error(),
+			"error": "delete failed",
 		})
 	}
 

@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/xiriframework/xiri-go/uicontext"
@@ -65,6 +66,9 @@ func (f *IntField) Parse(raw interface{}) (interface{}, error) {
 	case int64:
 		return int(v), nil
 	case float64:
+		if v > math.MaxInt32 || v < math.MinInt32 {
+			return nil, fmt.Errorf("int value out of range for %s", f.ID)
+		}
 		return int(v), nil
 	case string:
 		parsed, err := strconv.Atoi(v)

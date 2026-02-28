@@ -1,294 +1,117 @@
 package table
 
-// FieldTypeHint provides semantic field type constants for the Field() method.
+// fieldTypeHint provides semantic field type constants for typed field methods.
 // These constants automatically configure the field with appropriate formatters and settings.
-type FieldTypeHint string
+type fieldTypeHint string
 
-// Semantic field type constants
-// These are used as the 3rd parameter to Field() to automatically apply default
-// formatters and field type settings.
+// Semantic field type constants.
+// These are used internally by typed field methods to automatically apply
+// default formatters and field type settings.
 const (
-	// Integer creates an int32/int64 field with locale-aware number formatting.
-	// - Sets field type to FieldTypeNumber
-	// - Web/PDF output: locale-aware formatting (e.g., "1,234" or "1.234")
-	// - CSV/Excel output: plain number string
-	// - Returns [display, value] array on web output for sorting
-	Integer FieldTypeHint = "integer"
+	// integer creates an int32/int64 field with locale-aware number formatting.
+	integer fieldTypeHint = "integer"
 
-	// Float creates a float64 field with locale-aware decimal formatting.
-	// - Sets field type to FieldTypeNumber
-	// - Default decimals: 2 (override with .WithDecimals(n))
-	// - Web/PDF output: locale-aware formatting (e.g., "123,45" or "123.45")
-	// - CSV/Excel output: formatted number string
-	// - Returns [display, value] array on web output for sorting
-	Float FieldTypeHint = "float"
+	// float creates a float64 field with locale-aware decimal formatting.
+	float fieldTypeHint = "float"
 
-	// Text creates a string field with simple text formatting.
-	// - Sets field type to FieldTypeText
-	// - All outputs: plain string or empty string for nil
-	Text FieldTypeHint = "text"
+	// text creates a string field with simple text formatting.
+	text fieldTypeHint = "text"
 
-	// Bool creates a boolean field with custom true/false text mapping.
-	// - Sets field type to FieldTypeText
-	// - Requires .WithBoolText(trueText, falseText) to set display values
-	// - Default: shows "true"/"false" if WithBoolText not called
-	Bool FieldTypeHint = "bool"
+	// boolean creates a boolean field with custom true/false text mapping.
+	boolean fieldTypeHint = "bool"
 
-	// DateTime creates a timestamp field with date+time formatting.
-	// - Sets field type to FieldTypeText
-	// - Expects int64 Unix timestamp (seconds)
-	// - Web/PDF output: user timezone and locale (e.g., "2021-12-20 12:26")
-	// - CSV/Excel output: ISO format "2006-01-02 15:04:05" in user timezone
-	DateTime FieldTypeHint = "datetime"
+	// dateTime creates a timestamp field with date+time formatting.
+	dateTime fieldTypeHint = "datetime"
 
-	// Date creates a timestamp field with date-only formatting (no time component).
-	// - Sets field type to FieldTypeText
-	// - Expects int64 Unix timestamp (seconds)
-	// - Web/PDF output: user timezone and locale (e.g., "2021-12-20")
-	// - CSV/Excel output: ISO format "2006-01-02"
-	Date FieldTypeHint = "date"
+	// date creates a timestamp field with date-only formatting.
+	date fieldTypeHint = "date"
 
-	// Distance creates a float64 field with automatic unit conversion (km/mi/NM).
-	// - Sets field type to FieldTypeNumber
-	// - Expects value in kilometers
-	// - Default decimals: 2 (override with .WithDecimals(n))
-	// - Automatically converts to miles or nautical miles based on user/device preference
-	// - Web/PDF output: formatted with unit (e.g., "123,45 km" or "76.72 mi")
-	// - CSV/Excel output: converted numeric value only
-	Distance FieldTypeHint = "distance"
+	// distanceHint creates a float64 field with automatic unit conversion (km/mi/NM).
+	distanceHint fieldTypeHint = "distance"
 
-	// Pressure creates a float64 field with automatic unit conversion (bar/psi).
-	// - Sets field type to FieldTypeNumber
-	// - Expects value in bar
-	// - Default decimals: 2 (override with .WithDecimals(n))
-	// - Automatically converts to psi based on user/device preference
-	// - Web/PDF output: formatted with unit (e.g., "2,50 bar" or "36.26 psi")
-	// - CSV/Excel output: converted numeric value only
-	Pressure FieldTypeHint = "pressure"
+	// pressureHint creates a float64 field with automatic unit conversion (bar/psi).
+	pressureHint fieldTypeHint = "pressure"
 
-	// Speed creates a float64 field with automatic unit conversion (km/h, mph, knots).
-	// - Sets field type to FieldTypeNumber
-	// - Expects value in km/h
-	// - Default decimals: 1 (override with .WithDecimals(n))
-	// - Automatically converts to mph or knots based on user/device preference
-	// - Web/PDF output: formatted with unit (e.g., "100,0 km/h" or "62.1 mph")
-	// - CSV/Excel output: converted numeric value only
-	Speed FieldTypeHint = "speed"
+	// speedHint creates a float64 field with automatic unit conversion (km/h, mph, knots).
+	speedHint fieldTypeHint = "speed"
 
-	// Buttons creates a buttons-type field with action buttons.
-	// - Sets field type to FieldTypeButtons
-	// - Used for row actions (edit, delete, view, download, etc.)
-	// - Configure buttons with .AddButton(key, action, icon, color, hint)
-	// - Each button can have custom actions: link, dialog, api, etc.
-	// - All outputs: renders as button array in table cell
-	Buttons FieldTypeHint = "buttons"
+	// buttons creates a buttons-type field with action buttons.
+	buttons fieldTypeHint = "buttons"
 
-	// Icon creates an icon-type field with value-to-icon mappings.
-	// - Sets field type to FieldTypeIcon
-	// - Maps field values to specific icons with colors
-	// - Configure with IconFieldFromSet()
-	// - Useful for status indicators, priorities, categories
-	// - All outputs: renders as colored icon in table cell
-	Icon FieldTypeHint = "icon"
+	// icon creates an icon-type field with value-to-icon mappings.
+	icon fieldTypeHint = "icon"
 
-	// Link creates a link-type field with clickable URLs.
-	// - Sets field type to FieldTypeLink
-	// - Renders values as clickable hyperlinks
-	// - Supports internal navigation and external URLs
-	// - All outputs: clickable link in web, plain URL in CSV/Excel
-	Link FieldTypeHint = "link"
+	// link creates a link-type field with clickable URLs.
+	link fieldTypeHint = "link"
 
-	// Html creates an html-type field with raw HTML content.
-	// - Sets field type to FieldTypeHtml
-	// - Renders raw HTML in table cells
-	// - Web/PDF output: rendered HTML
-	// - CSV/Excel output: plain text (HTML tags stripped)
-	Html FieldTypeHint = "html"
+	// html creates an html-type field with raw HTML content.
+	html fieldTypeHint = "html"
 
-	// Input creates an input-type field with inline editing.
-	// - Sets field type to FieldTypeInput
-	// - Allows direct cell editing in table
-	// - Supports text, number, select input types
-	// - Web output: editable input field
-	// - CSV/Excel output: current value
-	Input FieldTypeHint = "input"
+	// input creates an input-type field with inline editing.
+	inputHint fieldTypeHint = "input"
 
-	// Deprecated: Use [TextN] instead.
-	//
-	// Text2 creates a text2-type field (alternative text style).
-	// - Sets field type to FieldTypeText2
-	// - Alternative text rendering with different styling
-	// - Used for secondary information or subtitles
-	// - All outputs: plain text with alternative formatting
-	Text2 FieldTypeHint = "text2"
+	// text2 creates a text2-type field (alternative text style).
+	text2 fieldTypeHint = "text2"
 
-	// Deprecated: Use [IntegerN] instead.
-	//
-	// Text2Int creates a text2-type field with integer formatting.
-	// - Sets field type to FieldTypeText2
-	// - Expects [2]int accessor
-	// - Web/PDF output: locale-aware number formatting for both lines
-	// - CSV/Excel output: formatted numbers combined with " - "
-	Text2Int FieldTypeHint = "text2int"
+	// text2Int creates a text2-type field with integer formatting.
+	text2Int fieldTypeHint = "text2int"
 
-	// Deprecated: Use [FloatN] instead.
-	//
-	// Text2Float creates a text2-type field with float formatting.
-	// - Sets field type to FieldTypeText2
-	// - Expects [2]float64 accessor
-	// - Default decimals: 2 (override with .WithDecimals(n))
-	// - Web/PDF output: locale-aware decimal formatting for both lines
-	// - CSV/Excel output: formatted numbers combined with " - "
-	Text2Float FieldTypeHint = "text2float"
+	// text2Float creates a text2-type field with float formatting.
+	text2Float fieldTypeHint = "text2float"
 
-	// Deprecated: Use [DateTimeN] instead.
-	//
-	// Text2DateTime creates a text2-type field with datetime formatting.
-	// - Sets field type to FieldTypeText2
-	// - Expects [2]time.Time accessor
-	// - Web/PDF output: user timezone and locale for both lines
-	// - CSV/Excel output: ISO datetime format combined with " - "
-	Text2DateTime FieldTypeHint = "text2datetime"
+	// text2DateTime creates a text2-type field with datetime formatting.
+	text2DateTime fieldTypeHint = "text2datetime"
 
-	// Deprecated: Use [DateN] instead.
-	//
-	// Text2Date creates a text2-type field with date-only formatting.
-	// - Sets field type to FieldTypeText2
-	// - Expects [2]time.Time accessor
-	// - Web/PDF output: date-only format in user timezone for both lines
-	// - CSV/Excel output: ISO date format combined with " - "
-	Text2Date FieldTypeHint = "text2date"
+	// text2Date creates a text2-type field with date-only formatting.
+	text2Date fieldTypeHint = "text2date"
 
-	// Deprecated: Use [DistanceN] instead.
-	//
-	// Text2Distance creates a text2-type field with distance formatting and unit conversion.
-	// - Sets field type to FieldTypeText2
-	// - Expects [2]float64 accessor (values in kilometers)
-	// - Default decimals: 2 (override with .WithDecimals(n))
-	// - Automatically converts to miles or nautical miles based on user/device preference
-	// - Web/PDF output: formatted with unit for both lines
-	// - CSV/Excel output: converted numeric values combined with " - "
-	Text2Distance FieldTypeHint = "text2distance"
+	// text2Distance creates a text2-type field with distance formatting and unit conversion.
+	text2Distance fieldTypeHint = "text2distance"
 
-	// Deprecated: Use [SpeedN] instead.
-	//
-	// Text2Speed creates a text2-type field with speed formatting and unit conversion.
-	// - Sets field type to FieldTypeText2
-	// - Expects [2]float64 accessor (values in km/h)
-	// - Default decimals: 1 (override with .WithDecimals(n))
-	// - Automatically converts to mph or knots based on user/device preference
-	// - Web/PDF output: formatted with unit for both lines
-	// - CSV/Excel output: converted numeric values combined with " - "
-	Text2Speed FieldTypeHint = "text2speed"
+	// text2Speed creates a text2-type field with speed formatting and unit conversion.
+	text2Speed fieldTypeHint = "text2speed"
 
-	// Deprecated: Use [BoolN] instead.
-	//
-	// Text2Bool creates a text2-type field with boolean formatting.
-	// - Sets field type to FieldTypeText2
-	// - Expects [2]bool accessor
-	// - Web/PDF output: "Yes"/"No" for both lines (locale-aware)
-	// - CSV/Excel output: "Yes"/"No" combined with " - "
-	Text2Bool FieldTypeHint = "text2bool"
+	// text2Bool creates a text2-type field with boolean formatting.
+	text2Bool fieldTypeHint = "text2bool"
 
-	// TimeLength creates a time duration field with HH:MM formatting.
-	// - Sets field type to FieldTypeText
-	// - Expects int64 accessor (value in seconds)
-	// - Web/PDF output: "HH:MM" format (e.g., "05:30"), or "Xd HH:MM" for >= 24 hours (e.g., "2d 05:30")
-	// - CSV/Excel output: integer minutes (no decimals)
-	TimeLength FieldTypeHint = "timelength"
+	// timeLength creates a time duration field with HH:MM formatting.
+	timeLength fieldTypeHint = "timelength"
 
-	// Deprecated: Use [TimeLengthN] instead.
-	//
-	// Text2TimeLength creates a text2-type field with time duration formatting.
-	// - Sets field type to FieldTypeText2
-	// - Expects [2]int64 accessor (values in seconds)
-	// - Web/PDF output: "HH:MM" or "Xd HH:MM" format for both lines
-	// - CSV/Excel output: integer minutes combined with " - "
-	Text2TimeLength FieldTypeHint = "text2timelength"
+	// text2TimeLength creates a text2-type field with time duration formatting.
+	text2TimeLength fieldTypeHint = "text2timelength"
 
-	// TextN creates a textn-type field with variable number of lines.
-	// - Sets field type to FieldTypeTextN
-	// - Expects []string accessor
-	// - Web/PDF output: []string slice
-	// - CSV/Excel output: []string, expanded into N separate columns
-	TextN FieldTypeHint = "textn"
+	// textN creates a textn-type field with variable number of lines.
+	textN fieldTypeHint = "textn"
 
-	// IntegerN creates a textn-type field with integer formatting for variable lines.
-	// - Sets field type to FieldTypeTextN
-	// - Expects []int accessor
-	// - Web/PDF output: []string with locale-aware number formatting
-	// - CSV/Excel output: []string with plain numbers, expanded into N separate columns
-	IntegerN FieldTypeHint = "integern"
+	// integerN creates a textn-type field with integer formatting for variable lines.
+	integerN fieldTypeHint = "integern"
 
-	// FloatN creates a textn-type field with float formatting for variable lines.
-	// - Sets field type to FieldTypeTextN
-	// - Expects []float64 accessor
-	// - Default decimals: 2 (override with .WithDecimals(n))
-	// - Web/PDF output: []string with locale-aware decimal formatting
-	// - CSV/Excel output: []string with formatted numbers, expanded into N separate columns
-	FloatN FieldTypeHint = "floatn"
+	// floatN creates a textn-type field with float formatting for variable lines.
+	floatN fieldTypeHint = "floatn"
 
-	// DateTimeN creates a textn-type field with datetime formatting for variable lines.
-	// - Sets field type to FieldTypeTextN
-	// - Expects []time.Time accessor
-	// - Web/PDF output: []string with user timezone and locale
-	// - CSV/Excel output: []string with ISO datetime format, expanded into N separate columns
-	DateTimeN FieldTypeHint = "datetimen"
+	// dateTimeN creates a textn-type field with datetime formatting for variable lines.
+	dateTimeN fieldTypeHint = "datetimen"
 
-	// DateN creates a textn-type field with date-only formatting for variable lines.
-	// - Sets field type to FieldTypeTextN
-	// - Expects []time.Time accessor
-	// - Web/PDF output: []string with date-only format in user timezone
-	// - CSV/Excel output: []string with ISO date format, expanded into N separate columns
-	DateN FieldTypeHint = "daten"
+	// dateN creates a textn-type field with date-only formatting for variable lines.
+	dateN fieldTypeHint = "daten"
 
-	// DistanceN creates a textn-type field with distance formatting for variable lines.
-	// - Sets field type to FieldTypeTextN
-	// - Expects []float64 accessor (values in kilometers)
-	// - Default decimals: 2 (override with .WithDecimals(n))
-	// - Automatically converts to miles or nautical miles based on user/device preference
-	// - Web/PDF output: []string with formatted values and unit
-	// - CSV/Excel output: []string with converted numeric values, expanded into N separate columns
-	DistanceN FieldTypeHint = "distancen"
+	// distanceN creates a textn-type field with distance formatting for variable lines.
+	distanceN fieldTypeHint = "distancen"
 
-	// SpeedN creates a textn-type field with speed formatting for variable lines.
-	// - Sets field type to FieldTypeTextN
-	// - Expects []float64 accessor (values in km/h)
-	// - Default decimals: 1 (override with .WithDecimals(n))
-	// - Automatically converts to mph or knots based on user/device preference
-	// - Web/PDF output: []string with formatted values and unit
-	// - CSV/Excel output: []string with converted numeric values, expanded into N separate columns
-	SpeedN FieldTypeHint = "speedn"
+	// speedN creates a textn-type field with speed formatting for variable lines.
+	speedN fieldTypeHint = "speedn"
 
-	// BoolN creates a textn-type field with boolean formatting for variable lines.
-	// - Sets field type to FieldTypeTextN
-	// - Expects []bool accessor
-	// - Web/PDF output: []string with "Yes"/"No"
-	// - CSV/Excel output: []string with "Yes"/"No" values, expanded into N separate columns
-	BoolN FieldTypeHint = "booln"
+	// boolN creates a textn-type field with boolean formatting for variable lines.
+	boolN fieldTypeHint = "booln"
 
-	// TimeLengthN creates a textn-type field with time duration formatting for variable lines.
-	// - Sets field type to FieldTypeTextN
-	// - Expects []int64 accessor (values in seconds)
-	// - Web/PDF output: []string with "HH:MM" or "Xd HH:MM" format
-	// - CSV/Excel output: []string with integer minutes, expanded into N separate columns
-	TimeLengthN FieldTypeHint = "timelenthn"
+	// timeLengthN creates a textn-type field with time duration formatting for variable lines.
+	timeLengthN fieldTypeHint = "timelenthn"
 
-	// Header creates a header-type field (section divider).
-	// - Sets field type to FieldTypeHeader
-	// - Used to group related columns visually
-	// - Not searchable or sortable
-	// - Web output: renders as table section header
-	// - CSV/Excel output: column label
-	Header FieldTypeHint = "header"
+	// header creates a header-type field (section divider).
+	header fieldTypeHint = "header"
 
-	// Id creates an id-type field with special export format.
-	// - Sets field type to FieldTypeID
-	// - Uses number formatting with no decimals
-	// - Special "id" type for frontend identification
-	// - Expects int64 value
-	// - All outputs: formatted as integer with special "id" type marker
-	Id FieldTypeHint = "id"
+	// idHint creates an id-type field with special export format.
+	idHint fieldTypeHint = "id"
 )
 
 // ============================================================================
@@ -314,21 +137,21 @@ const (
 	FieldFooterStatic FieldFooter = "static"
 )
 
-// FieldType represents the type/format of a table field for JSON export
-type FieldType string
+// fieldType represents the type/format of a table field for JSON export
+type fieldType string
 
 const (
-	FieldTypeText    FieldType = "text"
-	FieldTypeButtons FieldType = "buttons"
-	FieldTypeIcon    FieldType = "icon"
-	FieldTypeHtml    FieldType = "html"
-	FieldTypeLink    FieldType = "link"
-	FieldTypeInput   FieldType = "input"
-	FieldTypeText2   FieldType = "text2"
-	FieldTypeTextN   FieldType = "textn"
-	FieldTypeHeader  FieldType = "header"
-	FieldTypeNumber  FieldType = "number"
-	FieldTypeID      FieldType = "id" // Special ID field type
+	fieldTypeText    fieldType = "text"
+	fieldTypeButtons fieldType = "buttons"
+	fieldTypeIcon    fieldType = "icon"
+	fieldTypeHtml    fieldType = "html"
+	fieldTypeLink    fieldType = "link"
+	fieldTypeInput   fieldType = "input"
+	fieldTypeText2   fieldType = "text2"
+	fieldTypeTextN   fieldType = "textn"
+	fieldTypeHeader  fieldType = "header"
+	fieldTypeNumber  fieldType = "number"
+	fieldTypeID      fieldType = "id"
 )
 
 // FieldButtonAction represents button action types

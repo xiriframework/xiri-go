@@ -4,7 +4,7 @@ import "github.com/xiriframework/xiri-go/component/core"
 
 // FieldBuilder provides a fluent API for configuring a single field
 type FieldBuilder[T any] struct {
-	field       *Field[T]
+	field       *field[T]
 	lastMenuKey int // Track last menu button index for AddMenuItem chaining
 }
 
@@ -133,7 +133,7 @@ func (fb *FieldBuilder[T]) AddButton(
 	color core.Color,
 	hint string,
 ) *FieldBuilder[T] {
-	fb.field.AddButton(key, action, icon, color, hint)
+	fb.field.addButton(key, action, icon, color, hint)
 	return fb
 }
 
@@ -150,25 +150,25 @@ func (fb *FieldBuilder[T]) WithDecimals(decimals int) *FieldBuilder[T] {
 
 	// Recreate formatter based on field type hint
 	switch fb.field.fieldTypeHint {
-	case Float:
+	case float:
 		fb.field.defaultFormatter = createFloatFormatter(decimals)
-	case Distance:
+	case distanceHint:
 		fb.field.defaultFormatter = createDistanceFormatter(decimals)
-	case Pressure:
+	case pressureHint:
 		fb.field.defaultFormatter = createPressureFormatter(decimals)
-	case Speed:
+	case speedHint:
 		fb.field.defaultFormatter = createSpeedFormatter(decimals)
-	case Text2Float:
+	case text2Float:
 		fb.field.defaultFormatter = createText2FloatFormatter(decimals)
-	case Text2Distance:
+	case text2Distance:
 		fb.field.defaultFormatter = createText2DistanceFormatter(decimals)
-	case Text2Speed:
+	case text2Speed:
 		fb.field.defaultFormatter = createText2SpeedFormatter(decimals)
-	case FloatN:
+	case floatN:
 		fb.field.defaultFormatter = createFloatNFormatter(decimals)
-	case DistanceN:
+	case distanceN:
 		fb.field.defaultFormatter = createDistanceNFormatter(decimals)
-	case SpeedN:
+	case speedN:
 		fb.field.defaultFormatter = createSpeedNFormatter(decimals)
 	}
 	return fb
@@ -279,7 +279,7 @@ func (fb *FieldBuilder[T]) WithAccess(access []string) *FieldBuilder[T] {
 // - "": hide the menu item for this row
 // Returning nil hides the entire menu button for this row.
 func (fb *FieldBuilder[T]) AddMenu(key int, icon string, color core.Color, hint string, accessor func(T) []string) *FieldBuilder[T] {
-	fb.field.AddButton(key, FieldButtonActionMenu, icon, color, hint)
+	fb.field.addButton(key, FieldButtonActionMenu, icon, color, hint)
 
 	if fb.field.menuAccessors == nil {
 		fb.field.menuAccessors = make(map[int]func(T) []string)
@@ -287,7 +287,7 @@ func (fb *FieldBuilder[T]) AddMenu(key int, icon string, color core.Color, hint 
 	fb.field.menuAccessors[key] = accessor
 
 	if fb.field.menuItems == nil {
-		fb.field.menuItems = make(map[int][]*MenuItemDef)
+		fb.field.menuItems = make(map[int][]*menuItemDef)
 	}
 	fb.field.menuItems[key] = nil
 
@@ -298,13 +298,13 @@ func (fb *FieldBuilder[T]) AddMenu(key int, icon string, color core.Color, hint 
 // AddMenuItem adds a menu item definition to the last added menu button.
 func (fb *FieldBuilder[T]) AddMenuItem(action FieldButtonAction, icon string, color core.Color, text string) *FieldBuilder[T] {
 	if fb.field.menuItems == nil {
-		fb.field.menuItems = make(map[int][]*MenuItemDef)
+		fb.field.menuItems = make(map[int][]*menuItemDef)
 	}
-	fb.field.menuItems[fb.lastMenuKey] = append(fb.field.menuItems[fb.lastMenuKey], &MenuItemDef{
-		Action: action,
-		Icon:   icon,
-		Color:  color,
-		Text:   text,
+	fb.field.menuItems[fb.lastMenuKey] = append(fb.field.menuItems[fb.lastMenuKey], &menuItemDef{
+		action: action,
+		icon:   icon,
+		color:  color,
+		text:   text,
 	})
 	return fb
 }

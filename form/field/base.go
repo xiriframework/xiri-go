@@ -57,6 +57,9 @@ type FormField interface {
 	// GetForm returns whether this field should be shown in the form
 	GetForm() bool
 
+	// IsDisabled returns whether this field is disabled
+	IsDisabled() bool
+
 	// ExportForFrontend exports the field definition for the frontend
 	// The ctx parameter is used for translations and the value parameter
 	// is the current field value (from form data)
@@ -121,6 +124,10 @@ func (f *BaseField) GetDefault() interface{} {
 
 func (f *BaseField) GetForm() bool {
 	return f.Form
+}
+
+func (f *BaseField) IsDisabled() bool {
+	return f.Disabled
 }
 
 // GetBaseExport returns common export fields for all field types

@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 
 	"github.com/xiriframework/xiri-go/uicontext"
@@ -88,6 +89,9 @@ func (f *ModelField) Parse(raw interface{}) (interface{}, error) {
 	case int64:
 		return int32(v), nil
 	case float64:
+		if v > math.MaxInt32 || v < math.MinInt32 || v != float64(int32(v)) {
+			return nil, fmt.Errorf("invalid model ID for %s", f.ID)
+		}
 		return int32(v), nil
 	case string:
 		parsed, err := strconv.ParseInt(v, 10, 32)

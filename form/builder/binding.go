@@ -1,6 +1,8 @@
 package builder
 
 import (
+	"strings"
+
 	"github.com/labstack/echo/v4"
 	"github.com/xiriframework/xiri-go/form/field"
 	"github.com/xiriframework/xiri-go/form/group"
@@ -54,11 +56,11 @@ import (
 // Returns:
 //   - error: Validation error if any field fails validation
 func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
-	// Get only Form=true field IDs (excludes hidden fields from request extraction)
+	// Get only Form=true and non-disabled field IDs (excludes hidden and disabled fields from request extraction)
 	allFields := fg.GetFields()
 	fieldIDs := make([]string, 0, len(allFields))
 	for _, f := range allFields {
-		if f.GetForm() {
+		if f.GetForm() && !f.IsDisabled() {
 			fieldIDs = append(fieldIDs, f.GetID())
 		}
 	}
@@ -69,7 +71,7 @@ func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
 	// Check content type
 	contentType := c.Request().Header.Get("Content-Type")
 
-	if contentType == "application/json" || contentType == "application/json; charset=UTF-8" {
+	if strings.HasPrefix(contentType, "application/json") {
 		// Handle JSON body
 		var rawData map[string]interface{}
 		if err := c.Bind(&rawData); err != nil {
@@ -120,7 +122,7 @@ func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
 func BindFromMap(formData map[string]interface{}, fg *group.FormGroup) error {
 	for _, f := range fg.GetFields() {
 		var rawValue interface{}
-		if f.GetForm() {
+		if f.GetForm() && !f.IsDisabled() {
 			rawValue = resolveFieldValue(f, formData)
 		} else {
 			rawValue = f.GetDefault()

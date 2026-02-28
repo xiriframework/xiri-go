@@ -131,6 +131,76 @@ func TestNewFormBuilder_BuildAddForDisplay(t *testing.T) {
 	}
 }
 
+// TestBindFromMap_DisabledFieldUsesDefault verifies that disabled fields use
+// their default value and ignore submitted data (M5).
+func TestBindFromMap_DisabledFieldUsesDefault(t *testing.T) {
+	name := field.NewTextField("name", "NAME", true, "secure-default")
+	name.SetDisabled(true)
+	active := field.NewBoolField("active", "ACTIVE", false, false)
+
+	fg := group.NewFormGroup([]field.FormField{name, active})
+
+	data := map[string]interface{}{
+		"name":   "attacker-value",
+		"active": true,
+	}
+
+	if err := BindFromMap(data, fg); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Disabled field must use default, not submitted value
+	if name.Value == nil || *name.Value != "secure-default" {
+		t.Errorf("expected 'secure-default', got %v", name.Value)
+	}
+	// Non-disabled field must accept submitted value
+	if active.Value == nil || *active.Value != true {
+		t.Errorf("expected true, got %v", active.Value)
+	}
+}
+
+// TestBindFromMap_DisabledIntField verifies that disabled IntField uses
+// its default value and ignores submitted data (M5).
+func TestBindFromMap_DisabledIntField(t *testing.T) {
+	count := field.NewIntField("count", "COUNT", false, 42)
+	count.SetDisabled(true)
+
+	fg := group.NewFormGroup([]field.FormField{count})
+
+	data := map[string]interface{}{
+		"count": float64(999),
+	}
+
+	if err := BindFromMap(data, fg); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if count.Value == nil || *count.Value != 42 {
+		t.Errorf("expected 42, got %v", count.Value)
+	}
+}
+
+// TestBindFromMap_DisabledModelField verifies that disabled ModelField uses
+// its default value and ignores submitted data (M5).
+func TestBindFromMap_DisabledModelField(t *testing.T) {
+	device := field.NewModelField("device", "DEVICE", false, "Device", int32(10))
+	device.SetDisabled(true)
+
+	fg := group.NewFormGroup([]field.FormField{device})
+
+	data := map[string]interface{}{
+		"device": float64(999),
+	}
+
+	if err := BindFromMap(data, fg); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if device.Value != 10 {
+		t.Errorf("expected 10, got %v", device.Value)
+	}
+}
+
 func TestNewFormBuilder_OnEditValueCheck(t *testing.T) {
 	name := field.NewTextField("name", "NAME", true, "default")
 

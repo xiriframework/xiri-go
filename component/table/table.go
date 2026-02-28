@@ -17,7 +17,7 @@ import (
 // Table is a generic type-safe table that maintains type safety internally
 // while producing output compatible with the existing component.Table JSON format.
 type Table[T any] struct {
-	fields          []*Field[T]
+	fields          []*field[T]
 	fieldsCanChange bool
 	data            []T
 	ctx             *uicontext.UiContext
@@ -77,57 +77,57 @@ func (t *Table[T]) GetData(output OutputType) []map[string]any {
 
 	for i, rowData := range t.data {
 		// Create Row wrapper for cross-field access
-		row := NewTypedRow(rowData, fieldMap)
+		row := newTypedRow(rowData, fieldMap)
 
 		// Extract and format each field
 		rowMap := make(map[string]any)
 
-		for _, field := range t.fields {
+		for _, f := range t.fields {
 			// Skip hidden fields
-			if field.IsHidden() {
+			if f.hide {
 				continue
 			}
 
 			// Skip non-CSV fields for CSV/Excel output
-			if (output == OutputCSV || output == OutputExcel) && !field.IsCsvEnabled() {
+			if (output == OutputCSV || output == OutputExcel) && !f.csv {
 				continue
 			}
 
 			// Extract value using accessor
-			value := field.GetAccessor()(rowData)
+			value := f.accessor(rowData)
 
 			// Format with access to entire row (for cross-field dependencies)
-			formatted := field.Format(value, row, output, t.ctx)
+			formatted := f.format(value, row, output, t.ctx)
 
 			// Special handling for Link fields in OutputWeb/OutputPDF
 			// Link fields output TWO fields: fieldName (display text) and fieldNameLink (URL)
-			if output == OutputWeb && field.GetFieldTypeHint() == Link {
+			if output == OutputWeb && f.fieldTypeHint == link {
 				// Extract [2]string array from formatted value
 				if linkArray, ok := formatted.([2]string); ok {
-					rowMap[field.GetID()] = linkArray[0]        // Display text
-					rowMap[field.GetID()+"Link"] = linkArray[1] // URL
+					rowMap[f.id] = linkArray[0]        // Display text
+					rowMap[f.id+"Link"] = linkArray[1] // URL
 				} else {
 					// Fallback for invalid data
-					rowMap[field.GetID()] = ""
-					rowMap[field.GetID()+"Link"] = ""
+					rowMap[f.id] = ""
+					rowMap[f.id+"Link"] = ""
 				}
 			} else {
 				// Normal field: single value
-				rowMap[field.GetID()] = formatted
+				rowMap[f.id] = formatted
 			}
 
 			// Add per-row hint for icon fields with hintAccessor
-			if output == OutputWeb && field.GetHintAccessor() != nil {
-				hintStr := field.GetHintAccessor()(rowData)
+			if output == OutputWeb && f.hintAccessor != nil {
+				hintStr := f.hintAccessor(rowData)
 				if hintStr != "" {
-					rowMap[field.GetID()+"Hint"] = hintStr
+					rowMap[f.id+"Hint"] = hintStr
 				}
 			}
 
 			// Inject menu data into button row data
-			if output == OutputWeb && len(field.GetMenuAccessors()) > 0 {
-				if buttonMap, ok := rowMap[field.GetID()].(map[string]any); ok {
-					for key, menuAccessor := range field.GetMenuAccessors() {
+			if output == OutputWeb && len(f.menuAccessors) > 0 {
+				if buttonMap, ok := rowMap[f.id].(map[string]any); ok {
+					for key, menuAccessor := range f.menuAccessors {
 						keyStr := strconv.Itoa(key)
 						if val, exists := buttonMap[keyStr]; exists && val == false {
 							continue
@@ -161,14 +161,14 @@ func (t *Table[T]) GetData(output OutputType) []map[string]any {
 // This allows formatters to access any field value in the row for cross-field dependencies.
 func (t *Table[T]) buildFieldMap() map[string]func(T) any {
 	fieldMap := make(map[string]func(T) any)
-	for _, field := range t.fields {
-		fieldMap[field.GetID()] = field.GetAccessor()
+	for _, f := range t.fields {
+		fieldMap[f.id] = f.accessor
 	}
 	return fieldMap
 }
 
-// GetFields returns all fields
-func (t *Table[T]) GetFields() []*Field[T] {
+// getFields returns all fields
+func (t *Table[T]) getFields() []*field[T] {
 	return t.fields
 }
 
@@ -221,21 +221,25 @@ func (t *Table[T]) LoadFilterData(c echo.Context) (map[string]any, error) {
 		requestData = make(map[string]interface{})
 	}
 
-	// Check for CSV flag and set output type
-	if csvVal, ok := requestData["_csv"]; ok {
-		if csvBool, isBool := csvVal.(bool); isBool && csvBool {
-			t.outputType = OutputCSV
-		} else if csvStr, isStr := csvVal.(string); isStr && csvStr == "true" {
-			t.outputType = OutputCSV
+	// Check for CSV flag and set output type (only if CSV export is enabled in options)
+	if t.options.Csv == nil || *t.options.Csv {
+		if csvVal, ok := requestData["_csv"]; ok {
+			if csvBool, isBool := csvVal.(bool); isBool && csvBool {
+				t.outputType = OutputCSV
+			} else if csvStr, isStr := csvVal.(string); isStr && csvStr == "true" {
+				t.outputType = OutputCSV
+			}
 		}
 	}
 
-	// Check for Excel flag and set output type
-	if excelVal, ok := requestData["_excel"]; ok {
-		if excelBool, isBool := excelVal.(bool); isBool && excelBool {
-			t.outputType = OutputExcel
-		} else if excelStr, isStr := excelVal.(string); isStr && excelStr == "true" {
-			t.outputType = OutputExcel
+	// Check for Excel flag and set output type (only if Excel export is enabled in options)
+	if t.options.Excel == nil || *t.options.Excel {
+		if excelVal, ok := requestData["_excel"]; ok {
+			if excelBool, isBool := excelVal.(bool); isBool && excelBool {
+				t.outputType = OutputExcel
+			} else if excelStr, isStr := excelVal.(string); isStr && excelStr == "true" {
+				t.outputType = OutputExcel
+			}
 		}
 	}
 
@@ -386,6 +390,38 @@ func (t *Table[T]) LoadPaginationParams() PaginationParams {
 		}
 	}
 
+	// Validate sort against defined field IDs to prevent SQL injection
+	if params.Sort != "" {
+		valid := false
+		for _, f := range t.fields {
+			if f.id == params.Sort {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			params.Sort = ""
+		}
+	}
+
+	// Clamp page size to prevent memory exhaustion
+	if params.PageSize < 1 {
+		params.PageSize = 50
+	}
+	if params.PageSize > 1000 {
+		params.PageSize = 1000
+	}
+
+	// Prevent negative page index
+	if params.Page < 0 {
+		params.Page = 0
+	}
+
+	// Limit search string length to prevent performance issues
+	if len(params.Search) > 200 {
+		params.Search = params.Search[:200]
+	}
+
 	return params
 }
 
@@ -400,18 +436,18 @@ func (t *Table[T]) CalculateFooter(output OutputType) map[string]any {
 	footer := make(map[string]any)
 	fieldMap := t.buildFieldMap()
 
-	for _, field := range t.fields {
-		if field.GetFooter() == FieldFooterNo {
+	for _, f := range t.fields {
+		if f.footer == FieldFooterNo {
 			continue
 		}
 
 		var aggregated any
 
-		switch field.GetFooter() {
+		switch f.footer {
 		case FieldFooterSum:
-			aggregated = t.sumField(field)
+			aggregated = t.sumField(f)
 		case FieldFooterCount:
-			aggregated = t.countField(field)
+			aggregated = t.countField(f)
 		case FieldFooterStatic:
 			// Static footer values would be set separately
 			continue
@@ -420,13 +456,13 @@ func (t *Table[T]) CalculateFooter(output OutputType) map[string]any {
 		// Format footer value
 		// Use first row for Row context (for device-specific formatting)
 		if len(t.data) > 0 {
-			row := NewTypedRow(t.data[0], fieldMap)
-			formatted := field.Format(aggregated, row, output, t.ctx)
-			footer[field.GetID()] = formatted
+			row := newTypedRow(t.data[0], fieldMap)
+			formatted := f.format(aggregated, row, output, t.ctx)
+			footer[f.id] = formatted
 		} else {
 			// For empty tables, use raw aggregated value without formatting
 			// to avoid nil row access in formatters that reference other fields
-			footer[field.GetID()] = aggregated
+			footer[f.id] = aggregated
 		}
 	}
 
@@ -434,30 +470,24 @@ func (t *Table[T]) CalculateFooter(output OutputType) map[string]any {
 }
 
 // sumField sums all values for a field
-func (t *Table[T]) sumField(field *Field[T]) float64 {
+func (t *Table[T]) sumField(f *field[T]) float64 {
 	sum := 0.0
-	accessor := field.GetAccessor()
-
 	for _, rowData := range t.data {
-		val := accessor(rowData)
+		val := f.accessor(rowData)
 		sum += toFloat64(val)
 	}
-
 	return sum
 }
 
 // countField counts non-empty values for a field
-func (t *Table[T]) countField(field *Field[T]) int {
+func (t *Table[T]) countField(f *field[T]) int {
 	count := 0
-	accessor := field.GetAccessor()
-
 	for _, rowData := range t.data {
-		val := accessor(rowData)
+		val := f.accessor(rowData)
 		if val != nil && val != "" {
 			count++
 		}
 	}
-
 	return count
 }
 
@@ -561,9 +591,9 @@ func (t *Table[T]) AddComponent(comp core.Component) *Table[T] {
 //	}
 //	tbl.SetData(rows)
 func (t *Table[T]) HideField(fieldID string) *Table[T] {
-	for _, field := range t.fields {
-		if field.GetID() == fieldID {
-			field.setHide(true)
+	for _, f := range t.fields {
+		if f.id == fieldID {
+			f.hide = true
 			return t
 		}
 	}
@@ -582,9 +612,9 @@ func (t *Table[T]) HideField(fieldID string) *Table[T] {
 //	}
 //	tbl.SetData(rows)
 func (t *Table[T]) ShowField(fieldID string) *Table[T] {
-	for _, field := range t.fields {
-		if field.GetID() == fieldID {
-			field.setHide(false)
+	for _, f := range t.fields {
+		if f.id == fieldID {
+			f.hide = false
 			return t
 		}
 	}
@@ -614,9 +644,9 @@ func (t *Table[T]) HideFields(fieldIDs ...string) *Table[T] {
 	}
 
 	// Set hide flag on matching fields
-	for _, field := range t.fields {
-		if hideMap[field.GetID()] {
-			field.setHide(true)
+	for _, f := range t.fields {
+		if hideMap[f.id] {
+			f.hide = true
 		}
 	}
 	return t
@@ -644,9 +674,9 @@ func (t *Table[T]) ShowFields(fieldIDs ...string) *Table[T] {
 	}
 
 	// Clear hide flag on matching fields
-	for _, field := range t.fields {
-		if showMap[field.GetID()] {
-			field.setHide(false)
+	for _, f := range t.fields {
+		if showMap[f.id] {
+			f.hide = false
 		}
 	}
 	return t

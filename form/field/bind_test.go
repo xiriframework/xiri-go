@@ -1,6 +1,7 @@
 package field
 
 import (
+	"math"
 	"testing"
 )
 
@@ -191,6 +192,67 @@ func TestModelFieldBindValue_Nil(t *testing.T) {
 	}
 	if f.Value != 5 {
 		t.Errorf("expected default 5, got %v", f.Value)
+	}
+}
+
+// TestIntFieldBindValue_Overflow verifies that float64 values exceeding int32
+// range are rejected to prevent integer overflow (M4).
+func TestIntFieldBindValue_Overflow(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     float64
+		expectErr bool
+	}{
+		{"max int32", math.MaxInt32, false},
+		{"min int32", math.MinInt32, false},
+		{"above max int32", math.MaxInt32 + 1, true},
+		{"below min int32", math.MinInt32 - 1, true},
+		{"large positive", 1e18, true},
+		{"large negative", -1e18, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := NewIntField("count", "COUNT", false, 0)
+			err := f.BindValue(tt.input)
+			if tt.expectErr && err == nil {
+				t.Errorf("input=%v: expected error, got nil", tt.input)
+			}
+			if !tt.expectErr && err != nil {
+				t.Errorf("input=%v: unexpected error: %v", tt.input, err)
+			}
+		})
+	}
+}
+
+// TestModelFieldBindValue_Overflow verifies that float64 values exceeding int32
+// range or non-integer floats are rejected for model IDs (M4).
+func TestModelFieldBindValue_Overflow(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     float64
+		expectErr bool
+	}{
+		{"max int32", math.MaxInt32, false},
+		{"min int32", math.MinInt32, false},
+		{"above max int32", math.MaxInt32 + 1, true},
+		{"below min int32", math.MinInt32 - 1, true},
+		{"large positive", 1e18, true},
+		{"non-integer", 42.5, true},
+		{"integer float", 42.0, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := NewModelField("device", "DEVICE", false, "Device", int32(0))
+			err := f.BindValue(tt.input)
+			if tt.expectErr && err == nil {
+				t.Errorf("input=%v: expected error, got nil", tt.input)
+			}
+			if !tt.expectErr && err != nil {
+				t.Errorf("input=%v: unexpected error: %v", tt.input, err)
+			}
+		})
 	}
 }
 

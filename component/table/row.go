@@ -27,23 +27,23 @@ type Row interface {
 	GetBool(fieldID string) bool
 }
 
-// TypedRow wraps a struct value and provides field access via accessor functions.
+// typedRow wraps a struct value and provides field access via accessor functions.
 // This is the concrete implementation of the Row interface used by Table[T].
-type TypedRow[T any] struct {
+type typedRow[T any] struct {
 	data     T
 	fieldMap map[string]func(T) any
 }
 
-// NewTypedRow creates a new TypedRow with the given data and field accessors
-func NewTypedRow[T any](data T, fieldMap map[string]func(T) any) *TypedRow[T] {
-	return &TypedRow[T]{
+// newTypedRow creates a new typedRow with the given data and field accessors
+func newTypedRow[T any](data T, fieldMap map[string]func(T) any) *typedRow[T] {
+	return &typedRow[T]{
 		data:     data,
 		fieldMap: fieldMap,
 	}
 }
 
 // Get returns the raw value by field ID
-func (r *TypedRow[T]) Get(fieldID string) any {
+func (r *typedRow[T]) Get(fieldID string) any {
 	if accessor, ok := r.fieldMap[fieldID]; ok {
 		return accessor(r.data)
 	}
@@ -51,7 +51,7 @@ func (r *TypedRow[T]) Get(fieldID string) any {
 }
 
 // GetInt32 returns the value as int32 (with type conversion)
-func (r *TypedRow[T]) GetInt32(fieldID string) int32 {
+func (r *typedRow[T]) GetInt32(fieldID string) int32 {
 	v := r.Get(fieldID)
 	if v == nil {
 		return 0
@@ -78,7 +78,7 @@ func (r *TypedRow[T]) GetInt32(fieldID string) int32 {
 }
 
 // GetInt64 returns the value as int64 (with type conversion)
-func (r *TypedRow[T]) GetInt64(fieldID string) int64 {
+func (r *typedRow[T]) GetInt64(fieldID string) int64 {
 	v := r.Get(fieldID)
 	if v == nil {
 		return 0
@@ -105,7 +105,7 @@ func (r *TypedRow[T]) GetInt64(fieldID string) int64 {
 }
 
 // GetFloat64 returns the value as float64 (with type conversion)
-func (r *TypedRow[T]) GetFloat64(fieldID string) float64 {
+func (r *typedRow[T]) GetFloat64(fieldID string) float64 {
 	v := r.Get(fieldID)
 	if v == nil {
 		return 0.0
@@ -132,7 +132,7 @@ func (r *TypedRow[T]) GetFloat64(fieldID string) float64 {
 }
 
 // GetString returns the value as string (with type conversion)
-func (r *TypedRow[T]) GetString(fieldID string) string {
+func (r *typedRow[T]) GetString(fieldID string) string {
 	v := r.Get(fieldID)
 	if v == nil {
 		return ""
@@ -142,7 +142,7 @@ func (r *TypedRow[T]) GetString(fieldID string) string {
 }
 
 // GetBool returns the value as bool (with type conversion)
-func (r *TypedRow[T]) GetBool(fieldID string) bool {
+func (r *typedRow[T]) GetBool(fieldID string) bool {
 	v := r.Get(fieldID)
 	if v == nil {
 		return false

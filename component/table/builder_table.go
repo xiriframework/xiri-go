@@ -31,7 +31,7 @@ func NewBuilder[T any](ctx *uicontext.UiContext, translator core.TranslateFunc) 
 		table: &Table[T]{
 			ctx:             ctx,
 			translator:      translator,
-			fields:          make([]*Field[T], 0),
+			fields:          make([]*field[T], 0),
 			fieldsCanChange: false,
 			options: TableOptions{
 				Pagination: &defaultTrue, // Default: enabled
@@ -49,8 +49,8 @@ func NewBuilder[T any](ctx *uicontext.UiContext, translator core.TranslateFunc) 
 // fieldInternal is the internal implementation for all typed field methods.
 // This method is used by all type-safe field methods (IntField, TextField, etc.)
 // to create fields with the correct configuration.
-func (b *TableBuilder[T]) fieldInternal(id string, name string, fieldType FieldTypeHint, accessor func(T) any) *FieldBuilder[T] {
-	field := &Field[T]{
+func (b *TableBuilder[T]) fieldInternal(id string, name string, fieldType fieldTypeHint, accessor func(T) any) *FieldBuilder[T] {
+	field := &field[T]{
 		id:         id,
 		name:       name,
 		accessor:   accessor,
@@ -106,11 +106,11 @@ func (b *TableBuilder[T]) Build() *Table[T] {
 func (b *TableBuilder[T]) validateFields() {
 	for _, f := range b.table.fields {
 		switch f.fieldType {
-		case FieldTypeIcon:
+		case fieldTypeIcon:
 			if len(f.icons) == 0 {
 				slog.Warn("table.Build: icon field has no icon definitions, use IconFieldFromSet()", "fieldId", f.id)
 			}
-		case FieldTypeButtons:
+		case fieldTypeButtons:
 			if len(f.buttons) == 0 {
 				slog.Warn("table.Build: buttons field has no button definitions, use AddButton()", "fieldId", f.id)
 			}

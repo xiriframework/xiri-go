@@ -85,42 +85,42 @@ func (t *Table[T]) ToTableDataResponse() *TableDataResponse {
 	return response
 }
 
-// exportFields converts Field[T] array to JSON array for component output.
-// Each field is converted to TableFieldJSON format for JSON serialization.
+// exportFields converts field[T] array to JSON array for component output.
+// Each field is converted to tableFieldJSON format for JSON serialization.
 // Hidden fields are excluded from the output.
 func (t *Table[T]) exportFields(translator core.TranslateFunc) []map[string]any {
 	fields := make([]map[string]any, 0, len(t.fields))
-	for _, field := range t.fields {
+	for _, f := range t.fields {
 		// Skip hidden fields
-		if field.IsHidden() {
+		if f.hide {
 			continue
 		}
 
-		// Convert to TableFieldJSON for JSON serialization
-		jsonField := field.toTableField()
-		fields = append(fields, jsonField.Print(translator))
+		// Convert to tableFieldJSON for JSON serialization
+		jsonField := f.toTableField()
+		fields = append(fields, jsonField.print(translator))
 	}
 	return fields
 }
 
-// exportFieldsForCSV converts Field[T] array to JSON array for CSV export only.
+// exportFieldsForCSV converts field[T] array to JSON array for CSV export only.
 // This filters out fields where csv=false or fields that are hidden.
 func (t *Table[T]) exportFieldsForCSV(translator core.TranslateFunc) []map[string]any {
 	csvFields := make([]map[string]any, 0, len(t.fields))
-	for _, field := range t.fields {
+	for _, f := range t.fields {
 		// Skip hidden fields first
-		if field.IsHidden() {
+		if f.hide {
 			continue
 		}
 
 		// Skip fields with csv=false
-		if !field.IsCsvEnabled() {
+		if !f.csv {
 			continue
 		}
 
-		// Convert to TableFieldJSON for JSON serialization
-		jsonField := field.toTableField()
-		csvFields = append(csvFields, jsonField.Print(translator))
+		// Convert to tableFieldJSON for JSON serialization
+		jsonField := f.toTableField()
+		csvFields = append(csvFields, jsonField.print(translator))
 	}
 	return csvFields
 }

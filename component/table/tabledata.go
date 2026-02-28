@@ -311,6 +311,16 @@ func (td *TableDataResponse) expandNFieldColumns() {
 	}
 }
 
+// sanitizeExportValue prevents formula injection in CSV/Excel exports.
+// Prefixes values starting with dangerous characters (=, +, -, @, \t, \r, \n)
+// with a single quote to prevent formula execution in spreadsheet applications.
+func sanitizeExportValue(s string) string {
+	if len(s) > 0 && (s[0] == '=' || s[0] == '+' || s[0] == '-' || s[0] == '@' || s[0] == '\t' || s[0] == '\r' || s[0] == '\n') {
+		return "'" + s
+	}
+	return s
+}
+
 // generateCSV creates a CSV string from the table data.
 // Uses semicolon (;) delimiter for Excel compatibility.
 // Only includes fields that are marked as CSV-enabled.
@@ -384,9 +394,9 @@ func (td *TableDataResponse) generateCSV(translator core.TranslateFunc) string {
 			// Handle array values (e.g., [display, value] from formatters)
 			if arr, ok := value.([]interface{}); ok && len(arr) > 0 {
 				// For CSV, use the display value (first element)
-				row[i] = fmt.Sprintf("%v", arr[0])
+				row[i] = sanitizeExportValue(fmt.Sprintf("%v", arr[0]))
 			} else {
-				row[i] = fmt.Sprintf("%v", value)
+				row[i] = sanitizeExportValue(fmt.Sprintf("%v", value))
 			}
 		}
 
@@ -496,6 +506,11 @@ func (td *TableDataResponse) generateExcel(translator core.TranslateFunc) ([]byt
 			if arr, ok := value.([]interface{}); ok && len(arr) > 0 {
 				// For Excel, use the display value (first element)
 				value = arr[0]
+			}
+
+			// Sanitize string values to prevent formula injection
+			if strVal, ok := value.(string); ok {
+				value = sanitizeExportValue(strVal)
 			}
 
 			// Write cell value

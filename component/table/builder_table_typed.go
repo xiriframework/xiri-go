@@ -19,7 +19,7 @@ import "time"
 //	    return r.ID
 //	})
 func (b *TableBuilder[T]) IdField(id, name string, accessor func(T) int64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Id, func(row T) any {
+	return b.fieldInternal(id, name, idHint, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -33,7 +33,7 @@ func (b *TableBuilder[T]) IdField(id, name string, accessor func(T) int64) *Fiel
 //	    return r.Count
 //	})
 func (b *TableBuilder[T]) IntField(id, name string, accessor func(T) int) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Integer, func(row T) any {
+	return b.fieldInternal(id, name, integer, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -47,7 +47,7 @@ func (b *TableBuilder[T]) IntField(id, name string, accessor func(T) int) *Field
 //	    return r.Value
 //	})
 func (b *TableBuilder[T]) Int32Field(id, name string, accessor func(T) int32) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Integer, func(row T) any {
+	return b.fieldInternal(id, name, integer, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -61,7 +61,7 @@ func (b *TableBuilder[T]) Int32Field(id, name string, accessor func(T) int32) *F
 //	    return r.Size
 //	})
 func (b *TableBuilder[T]) Int64Field(id, name string, accessor func(T) int64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Integer, func(row T) any {
+	return b.fieldInternal(id, name, integer, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -75,7 +75,7 @@ func (b *TableBuilder[T]) Int64Field(id, name string, accessor func(T) int64) *F
 //	    return r.Price
 //	}).WithDecimals(2)
 func (b *TableBuilder[T]) FloatField(id, name string, accessor func(T) float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Float, func(row T) any {
+	return b.fieldInternal(id, name, float, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -88,7 +88,7 @@ func (b *TableBuilder[T]) FloatField(id, name string, accessor func(T) float64) 
 //	    return r.Name
 //	})
 func (b *TableBuilder[T]) TextField(id, name string, accessor func(T) string) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text, func(row T) any {
+	return b.fieldInternal(id, name, text, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -104,7 +104,7 @@ func (b *TableBuilder[T]) TextField(id, name string, accessor func(T) string) *F
 //	    return [2]string{r.Name, r.Model}
 //	})
 func (b *TableBuilder[T]) Text2Field(id, name string, accessor func(T) [2]string) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text2, func(row T) any {
+	return b.fieldInternal(id, name, text2, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -120,7 +120,7 @@ func (b *TableBuilder[T]) Text2Field(id, name string, accessor func(T) [2]string
 //	    return [2]int{r.TripsToday, r.TotalTrips}
 //	})
 func (b *TableBuilder[T]) Text2IntField(id, name string, accessor func(T) [2]int) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text2Int, func(row T) any {
+	return b.fieldInternal(id, name, text2Int, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -137,7 +137,7 @@ func (b *TableBuilder[T]) Text2IntField(id, name string, accessor func(T) [2]int
 //	    return [2]float64{r.FuelCurrent, r.FuelAverage}
 //	}).WithDecimals(2)
 func (b *TableBuilder[T]) Text2FloatField(id, name string, accessor func(T) [2]float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text2Float, func(row T) any {
+	return b.fieldInternal(id, name, text2Float, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -153,7 +153,7 @@ func (b *TableBuilder[T]) Text2FloatField(id, name string, accessor func(T) [2]f
 //	    return [2]time.Time{r.LastSeen, r.Created}
 //	})
 func (b *TableBuilder[T]) Text2DateTimeField(id, name string, accessor func(T) [2]time.Time) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text2DateTime, func(row T) any {
+	return b.fieldInternal(id, name, text2DateTime, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -169,7 +169,7 @@ func (b *TableBuilder[T]) Text2DateTimeField(id, name string, accessor func(T) [
 //	    return [2]time.Time{r.RegistrationDate, r.ExpiryDate}
 //	})
 func (b *TableBuilder[T]) Text2DateField(id, name string, accessor func(T) [2]time.Time) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text2Date, func(row T) any {
+	return b.fieldInternal(id, name, text2Date, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -186,7 +186,7 @@ func (b *TableBuilder[T]) Text2DateField(id, name string, accessor func(T) [2]ti
 //	    return [2]float64{r.TodayKm, r.TotalKm}
 //	}).WithDecimals(1)
 func (b *TableBuilder[T]) Text2DistanceField(id, name string, accessor func(T) [2]float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text2Distance, func(row T) any {
+	return b.fieldInternal(id, name, text2Distance, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -203,7 +203,7 @@ func (b *TableBuilder[T]) Text2DistanceField(id, name string, accessor func(T) [
 //	    return [2]float64{r.MaxSpeed, r.AvgSpeed}
 //	}).WithDecimals(1)
 func (b *TableBuilder[T]) Text2SpeedField(id, name string, accessor func(T) [2]float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text2Speed, func(row T) any {
+	return b.fieldInternal(id, name, text2Speed, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -220,7 +220,7 @@ func (b *TableBuilder[T]) Text2SpeedField(id, name string, accessor func(T) [2]f
 //	    return [2]bool{r.Active, r.Online}
 //	})
 func (b *TableBuilder[T]) Text2BoolField(id, name string, accessor func(T) [2]bool) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text2Bool, func(row T) any {
+	return b.fieldInternal(id, name, text2Bool, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -236,7 +236,7 @@ func (b *TableBuilder[T]) Text2BoolField(id, name string, accessor func(T) [2]bo
 //	    return r.DurationSeconds
 //	})
 func (b *TableBuilder[T]) TimeLengthField(id, name string, accessor func(T) int64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, TimeLength, func(row T) any {
+	return b.fieldInternal(id, name, timeLength, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -254,7 +254,7 @@ func (b *TableBuilder[T]) TimeLengthField(id, name string, accessor func(T) int6
 //	    return [2]int64{r.DurationSeconds, r.IdleSeconds}
 //	})
 func (b *TableBuilder[T]) Text2TimeLengthField(id, name string, accessor func(T) [2]int64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Text2TimeLength, func(row T) any {
+	return b.fieldInternal(id, name, text2TimeLength, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -268,7 +268,7 @@ func (b *TableBuilder[T]) Text2TimeLengthField(id, name string, accessor func(T)
 //	    return []string{r.Name, r.Model, r.Serial}
 //	})
 func (b *TableBuilder[T]) TextNField(id, name string, accessor func(T) []string) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, TextN, func(row T) any {
+	return b.fieldInternal(id, name, textN, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -282,7 +282,7 @@ func (b *TableBuilder[T]) TextNField(id, name string, accessor func(T) []string)
 //	    return []int{r.TripsToday, r.TripsWeek, r.TotalTrips}
 //	})
 func (b *TableBuilder[T]) IntNField(id, name string, accessor func(T) []int) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, IntegerN, func(row T) any {
+	return b.fieldInternal(id, name, integerN, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -297,7 +297,7 @@ func (b *TableBuilder[T]) IntNField(id, name string, accessor func(T) []int) *Fi
 //	    return []float64{r.FuelCurrent, r.FuelAverage, r.FuelMax}
 //	}).WithDecimals(2)
 func (b *TableBuilder[T]) FloatNField(id, name string, accessor func(T) []float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, FloatN, func(row T) any {
+	return b.fieldInternal(id, name, floatN, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -311,7 +311,7 @@ func (b *TableBuilder[T]) FloatNField(id, name string, accessor func(T) []float6
 //	    return []time.Time{r.LastSeen, r.Created, r.Updated}
 //	})
 func (b *TableBuilder[T]) DateTimeNField(id, name string, accessor func(T) []time.Time) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, DateTimeN, func(row T) any {
+	return b.fieldInternal(id, name, dateTimeN, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -325,7 +325,7 @@ func (b *TableBuilder[T]) DateTimeNField(id, name string, accessor func(T) []tim
 //	    return []time.Time{r.RegistrationDate, r.ExpiryDate, r.InspectionDate}
 //	})
 func (b *TableBuilder[T]) DateNField(id, name string, accessor func(T) []time.Time) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, DateN, func(row T) any {
+	return b.fieldInternal(id, name, dateN, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -340,7 +340,7 @@ func (b *TableBuilder[T]) DateNField(id, name string, accessor func(T) []time.Ti
 //	    return []float64{r.TodayKm, r.WeekKm, r.TotalKm}
 //	}).WithDecimals(1)
 func (b *TableBuilder[T]) DistanceNField(id, name string, accessor func(T) []float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, DistanceN, func(row T) any {
+	return b.fieldInternal(id, name, distanceN, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -355,7 +355,7 @@ func (b *TableBuilder[T]) DistanceNField(id, name string, accessor func(T) []flo
 //	    return []float64{r.MaxSpeed, r.AvgSpeed, r.MinSpeed}
 //	}).WithDecimals(1)
 func (b *TableBuilder[T]) SpeedNField(id, name string, accessor func(T) []float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, SpeedN, func(row T) any {
+	return b.fieldInternal(id, name, speedN, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -370,7 +370,7 @@ func (b *TableBuilder[T]) SpeedNField(id, name string, accessor func(T) []float6
 //	    return []bool{r.Active, r.Online, r.Licensed}
 //	})
 func (b *TableBuilder[T]) BoolNField(id, name string, accessor func(T) []bool) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, BoolN, func(row T) any {
+	return b.fieldInternal(id, name, boolN, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -386,7 +386,7 @@ func (b *TableBuilder[T]) BoolNField(id, name string, accessor func(T) []bool) *
 //	    return []int64{r.DriveTime, r.IdleTime, r.StopTime}
 //	})
 func (b *TableBuilder[T]) TimeLengthNField(id, name string, accessor func(T) []int64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, TimeLengthN, func(row T) any {
+	return b.fieldInternal(id, name, timeLengthN, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -400,7 +400,7 @@ func (b *TableBuilder[T]) TimeLengthNField(id, name string, accessor func(T) []i
 //	    return r.Active
 //	}).WithBoolText("Active", "Inactive")
 func (b *TableBuilder[T]) BoolField(id, name string, accessor func(T) bool) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Bool, func(row T) any {
+	return b.fieldInternal(id, name, boolean, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -414,7 +414,7 @@ func (b *TableBuilder[T]) BoolField(id, name string, accessor func(T) bool) *Fie
 //	    return r.LastSeen
 //	})
 func (b *TableBuilder[T]) DateTimeField(id, name string, accessor func(T) time.Time) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, DateTime, func(row T) any {
+	return b.fieldInternal(id, name, dateTime, func(row T) any {
 		return accessor(row).Unix() // Convert to Unix seconds
 	})
 }
@@ -428,7 +428,7 @@ func (b *TableBuilder[T]) DateTimeField(id, name string, accessor func(T) time.T
 //	    return r.Created
 //	})
 func (b *TableBuilder[T]) DateField(id, name string, accessor func(T) time.Time) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Date, func(row T) any {
+	return b.fieldInternal(id, name, date, func(row T) any {
 		return accessor(row).Unix() // Convert to Unix seconds
 	})
 }
@@ -442,7 +442,7 @@ func (b *TableBuilder[T]) DateField(id, name string, accessor func(T) time.Time)
 //	    return r.DistanceKm
 //	}).WithDecimals(2)
 func (b *TableBuilder[T]) DistanceField(id, name string, accessor func(T) float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Distance, func(row T) any {
+	return b.fieldInternal(id, name, distanceHint, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -456,7 +456,7 @@ func (b *TableBuilder[T]) DistanceField(id, name string, accessor func(T) float6
 //	    return r.PressureBar
 //	}).WithDecimals(2)
 func (b *TableBuilder[T]) PressureField(id, name string, accessor func(T) float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Pressure, func(row T) any {
+	return b.fieldInternal(id, name, pressureHint, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -470,7 +470,7 @@ func (b *TableBuilder[T]) PressureField(id, name string, accessor func(T) float6
 //	    return r.SpeedKmh
 //	}).WithDecimals(1)
 func (b *TableBuilder[T]) SpeedField(id, name string, accessor func(T) float64) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Speed, func(row T) any {
+	return b.fieldInternal(id, name, speedHint, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -488,7 +488,7 @@ func (b *TableBuilder[T]) SpeedField(id, name string, accessor func(T) float64) 
 //	    }
 //	}).AddButton(0, FieldButtonActionLink, "edit", core.ColorPrimary, "common.edit")
 func (b *TableBuilder[T]) ButtonsField(id, name string, accessor func(T) map[string]string) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Buttons, func(row T) any {
+	return b.fieldInternal(id, name, buttons, func(row T) any {
 		// Convert map[string]string to map[string]any
 		// Empty string values become false to hide buttons
 		buttons := accessor(row)
@@ -528,7 +528,7 @@ func (b *TableBuilder[T]) ButtonsField(id, name string, accessor func(T) map[str
 //	    statusIcons,
 //	)
 func (b *TableBuilder[T]) IconFieldFromSet(id, name string, accessor func(T) *IconRef, iconSet *IconSet) *FieldBuilder[T] {
-	fb := b.fieldInternal(id, name, Icon, func(row T) any {
+	fb := b.fieldInternal(id, name, icon, func(row T) any {
 		ref := accessor(row)
 		if ref == nil {
 			return ""
@@ -539,10 +539,10 @@ func (b *TableBuilder[T]) IconFieldFromSet(id, name string, accessor func(T) *Ic
 	// Copy icon definitions from IconSet into the field
 	for _, value := range iconSet.order {
 		def := iconSet.icons[value]
-		fb.field.addIcon(value, def.Icon, def.Color, def.Hint)
+		fb.field.addIcon(value, def.icon, def.color, def.hint)
 		// Copy custom options
-		for k, v := range def.Options {
-			fb.field.icons[value].Options[k] = v
+		for k, v := range def.options {
+			fb.field.icons[value].options[k] = v
 		}
 	}
 
@@ -558,7 +558,7 @@ func (b *TableBuilder[T]) IconFieldFromSet(id, name string, accessor func(T) *Ic
 //	    return [2]string{r.Name, r.URL}
 //	})
 func (b *TableBuilder[T]) LinkField(id, name string, accessor func(T) [2]string) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Link, func(row T) any {
+	return b.fieldInternal(id, name, link, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -572,7 +572,7 @@ func (b *TableBuilder[T]) LinkField(id, name string, accessor func(T) [2]string)
 //	    return r.NotesHTML
 //	})
 func (b *TableBuilder[T]) HtmlField(id, name string, accessor func(T) string) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Html, func(row T) any {
+	return b.fieldInternal(id, name, html, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -586,7 +586,7 @@ func (b *TableBuilder[T]) HtmlField(id, name string, accessor func(T) string) *F
 //	    return r.Notes
 //	}).WithInputType("text")
 func (b *TableBuilder[T]) InputField(id, name string, accessor func(T) any) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Input, func(row T) any {
+	return b.fieldInternal(id, name, inputHint, func(row T) any {
 		return accessor(row)
 	})
 }
@@ -599,7 +599,7 @@ func (b *TableBuilder[T]) InputField(id, name string, accessor func(T) any) *Fie
 //	    return "Device Information"
 //	})
 func (b *TableBuilder[T]) HeaderField(id, name string, accessor func(T) string) *FieldBuilder[T] {
-	return b.fieldInternal(id, name, Header, func(row T) any {
+	return b.fieldInternal(id, name, header, func(row T) any {
 		return accessor(row)
 	})
 }

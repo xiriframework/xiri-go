@@ -17,14 +17,14 @@ type IconRef struct {
 // Use NewIconSet() to create an IconSet, then Add() to register
 // icon definitions. The resulting IconRefs are used in IconFieldFromSet accessors.
 type IconSet struct {
-	icons map[string]*IconDef
+	icons map[string]*iconDef
 	order []string
 }
 
 // NewIconSet creates a new empty IconSet.
 func NewIconSet() *IconSet {
 	return &IconSet{
-		icons: make(map[string]*IconDef),
+		icons: make(map[string]*iconDef),
 	}
 }
 
@@ -42,11 +42,11 @@ func NewIconSet() *IconSet {
 //	iconOnline  := icons.Add("online",  "check_circle", core.ColorAccent,  "Online")
 //	iconOffline := icons.Add("offline", "cancel",       core.ColorWarning, "Offline")
 func (s *IconSet) Add(value, icon string, color core.Color, hint string) *IconRef {
-	s.icons[value] = &IconDef{
-		Icon:    icon,
-		Color:   color,
-		Hint:    hint,
-		Options: make(map[string]any),
+	s.icons[value] = &iconDef{
+		icon:    icon,
+		color:   color,
+		hint:    hint,
+		options: make(map[string]any),
 	}
 	s.order = append(s.order, value)
 	return &IconRef{value: value}
@@ -54,11 +54,11 @@ func (s *IconSet) Add(value, icon string, color core.Color, hint string) *IconRe
 
 // AddWithOptions registers an icon definition with additional custom options.
 func (s *IconSet) AddWithOptions(value, icon string, color core.Color, hint string, opts map[string]any) *IconRef {
-	s.icons[value] = &IconDef{
-		Icon:    icon,
-		Color:   color,
-		Hint:    hint,
-		Options: opts,
+	s.icons[value] = &iconDef{
+		icon:    icon,
+		color:   color,
+		hint:    hint,
+		options: opts,
 	}
 	s.order = append(s.order, value)
 	return &IconRef{value: value}
