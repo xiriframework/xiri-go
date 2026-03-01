@@ -5,17 +5,14 @@ import (
 	"github.com/xiriframework/xiri-go/uicontext"
 )
 
-// field represents a table column with type-safe accessor and formatting.
-// Each field extracts a value from the row struct using an accessor function,
-// then formats it using an OutputFormatter that adapts to different output types.
-type field[T any] struct {
+// fieldBase contains all type-independent field properties.
+// Extracted from field[T] to avoid generic monomorphization of methods
+// that don't depend on the row type T.
+type fieldBase struct {
 	// Identity
 	id        string
 	name      string // Translation key
 	fieldType fieldType
-
-	// Data extraction
-	accessor func(T) any // Extract value from row struct
 
 	// Formatting - default + per-output overrides
 	defaultFormatter OutputFormatter                // Used for all outputs by default
@@ -59,13 +56,23 @@ type field[T any] struct {
 	access []string // Required permissions
 
 	// Type-specific data for buttons/icon fields
-	buttons      map[int]*buttonDef
-	icons        map[string]*iconDef
-	hintAccessor func(T) string // Optional: extracts per-row hint text for icon fields
+	buttons   map[int]*buttonDef
+	icons     map[string]*iconDef
+	menuItems map[int][]*menuItemDef // Per-button menu item definitions (key = button index)
+}
 
-	// Menu button data
+// field represents a table column with type-safe accessor and formatting.
+// Each field extracts a value from the row struct using an accessor function,
+// then formats it using an OutputFormatter that adapts to different output types.
+type field[T any] struct {
+	fieldBase // Embedded non-generic base (all T-independent properties)
+
+	// Data extraction (T-dependent)
+	accessor func(T) any // Extract value from row struct
+
+	// T-dependent accessors for icon fields and menu buttons
+	hintAccessor  func(T) string          // Optional: extracts per-row hint text for icon fields
 	menuAccessors map[int]func(T) []string // Per-button menu data accessor (key = button index)
-	menuItems     map[int][]*menuItemDef   // Per-button menu item definitions (key = button index)
 }
 
 // buttonDef defines a button in a buttons-type field
@@ -95,7 +102,7 @@ type menuItemDef struct {
 
 // getFormatter returns the formatter for a specific output type.
 // Returns the per-output override if one exists, otherwise returns the default formatter.
-func (f *field[T]) getFormatter(output OutputType) OutputFormatter {
+func (f *fieldBase) getFormatter(output OutputType) OutputFormatter {
 	if formatter, ok := f.formatters[output]; ok {
 		return formatter
 	}
@@ -106,7 +113,7 @@ func (f *field[T]) getFormatter(output OutputType) OutputFormatter {
 //
 // CRITICAL: For number-type fields on web output, this wraps the result in [display, value] array
 // to maintain exact JSON compatibility with xiri-ui frontend expectations.
-func (f *field[T]) format(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+func (f *fieldBase) format(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
 	formatter := f.getFormatter(output)
 	formatted := formatter.Format(value, row, output, ctx)
 
@@ -120,7 +127,7 @@ func (f *field[T]) format(value any, row Row, output OutputType, ctx *uicontext.
 }
 
 // addButton adds a button definition to a buttons-type field.
-func (f *field[T]) addButton(key int, action FieldButtonAction, icon string, color core.Color, hint string) {
+func (f *fieldBase) addButton(key int, action FieldButtonAction, icon string, color core.Color, hint string) {
 	if f.buttons == nil {
 		f.buttons = make(map[int]*buttonDef)
 	}
@@ -134,7 +141,7 @@ func (f *field[T]) addButton(key int, action FieldButtonAction, icon string, col
 }
 
 // addIcon adds an icon mapping to an icon-type field.
-func (f *field[T]) addIcon(value string, icon string, color core.Color, hint string) {
+func (f *fieldBase) addIcon(value string, icon string, color core.Color, hint string) {
 	if f.icons == nil {
 		f.icons = make(map[string]*iconDef)
 	}
@@ -146,16 +153,10 @@ func (f *field[T]) addIcon(value string, icon string, color core.Color, hint str
 	}
 }
 
-// setHide sets whether the field is hidden (used internally by HideField/ShowField).
-func (f *field[T]) setHide(hide bool) {
-	f.hide = hide
-}
-
-// toTableField converts field[T] to tableFieldJSON for JSON serialization.
+// toTableField converts fieldBase to tableFieldJSON for JSON serialization.
 // This ensures all field properties are preserved in the conversion for the Angular frontend.
-func (f *field[T]) toTableField() *tableFieldJSON {
-	// Directly construct tableFieldJSON from field[T]
-	field := &tableFieldJSON{
+func (f *fieldBase) toTableField() *tableFieldJSON {
+	tf := &tableFieldJSON{
 		ID:          f.id,
 		fieldType:   f.fieldType,
 		name:        f.name,
@@ -205,7 +206,7 @@ func (f *field[T]) toTableField() *tableFieldJSON {
 			for k, v := range btn.options {
 				icon.withOption(k, v)
 			}
-			field.buttons[key] = &fieldButtonJSON{
+			tf.buttons[key] = &fieldButtonJSON{
 				action: btn.action,
 				icon:   icon,
 			}
@@ -215,7 +216,7 @@ func (f *field[T]) toTableField() *tableFieldJSON {
 	// Copy menu items into button JSON
 	if f.fieldType == fieldTypeButtons && len(f.menuItems) > 0 {
 		for key, items := range f.menuItems {
-			if btn, ok := field.buttons[key]; ok {
+			if btn, ok := tf.buttons[key]; ok {
 				btn.menuItems = items
 			}
 		}
@@ -228,9 +229,9 @@ func (f *field[T]) toTableField() *tableFieldJSON {
 			for k, v := range def.options {
 				icon.withOption(k, v)
 			}
-			field.icons[value] = icon
+			tf.icons[value] = icon
 		}
 	}
 
-	return field
+	return tf
 }

@@ -2,138 +2,140 @@ package table
 
 import "github.com/xiriframework/xiri-go/component/core"
 
-// FieldBuilder provides a fluent API for configuring a single field
-type FieldBuilder[T any] struct {
-	field       *field[T]
+// FieldBuilder provides a fluent API for configuring a single field.
+// This is non-generic — all methods operate on *fieldBase.
+type FieldBuilder struct {
+	base        *fieldBase
+	typedField  any // *field[T] — for T-dependent operations only
 	lastMenuKey int // Track last menu button index for AddMenuItem chaining
 }
 
 // WithFormatter sets the default formatter (used for all output types unless overridden)
-func (fb *FieldBuilder[T]) WithFormatter(formatter OutputFormatter) *FieldBuilder[T] {
-	fb.field.defaultFormatter = formatter
+func (fb *FieldBuilder) WithFormatter(formatter OutputFormatter) *FieldBuilder {
+	fb.base.defaultFormatter = formatter
 	return fb
 }
 
 // WithWebFormatter sets formatter specifically for web output (overrides default)
-func (fb *FieldBuilder[T]) WithWebFormatter(formatter OutputFormatter) *FieldBuilder[T] {
-	fb.field.formatters[OutputWeb] = formatter
+func (fb *FieldBuilder) WithWebFormatter(formatter OutputFormatter) *FieldBuilder {
+	fb.base.formatters[OutputWeb] = formatter
 	return fb
 }
 
 // WithCSVFormatter sets formatter specifically for CSV output (overrides default)
-func (fb *FieldBuilder[T]) WithCSVFormatter(formatter OutputFormatter) *FieldBuilder[T] {
-	fb.field.formatters[OutputCSV] = formatter
+func (fb *FieldBuilder) WithCSVFormatter(formatter OutputFormatter) *FieldBuilder {
+	fb.base.formatters[OutputCSV] = formatter
 	return fb
 }
 
 // WithPDFFormatter sets formatter specifically for PDF output (overrides default)
-func (fb *FieldBuilder[T]) WithPDFFormatter(formatter OutputFormatter) *FieldBuilder[T] {
-	fb.field.formatters[OutputPDF] = formatter
+func (fb *FieldBuilder) WithPDFFormatter(formatter OutputFormatter) *FieldBuilder {
+	fb.base.formatters[OutputPDF] = formatter
 	return fb
 }
 
 // WithExcelFormatter sets formatter specifically for Excel output (overrides default)
-func (fb *FieldBuilder[T]) WithExcelFormatter(formatter OutputFormatter) *FieldBuilder[T] {
-	fb.field.formatters[OutputExcel] = formatter
+func (fb *FieldBuilder) WithExcelFormatter(formatter OutputFormatter) *FieldBuilder {
+	fb.base.formatters[OutputExcel] = formatter
 	return fb
 }
 
 // WithFooter sets footer aggregation type
-func (fb *FieldBuilder[T]) WithFooter(footer FieldFooter) *FieldBuilder[T] {
-	fb.field.footer = footer
+func (fb *FieldBuilder) WithFooter(footer FieldFooter) *FieldBuilder {
+	fb.base.footer = footer
 	return fb
 }
 
 // WithFooterSum enables sum aggregation in footer
-func (fb *FieldBuilder[T]) WithFooterSum() *FieldBuilder[T] {
-	fb.field.footer = FieldFooterSum
+func (fb *FieldBuilder) WithFooterSum() *FieldBuilder {
+	fb.base.footer = FieldFooterSum
 	return fb
 }
 
 // WithFooterCount enables count aggregation in footer
-func (fb *FieldBuilder[T]) WithFooterCount() *FieldBuilder[T] {
-	fb.field.footer = FieldFooterCount
+func (fb *FieldBuilder) WithFooterCount() *FieldBuilder {
+	fb.base.footer = FieldFooterCount
 	return fb
 }
 
 // Hide hides the field (not displayed in any output)
-func (fb *FieldBuilder[T]) Hide() *FieldBuilder[T] {
-	fb.field.hide = true
+func (fb *FieldBuilder) Hide() *FieldBuilder {
+	fb.base.hide = true
 	return fb
 }
 
 // HideInCSV excludes field from CSV export
-func (fb *FieldBuilder[T]) HideInCSV() *FieldBuilder[T] {
-	fb.field.csv = false
+func (fb *FieldBuilder) HideInCSV() *FieldBuilder {
+	fb.base.csv = false
 	return fb
 }
 
 // ShowInCSV includes field in CSV export (default)
-func (fb *FieldBuilder[T]) ShowInCSV() *FieldBuilder[T] {
-	fb.field.csv = true
+func (fb *FieldBuilder) ShowInCSV() *FieldBuilder {
+	fb.base.csv = true
 	return fb
 }
 
 // WithAlign sets text alignment
-func (fb *FieldBuilder[T]) WithAlign(align FieldAlign) *FieldBuilder[T] {
-	fb.field.align = &align
+func (fb *FieldBuilder) WithAlign(align FieldAlign) *FieldBuilder {
+	fb.base.align = &align
 	return fb
 }
 
 // AlignLeft sets left alignment
-func (fb *FieldBuilder[T]) AlignLeft() *FieldBuilder[T] {
+func (fb *FieldBuilder) AlignLeft() *FieldBuilder {
 	align := FieldAlignLeft
-	fb.field.align = &align
+	fb.base.align = &align
 	return fb
 }
 
 // AlignCenter sets center alignment
-func (fb *FieldBuilder[T]) AlignCenter() *FieldBuilder[T] {
+func (fb *FieldBuilder) AlignCenter() *FieldBuilder {
 	align := FieldAlignCenter
-	fb.field.align = &align
+	fb.base.align = &align
 	return fb
 }
 
 // AlignRight sets right alignment
-func (fb *FieldBuilder[T]) AlignRight() *FieldBuilder[T] {
+func (fb *FieldBuilder) AlignRight() *FieldBuilder {
 	align := FieldAlignRight
-	fb.field.align = &align
+	fb.base.align = &align
 	return fb
 }
 
 // WithWidth sets column width
-func (fb *FieldBuilder[T]) WithWidth(width string) *FieldBuilder[T] {
-	fb.field.width = &width
+func (fb *FieldBuilder) WithWidth(width string) *FieldBuilder {
+	fb.base.width = &width
 	return fb
 }
 
 // WithMinWidth sets minimum column width
-func (fb *FieldBuilder[T]) WithMinWidth(minWidth string) *FieldBuilder[T] {
-	fb.field.minWidth = &minWidth
+func (fb *FieldBuilder) WithMinWidth(minWidth string) *FieldBuilder {
+	fb.base.minWidth = &minWidth
 	return fb
 }
 
 // WithHint sets tooltip/hint text
-func (fb *FieldBuilder[T]) WithHint(hint string) *FieldBuilder[T] {
-	fb.field.hint = &hint
+func (fb *FieldBuilder) WithHint(hint string) *FieldBuilder {
+	fb.base.hint = &hint
 	return fb
 }
 
 // WithDisplay sets CSS display class
-func (fb *FieldBuilder[T]) WithDisplay(display string) *FieldBuilder[T] {
-	fb.field.display = &display
+func (fb *FieldBuilder) WithDisplay(display string) *FieldBuilder {
+	fb.base.display = &display
 	return fb
 }
 
 // AddButton adds a button to a buttons-type field
-func (fb *FieldBuilder[T]) AddButton(
+func (fb *FieldBuilder) AddButton(
 	key int,
 	action FieldButtonAction,
 	icon string,
 	color core.Color,
 	hint string,
-) *FieldBuilder[T] {
-	fb.field.addButton(key, action, icon, color, hint)
+) *FieldBuilder {
+	fb.base.addButton(key, action, icon, color, hint)
 	return fb
 }
 
@@ -144,32 +146,32 @@ func (fb *FieldBuilder[T]) AddButton(
 //
 //	builder.Field("distance", "trip.distance", table.Distance, accessor).
 //	    WithDecimals(3) // Override default 2 decimals
-func (fb *FieldBuilder[T]) WithDecimals(decimals int) *FieldBuilder[T] {
+func (fb *FieldBuilder) WithDecimals(decimals int) *FieldBuilder {
 	// Store decimals for later use
-	fb.field.decimals = decimals
+	fb.base.decimals = decimals
 
 	// Recreate formatter based on field type hint
-	switch fb.field.fieldTypeHint {
+	switch fb.base.fieldTypeHint {
 	case float:
-		fb.field.defaultFormatter = createFloatFormatter(decimals)
+		fb.base.defaultFormatter = createFloatFormatter(decimals)
 	case distanceHint:
-		fb.field.defaultFormatter = createDistanceFormatter(decimals)
+		fb.base.defaultFormatter = createDistanceFormatter(decimals)
 	case pressureHint:
-		fb.field.defaultFormatter = createPressureFormatter(decimals)
+		fb.base.defaultFormatter = createPressureFormatter(decimals)
 	case speedHint:
-		fb.field.defaultFormatter = createSpeedFormatter(decimals)
+		fb.base.defaultFormatter = createSpeedFormatter(decimals)
 	case text2Float:
-		fb.field.defaultFormatter = createText2FloatFormatter(decimals)
+		fb.base.defaultFormatter = createText2FloatFormatter(decimals)
 	case text2Distance:
-		fb.field.defaultFormatter = createText2DistanceFormatter(decimals)
+		fb.base.defaultFormatter = createText2DistanceFormatter(decimals)
 	case text2Speed:
-		fb.field.defaultFormatter = createText2SpeedFormatter(decimals)
+		fb.base.defaultFormatter = createText2SpeedFormatter(decimals)
 	case floatN:
-		fb.field.defaultFormatter = createFloatNFormatter(decimals)
+		fb.base.defaultFormatter = createFloatNFormatter(decimals)
 	case distanceN:
-		fb.field.defaultFormatter = createDistanceNFormatter(decimals)
+		fb.base.defaultFormatter = createDistanceNFormatter(decimals)
 	case speedN:
-		fb.field.defaultFormatter = createSpeedNFormatter(decimals)
+		fb.base.defaultFormatter = createSpeedNFormatter(decimals)
 	}
 	return fb
 }
@@ -180,96 +182,114 @@ func (fb *FieldBuilder[T]) WithDecimals(decimals int) *FieldBuilder[T] {
 //
 //	builder.Field("active", "device.active", table.Bool, accessor).
 //	    WithBoolText("Yes", "No")
-func (fb *FieldBuilder[T]) WithBoolText(trueText, falseText string) *FieldBuilder[T] {
-	fb.field.boolTrueText = trueText
-	fb.field.boolFalseText = falseText
-	fb.field.defaultFormatter = createBoolFormatter(trueText, falseText)
+func (fb *FieldBuilder) WithBoolText(trueText, falseText string) *FieldBuilder {
+	fb.base.boolTrueText = trueText
+	fb.base.boolFalseText = falseText
+	fb.base.defaultFormatter = createBoolFormatter(trueText, falseText)
 	return fb
 }
 
 // WithSearch sets searchable flag
-func (fb *FieldBuilder[T]) WithSearch(search bool) *FieldBuilder[T] {
-	fb.field.search = search
+func (fb *FieldBuilder) WithSearch(search bool) *FieldBuilder {
+	fb.base.search = search
 	return fb
 }
 
 // WithSort sets sortable flag
-func (fb *FieldBuilder[T]) WithSort(sort bool) *FieldBuilder[T] {
-	fb.field.sort = sort
+func (fb *FieldBuilder) WithSort(sort bool) *FieldBuilder {
+	fb.base.sort = sort
 	return fb
 }
 
 // WithSticky makes column sticky (fixed during scroll)
-func (fb *FieldBuilder[T]) WithSticky(sticky bool) *FieldBuilder[T] {
-	fb.field.sticky = sticky
+func (fb *FieldBuilder) WithSticky(sticky bool) *FieldBuilder {
+	fb.base.sticky = sticky
 	return fb
 }
 
 // WithHeader sets custom header text
-func (fb *FieldBuilder[T]) WithHeader(header string) *FieldBuilder[T] {
-	fb.field.header = &header
+func (fb *FieldBuilder) WithHeader(header string) *FieldBuilder {
+	fb.base.header = &header
 	return fb
 }
 
 // WithHeaderSpan sets header column span
-func (fb *FieldBuilder[T]) WithHeaderSpan(span int) *FieldBuilder[T] {
-	fb.field.headerSpan = &span
+func (fb *FieldBuilder) WithHeaderSpan(span int) *FieldBuilder {
+	fb.base.headerSpan = &span
 	return fb
 }
 
 // WithColumnOrder sets column ordering
-func (fb *FieldBuilder[T]) WithColumnOrder(order int) *FieldBuilder[T] {
-	fb.field.columnOrder = order
+func (fb *FieldBuilder) WithColumnOrder(order int) *FieldBuilder {
+	fb.base.columnOrder = order
 	return fb
 }
 
 // WithInputType sets input field type
-func (fb *FieldBuilder[T]) WithInputType(inputType string) *FieldBuilder[T] {
-	fb.field.inputType = &inputType
+func (fb *FieldBuilder) WithInputType(inputType string) *FieldBuilder {
+	fb.base.inputType = &inputType
 	return fb
 }
 
 // WithInputRequired sets input required flag
-func (fb *FieldBuilder[T]) WithInputRequired(required bool) *FieldBuilder[T] {
-	fb.field.inputRequired = &required
+func (fb *FieldBuilder) WithInputRequired(required bool) *FieldBuilder {
+	fb.base.inputRequired = &required
 	return fb
 }
 
 // WithInputLang sets input language
-func (fb *FieldBuilder[T]) WithInputLang(lang string) *FieldBuilder[T] {
-	fb.field.inputLang = &lang
+func (fb *FieldBuilder) WithInputLang(lang string) *FieldBuilder {
+	fb.base.inputLang = &lang
 	return fb
 }
 
 // WithInputPaste sets input paste enabled
-func (fb *FieldBuilder[T]) WithInputPaste(paste bool) *FieldBuilder[T] {
-	fb.field.inputPaste = &paste
+func (fb *FieldBuilder) WithInputPaste(paste bool) *FieldBuilder {
+	fb.base.inputPaste = &paste
 	return fb
 }
 
 // WithTextPrefix sets text prefix
-func (fb *FieldBuilder[T]) WithTextPrefix(prefix string) *FieldBuilder[T] {
-	fb.field.textPrefix = &prefix
+func (fb *FieldBuilder) WithTextPrefix(prefix string) *FieldBuilder {
+	fb.base.textPrefix = &prefix
 	return fb
 }
 
 // WithTextSuffix sets text suffix
-func (fb *FieldBuilder[T]) WithTextSuffix(suffix string) *FieldBuilder[T] {
-	fb.field.textSuffix = &suffix
-	return fb
-}
-
-// WithRowHint sets a per-row hint accessor for icon fields.
-// When set, the hint text is extracted from each row and sent as row[fieldId + "Hint"].
-// In the Angular frontend, this overrides the static per-icon hint.
-func (fb *FieldBuilder[T]) WithRowHint(accessor func(T) string) *FieldBuilder[T] {
-	fb.field.hintAccessor = accessor
+func (fb *FieldBuilder) WithTextSuffix(suffix string) *FieldBuilder {
+	fb.base.textSuffix = &suffix
 	return fb
 }
 
 // WithAccess sets required permissions
-func (fb *FieldBuilder[T]) WithAccess(access []string) *FieldBuilder[T] {
-	fb.field.access = access
+func (fb *FieldBuilder) WithAccess(access []string) *FieldBuilder {
+	fb.base.access = access
+	return fb
+}
+
+// AddMenuItem adds a menu item definition to the last added menu button.
+func (fb *FieldBuilder) AddMenuItem(action FieldButtonAction, icon string, color core.Color, text string) *FieldBuilder {
+	if fb.base.menuItems == nil {
+		fb.base.menuItems = make(map[int][]*menuItemDef)
+	}
+	fb.base.menuItems[fb.lastMenuKey] = append(fb.base.menuItems[fb.lastMenuKey], &menuItemDef{
+		action: action,
+		icon:   icon,
+		color:  color,
+		text:   text,
+	})
+	return fb
+}
+
+// ============================================================================
+// T-dependent methods — generic standalone functions
+// ============================================================================
+
+// WithRowHint sets a per-row hint accessor for icon fields.
+// When set, the hint text is extracted from each row and sent as row[fieldId + "Hint"].
+// In the Angular frontend, this overrides the static per-icon hint.
+func WithRowHint[T any](fb *FieldBuilder, accessor func(T) string) *FieldBuilder {
+	fb.typedField.(*field[T]).hintAccessor = accessor
 	return fb
 }
 
@@ -278,33 +298,20 @@ func (fb *FieldBuilder[T]) WithAccess(access []string) *FieldBuilder[T] {
 // - non-empty string: URL/data for the menu item
 // - "": hide the menu item for this row
 // Returning nil hides the entire menu button for this row.
-func (fb *FieldBuilder[T]) AddMenu(key int, icon string, color core.Color, hint string, accessor func(T) []string) *FieldBuilder[T] {
-	fb.field.addButton(key, FieldButtonActionMenu, icon, color, hint)
+func AddMenu[T any](fb *FieldBuilder, key int, icon string, color core.Color, hint string, accessor func(T) []string) *FieldBuilder {
+	fb.base.addButton(key, FieldButtonActionMenu, icon, color, hint)
 
-	if fb.field.menuAccessors == nil {
-		fb.field.menuAccessors = make(map[int]func(T) []string)
+	f := fb.typedField.(*field[T])
+	if f.menuAccessors == nil {
+		f.menuAccessors = make(map[int]func(T) []string)
 	}
-	fb.field.menuAccessors[key] = accessor
+	f.menuAccessors[key] = accessor
 
-	if fb.field.menuItems == nil {
-		fb.field.menuItems = make(map[int][]*menuItemDef)
+	if fb.base.menuItems == nil {
+		fb.base.menuItems = make(map[int][]*menuItemDef)
 	}
-	fb.field.menuItems[key] = nil
+	fb.base.menuItems[key] = nil
 
 	fb.lastMenuKey = key
-	return fb
-}
-
-// AddMenuItem adds a menu item definition to the last added menu button.
-func (fb *FieldBuilder[T]) AddMenuItem(action FieldButtonAction, icon string, color core.Color, text string) *FieldBuilder[T] {
-	if fb.field.menuItems == nil {
-		fb.field.menuItems = make(map[int][]*menuItemDef)
-	}
-	fb.field.menuItems[fb.lastMenuKey] = append(fb.field.menuItems[fb.lastMenuKey], &menuItemDef{
-		action: action,
-		icon:   icon,
-		color:  color,
-		text:   text,
-	})
 	return fb
 }

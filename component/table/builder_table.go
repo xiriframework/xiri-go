@@ -29,19 +29,21 @@ func NewBuilder[T any](ctx *uicontext.UiContext, translator core.TranslateFunc) 
 
 	return &TableBuilder[T]{
 		table: &Table[T]{
-			ctx:             ctx,
-			translator:      translator,
-			fields:          make([]*field[T], 0),
-			fieldsCanChange: false,
-			options: TableOptions{
-				Pagination: &defaultTrue, // Default: enabled
-				Search:     &defaultTrue, // Default: enabled
-				Reload:     &defaultTrue, // Default: enabled
-				Csv:        &defaultTrue, // Default: enabled
-				Excel:      &defaultTrue, // Default: enabled
-				TextNoData: &defaultTextNoData,
+			tableCore: tableCore{
+				ctx:        ctx,
+				translator: translator,
+				fieldBases: make([]*fieldBase, 0),
+				options: TableOptions{
+					Pagination: &defaultTrue, // Default: enabled
+					Search:     &defaultTrue, // Default: enabled
+					Reload:     &defaultTrue, // Default: enabled
+					Csv:        &defaultTrue, // Default: enabled
+					Excel:      &defaultTrue, // Default: enabled
+					TextNoData: &defaultTextNoData,
+				},
+				outputType: OutputWeb, // Default output mode
 			},
-			outputType: OutputWeb, // Default output mode
+			fields: make([]*field[T], 0),
 		},
 	}
 }
@@ -49,23 +51,25 @@ func NewBuilder[T any](ctx *uicontext.UiContext, translator core.TranslateFunc) 
 // fieldInternal is the internal implementation for all typed field methods.
 // This method is used by all type-safe field methods (IntField, TextField, etc.)
 // to create fields with the correct configuration.
-func (b *TableBuilder[T]) fieldInternal(id string, name string, fieldType fieldTypeHint, accessor func(T) any) *FieldBuilder[T] {
-	field := &field[T]{
-		id:         id,
-		name:       name,
-		accessor:   accessor,
-		formatters: make(map[OutputType]OutputFormatter),
-		csv:        true,          // Include in CSV by default
-		footer:     FieldFooterNo, // No footer by default
+func (b *TableBuilder[T]) fieldInternal(id string, name string, fieldType fieldTypeHint, accessor func(T) any) *FieldBuilder {
+	f := &field[T]{
+		fieldBase: fieldBase{
+			id:         id,
+			name:       name,
+			formatters: make(map[OutputType]OutputFormatter),
+			csv:        true,          // Include in CSV by default
+			footer:     FieldFooterNo, // No footer by default
+		},
+		accessor: accessor,
 	}
 
-	// Apply defaults based on field type
-	builder := &FieldBuilder[T]{field: field}
-	builder = applyFieldTypeDefaults(builder, fieldType)
+	// Apply defaults based on field type (non-generic)
+	applyFieldTypeDefaults(&f.fieldBase, fieldType)
 
-	b.table.fields = append(b.table.fields, field)
+	b.table.fields = append(b.table.fields, f)
+	b.table.fieldBases = append(b.table.fieldBases, &f.fieldBase)
 
-	return builder
+	return &FieldBuilder{base: &f.fieldBase, typedField: f}
 }
 
 // SetFilter sets the filter FormGroup.
@@ -104,7 +108,7 @@ func (b *TableBuilder[T]) Build() *Table[T] {
 
 // validateFields checks field configurations and logs warnings for likely mistakes.
 func (b *TableBuilder[T]) validateFields() {
-	for _, f := range b.table.fields {
+	for _, f := range b.table.fieldBases {
 		switch f.fieldType {
 		case fieldTypeIcon:
 			if len(f.icons) == 0 {

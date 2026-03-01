@@ -53,10 +53,11 @@ var fieldDefaults = map[fieldTypeHint]fieldDefault{
 	header:          {fieldTypeHeader, alignPtr(FieldAlignLeft), 0, false, false, false},
 }
 
-// applyFieldTypeDefaults configures a field builder with appropriate defaults
+// applyFieldTypeDefaults configures a fieldBase with appropriate defaults
 // based on the specified field type hint.
-func applyFieldTypeDefaults[T any](builder *FieldBuilder[T], ft fieldTypeHint) *FieldBuilder[T] {
-	builder.field.fieldTypeHint = ft
+// This function is non-generic to avoid monomorphization across all Table[T] instantiations.
+func applyFieldTypeDefaults(base *fieldBase, ft fieldTypeHint) {
+	base.fieldTypeHint = ft
 
 	// Apply struct defaults from the map
 	def, ok := fieldDefaults[ft]
@@ -64,88 +65,86 @@ func applyFieldTypeDefaults[T any](builder *FieldBuilder[T], ft fieldTypeHint) *
 		def = fieldDefault{fieldTypeText, alignPtr(FieldAlignLeft), 0, true, true, true}
 	}
 
-	builder.field.fieldType = def.fieldType
-	builder.field.align = def.align
-	builder.field.decimals = def.decimals
-	builder.field.search = def.search
-	builder.field.sort = def.sort
-	builder.field.csv = def.csv
+	base.fieldType = def.fieldType
+	base.align = def.align
+	base.decimals = def.decimals
+	base.search = def.search
+	base.sort = def.sort
+	base.csv = def.csv
 
 	// Bool-specific defaults
 	if ft == boolean {
-		builder.field.boolTrueText = "true"
-		builder.field.boolFalseText = "false"
+		base.boolTrueText = "true"
+		base.boolFalseText = "false"
 	}
 
 	// Assign formatter (closures that may reference decimals)
 	switch ft {
 	case idHint:
-		builder.field.defaultFormatter = createIdFormatter()
+		base.defaultFormatter = createIdFormatter()
 	case integer:
-		builder.field.defaultFormatter = createIntegerFormatter()
+		base.defaultFormatter = createIntegerFormatter()
 	case float:
-		builder.field.defaultFormatter = createFloatFormatter(def.decimals)
+		base.defaultFormatter = createFloatFormatter(def.decimals)
 	case text, html, inputHint, header:
-		builder.field.defaultFormatter = createTextFormatter()
+		base.defaultFormatter = createTextFormatter()
 	case boolean:
-		builder.field.defaultFormatter = createBoolFormatter("true", "false")
+		base.defaultFormatter = createBoolFormatter("true", "false")
 	case dateTime:
-		builder.field.defaultFormatter = createDateTimeFormatter()
+		base.defaultFormatter = createDateTimeFormatter()
 	case date:
-		builder.field.defaultFormatter = createDateFormatter()
+		base.defaultFormatter = createDateFormatter()
 	case distanceHint:
-		builder.field.defaultFormatter = createDistanceFormatter(def.decimals)
+		base.defaultFormatter = createDistanceFormatter(def.decimals)
 	case pressureHint:
-		builder.field.defaultFormatter = createPressureFormatter(def.decimals)
+		base.defaultFormatter = createPressureFormatter(def.decimals)
 	case speedHint:
-		builder.field.defaultFormatter = createSpeedFormatter(def.decimals)
+		base.defaultFormatter = createSpeedFormatter(def.decimals)
 	case buttons:
-		builder.field.defaultFormatter = createPassthroughFormatter()
+		base.defaultFormatter = createPassthroughFormatter()
 	case icon:
-		builder.field.defaultFormatter = createTextFormatter()
+		base.defaultFormatter = createTextFormatter()
 	case link:
-		builder.field.defaultFormatter = createLinkFormatter()
+		base.defaultFormatter = createLinkFormatter()
 	case text2:
-		builder.field.defaultFormatter = createText2Formatter()
+		base.defaultFormatter = createText2Formatter()
 	case text2Int:
-		builder.field.defaultFormatter = createText2IntFormatter()
+		base.defaultFormatter = createText2IntFormatter()
 	case text2Float:
-		builder.field.defaultFormatter = createText2FloatFormatter(def.decimals)
+		base.defaultFormatter = createText2FloatFormatter(def.decimals)
 	case text2DateTime:
-		builder.field.defaultFormatter = createText2DateTimeFormatter()
+		base.defaultFormatter = createText2DateTimeFormatter()
 	case text2Date:
-		builder.field.defaultFormatter = createText2DateFormatter()
+		base.defaultFormatter = createText2DateFormatter()
 	case text2Distance:
-		builder.field.defaultFormatter = createText2DistanceFormatter(def.decimals)
+		base.defaultFormatter = createText2DistanceFormatter(def.decimals)
 	case text2Speed:
-		builder.field.defaultFormatter = createText2SpeedFormatter(def.decimals)
+		base.defaultFormatter = createText2SpeedFormatter(def.decimals)
 	case text2Bool:
-		builder.field.defaultFormatter = createText2BoolFormatter()
+		base.defaultFormatter = createText2BoolFormatter()
 	case timeLength:
-		builder.field.defaultFormatter = createTimeLengthFormatter()
+		base.defaultFormatter = createTimeLengthFormatter()
 	case text2TimeLength:
-		builder.field.defaultFormatter = createText2TimeLengthFormatter()
+		base.defaultFormatter = createText2TimeLengthFormatter()
 	case textN:
-		builder.field.defaultFormatter = createTextNFormatter()
+		base.defaultFormatter = createTextNFormatter()
 	case integerN:
-		builder.field.defaultFormatter = createIntegerNFormatter()
+		base.defaultFormatter = createIntegerNFormatter()
 	case floatN:
-		builder.field.defaultFormatter = createFloatNFormatter(def.decimals)
+		base.defaultFormatter = createFloatNFormatter(def.decimals)
 	case dateTimeN:
-		builder.field.defaultFormatter = createDateTimeNFormatter()
+		base.defaultFormatter = createDateTimeNFormatter()
 	case dateN:
-		builder.field.defaultFormatter = createDateNFormatter()
+		base.defaultFormatter = createDateNFormatter()
 	case distanceN:
-		builder.field.defaultFormatter = createDistanceNFormatter(def.decimals)
+		base.defaultFormatter = createDistanceNFormatter(def.decimals)
 	case speedN:
-		builder.field.defaultFormatter = createSpeedNFormatter(def.decimals)
+		base.defaultFormatter = createSpeedNFormatter(def.decimals)
 	case boolN:
-		builder.field.defaultFormatter = createBoolNFormatter()
+		base.defaultFormatter = createBoolNFormatter()
 	case timeLengthN:
-		builder.field.defaultFormatter = createTimeLengthNFormatter()
+		base.defaultFormatter = createTimeLengthNFormatter()
 	default:
-		builder.field.defaultFormatter = createTextFormatter()
+		base.defaultFormatter = createTextFormatter()
 	}
-
-	return builder
 }

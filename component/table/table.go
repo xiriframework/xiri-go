@@ -14,12 +14,12 @@ import (
 	"github.com/xiriframework/xiri-go/uicontext"
 )
 
-// Table is a generic type-safe table that maintains type safety internally
-// while producing output compatible with the existing component.Table JSON format.
-type Table[T any] struct {
-	fields          []*field[T]
+// tableCore contains all type-independent table state and configuration.
+// Methods on tableCore are non-generic and exist only once in the binary,
+// avoiding monomorphization across all Table[T] instantiations.
+type tableCore struct {
+	fieldBases      []*fieldBase
 	fieldsCanChange bool
-	data            []T
 	ctx             *uicontext.UiContext
 	translator      core.TranslateFunc
 
@@ -32,6 +32,14 @@ type Table[T any] struct {
 	options    TableOptions
 	outputType OutputType       // Current output mode (Web, CSV, PDF, Excel)
 	components []core.Component // Additional components (charts, stats, progress bars, etc.)
+}
+
+// Table is a generic type-safe table that maintains type safety internally
+// while producing output compatible with the existing component.Table JSON format.
+type Table[T any] struct {
+	tableCore
+	fields []*field[T]
+	data   []T
 }
 
 // TableOptions contains all table configuration options.
@@ -65,6 +73,574 @@ type TableOptions struct {
 	ServerSide    *bool   // Enable server-side pagination (data fetched page-by-page)
 	ScrollHeight  *string // Custom scroll height for the table container (e.g., "400px", "80vh")
 }
+
+// ============================================================================
+// Non-generic methods on tableCore (exist only once in the binary)
+// ============================================================================
+
+// GetContext returns the UiContext
+func (tc *tableCore) GetContext() *uicontext.UiContext {
+	return tc.ctx
+}
+
+// GetTranslator returns the translator function
+func (tc *tableCore) GetTranslator() core.TranslateFunc {
+	return tc.translator
+}
+
+// GetURL returns the table URL
+func (tc *tableCore) GetURL() *xurl.Url {
+	return tc.url
+}
+
+// GetFilter returns the filter FormGroup
+func (tc *tableCore) GetFilter() *group.FormGroup {
+	return tc.filter
+}
+
+// GetFilterData returns the raw filter data from the request.
+func (tc *tableCore) GetFilterData() map[string]any {
+	return tc.filterData
+}
+
+// GetOutputType returns the current output type (Web, CSV, PDF, Excel).
+func (tc *tableCore) GetOutputType() OutputType {
+	return tc.outputType
+}
+
+// GetOptions returns the table options
+func (tc *tableCore) GetOptions() TableOptions {
+	return tc.options
+}
+
+// SetOutputType sets the output type for the table.
+func (tc *tableCore) SetOutputType(output OutputType) {
+	tc.outputType = output
+}
+
+// AddButtonTop adds a button to the table's top toolbar.
+func (tc *tableCore) AddButtonTop(btn *button.TableButton) {
+	tc.options.ButtonsTop = append(tc.options.ButtonsTop, btn)
+}
+
+// LoadFilterData parses filter data from request, detects CSV flag, and returns parsed filter values.
+// This is the main method controllers should use for handling table data requests.
+//
+// Returns:
+//   - Parsed filter values (empty map if no filter)
+//   - Error if parsing/validation fails
+//
+// Side effects:
+//   - Sets outputType to OutputCSV if _csv flag is true
+//   - Stores raw filter data in filterData field
+//
+// Example:
+//
+//	tbl := buildDeviceTable(ctx, translator)
+//	parsedFilters, err := tbl.LoadFilterData(c)
+//	if err != nil {
+//	    return wc.BadRequest(err.Error())
+//	}
+//	rows := fetchDevicesWithFilters(parsedFilters)
+//	tbl.SetData(rows)
+//	return wc.TableDataFromTable(tbl)
+func (tc *tableCore) LoadFilterData(c echo.Context) (map[string]any, error) {
+	// Parse request body (contains filter fields + _csv flag)
+	var requestData map[string]interface{}
+	if err := c.Bind(&requestData); err != nil {
+		slog.Debug("LoadFilterData: failed to bind request body, using empty map", "error", err)
+		requestData = make(map[string]interface{})
+	}
+
+	// Check for CSV flag and set output type (only if CSV export is enabled in options)
+	if tc.options.Csv == nil || *tc.options.Csv {
+		if csvVal, ok := requestData["_csv"]; ok {
+			if csvBool, isBool := csvVal.(bool); isBool && csvBool {
+				tc.outputType = OutputCSV
+			} else if csvStr, isStr := csvVal.(string); isStr && csvStr == "true" {
+				tc.outputType = OutputCSV
+			}
+		}
+	}
+
+	// Check for Excel flag and set output type (only if Excel export is enabled in options)
+	if tc.options.Excel == nil || *tc.options.Excel {
+		if excelVal, ok := requestData["_excel"]; ok {
+			if excelBool, isBool := excelVal.(bool); isBool && excelBool {
+				tc.outputType = OutputExcel
+			} else if excelStr, isStr := excelVal.(string); isStr && excelStr == "true" {
+				tc.outputType = OutputExcel
+			}
+		}
+	}
+
+	// Store filter data (exclude _csv, _excel and flags)
+	tc.filterData = make(map[string]any)
+	for k, v := range requestData {
+		if k == "_csv" || k == "_excel" {
+			continue
+		}
+		// Check if field is a flag
+		isFlag := false
+		for _, flag := range tc.flags {
+			if k == flag {
+				isFlag = true
+				break
+			}
+		}
+		if !isFlag {
+			tc.filterData[k] = v
+		}
+	}
+
+	// Parse filter values (if filter exists)
+	if tc.filter != nil {
+		parsedFilters, err := tc.filter.ParseAndValidate(tc.filterData)
+		if err != nil {
+			return nil, err
+		}
+		return parsedFilters, nil
+	}
+
+	// No filter - return raw data excluding pagination params
+	// (pagination params are kept in filterData for LoadPaginationParams)
+	result := make(map[string]any)
+	for k, v := range tc.filterData {
+		// Exclude server-side pagination params from returned filter data
+		if k == "_page" || k == "_pageSize" || k == "_sort" || k == "_sortDir" || k == "_search" {
+			continue
+		}
+		result[k] = v
+	}
+	return result, nil
+}
+
+// PaginationParams holds server-side pagination parameters from request.
+// These are extracted from request body when server-side pagination is enabled.
+type PaginationParams struct {
+	Page     int    // 0-based page index (from _page)
+	PageSize int    // Items per page (from _pageSize)
+	Sort     string // Column ID to sort by (from _sort, optional)
+	SortDir  string // "asc" or "desc" (from _sortDir, optional)
+	Search   string // Search text (from _search, optional)
+}
+
+// LoadPaginationParams extracts server-side pagination parameters from request body.
+// Call this AFTER LoadFilterData() to get pagination parameters.
+// Returns default values (page=0, pageSize=50) if parameters are not present.
+//
+// Example:
+//
+//	filters, _ := tbl.LoadFilterData(c)
+//	pagination := tbl.LoadPaginationParams()
+//	devices, total := dbm.Device.FindWithPagination(filters, pagination.Page, pagination.PageSize)
+func (tc *tableCore) LoadPaginationParams() PaginationParams {
+	params := PaginationParams{
+		Page:     0,
+		PageSize: 50, // Default page size
+		SortDir:  "asc",
+	}
+
+	// Use ItemsPerPage from options as default if set
+	if tc.options.ItemsPerPage != nil {
+		params.PageSize = *tc.options.ItemsPerPage
+	}
+
+	// Extract from stored filter data (set by LoadFilterData)
+	if tc.filterData == nil {
+		return params
+	}
+
+	// _page (0-based)
+	if pageVal, ok := tc.filterData["_page"]; ok {
+		switch v := pageVal.(type) {
+		case float64:
+			params.Page = int(v)
+		case int:
+			params.Page = v
+		case int64:
+			params.Page = int(v)
+		}
+	}
+
+	// _pageSize
+	if pageSizeVal, ok := tc.filterData["_pageSize"]; ok {
+		switch v := pageSizeVal.(type) {
+		case float64:
+			params.PageSize = int(v)
+		case int:
+			params.PageSize = v
+		case int64:
+			params.PageSize = int(v)
+		}
+	}
+
+	// _sort
+	if sortVal, ok := tc.filterData["_sort"]; ok {
+		if s, ok := sortVal.(string); ok {
+			params.Sort = s
+		}
+	}
+
+	// _sortDir
+	if sortDirVal, ok := tc.filterData["_sortDir"]; ok {
+		if s, ok := sortDirVal.(string); ok && (s == "asc" || s == "desc") {
+			params.SortDir = s
+		}
+	}
+
+	// _search
+	if searchVal, ok := tc.filterData["_search"]; ok {
+		if s, ok := searchVal.(string); ok {
+			params.Search = s
+		}
+	}
+
+	// Validate sort against defined field IDs to prevent SQL injection
+	if params.Sort != "" {
+		valid := false
+		for _, f := range tc.fieldBases {
+			if f.id == params.Sort {
+				valid = true
+				break
+			}
+		}
+		if !valid {
+			params.Sort = ""
+		}
+	}
+
+	// Clamp page size to prevent memory exhaustion
+	if params.PageSize < 1 {
+		params.PageSize = 50
+	}
+	if params.PageSize > 1000 {
+		params.PageSize = 1000
+	}
+
+	// Prevent negative page index
+	if params.Page < 0 {
+		params.Page = 0
+	}
+
+	// Limit search string length to prevent performance issues
+	if len(params.Search) > 200 {
+		params.Search = params.Search[:200]
+	}
+
+	return params
+}
+
+// exportFields converts fieldBase array to JSON array for component output.
+// Each field is converted to tableFieldJSON format for JSON serialization.
+// Hidden fields are excluded from the output.
+func (tc *tableCore) exportFields(translator core.TranslateFunc) []map[string]any {
+	fields := make([]map[string]any, 0, len(tc.fieldBases))
+	for _, f := range tc.fieldBases {
+		if f.hide {
+			continue
+		}
+		jsonField := f.toTableField()
+		fields = append(fields, jsonField.print(translator))
+	}
+	return fields
+}
+
+// exportFieldsForCSV converts fieldBase array to JSON array for CSV export only.
+// This filters out fields where csv=false or fields that are hidden.
+func (tc *tableCore) exportFieldsForCSV(translator core.TranslateFunc) []map[string]any {
+	csvFields := make([]map[string]any, 0, len(tc.fieldBases))
+	for _, f := range tc.fieldBases {
+		if f.hide {
+			continue
+		}
+		if !f.csv {
+			continue
+		}
+		jsonField := f.toTableField()
+		csvFields = append(csvFields, jsonField.print(translator))
+	}
+	return csvFields
+}
+
+// exportOptions converts TableOptions to JSON map for component output.
+// Matches component.Table options format exactly.
+func (tc *tableCore) exportOptions(translator core.TranslateFunc) map[string]any {
+	opts := tc.options
+	options := make(map[string]any)
+
+	// Add all options that are set
+	if opts.Class != nil {
+		options["class"] = *opts.Class
+	}
+	if opts.Title != nil {
+		options["title"] = *opts.Title
+	}
+	if opts.TextNoData != nil {
+		options["textNoData"] = *opts.TextNoData
+	}
+	if opts.EmptyState != nil {
+		options["emptyState"] = opts.EmptyState.PrintData(translator)
+	}
+	if opts.ItemsPerPage != nil {
+		options["itemsPerPage"] = *opts.ItemsPerPage
+	}
+	if opts.PageSizes != nil && len(opts.PageSizes) > 0 {
+		options["pageSizes"] = opts.PageSizes
+	}
+
+	// ButtonsTop: Add CSV button if enabled, then export all buttons
+	var topButtons []*button.TableButton
+	if opts.ButtonsTop != nil {
+		topButtons = append(topButtons, opts.ButtonsTop...)
+	}
+
+	// Auto-generate CSV download button if CSV option enabled and URL exists
+	if opts.Csv != nil && *opts.Csv && tc.url != nil {
+		csvBtn := button.NewTableButton(
+			core.ButtonActionDownload,
+			"csv",
+			tc.url,
+			"CSV",
+			core.ColorAccent,
+			false,
+			map[string]any{"data": map[string]bool{"_csv": true}},
+		)
+		topButtons = append(topButtons, csvBtn)
+	}
+
+	// Auto-generate Excel download button if Excel option enabled and URL exists
+	if opts.Excel != nil && *opts.Excel && tc.url != nil {
+		excelBtn := button.NewTableButton(
+			core.ButtonActionDownload,
+			"explicit",
+			tc.url,
+			"Excel",
+			core.ColorAccent,
+			false,
+			map[string]any{"data": map[string]bool{"_excel": true}},
+		)
+		topButtons = append(topButtons, excelBtn)
+	}
+
+	// Export ButtonsTop in same format as SelectButtons
+	if len(topButtons) > 0 {
+		buttons := make([]map[string]any, len(topButtons))
+		for i, btn := range topButtons {
+			buttons[i] = btn.Print(translator)
+		}
+		options["buttons"] = map[string]any{"buttons": buttons}
+	}
+
+	if opts.Reload != nil {
+		options["reload"] = *opts.Reload
+	}
+	if opts.Dense != nil {
+		options["dense"] = *opts.Dense
+	}
+	if opts.Pagination != nil {
+		options["pagination"] = *opts.Pagination
+	}
+	if opts.Search != nil {
+		options["search"] = *opts.Search
+	}
+	if opts.MinWidth != nil {
+		options["minWidth"] = *opts.MinWidth
+	}
+	if opts.Query != nil {
+		options["query"] = *opts.Query
+	}
+	if opts.Csv != nil {
+		options["csv"] = *opts.Csv
+	}
+	if opts.SaveState != nil && opts.SaveStateId != nil {
+		options["saveState"] = *opts.SaveState
+		options["saveStateId"] = *opts.SaveStateId
+	}
+	if opts.SaveInput != nil {
+		options["saveInput"] = *opts.SaveInput
+	}
+	if opts.SaveInputUrl != nil {
+		options["saveInputUrl"] = *opts.SaveInputUrl
+	}
+	if opts.Borders != nil {
+		options["borders"] = *opts.Borders
+	}
+	if opts.BordersHeader != nil {
+		options["bordersHeader"] = *opts.BordersHeader
+	}
+	if opts.Select != nil {
+		options["select"] = *opts.Select
+	}
+	// SelectButtons: serialize each button component
+	if opts.SelectButtons != nil && len(opts.SelectButtons) > 0 {
+		buttons := make([]map[string]any, len(opts.SelectButtons))
+		for i, btn := range opts.SelectButtons {
+			buttons[i] = btn.Print(translator)
+		}
+		options["selectButtons"] = buttons
+	}
+	if opts.Footer != nil {
+		options["footer"] = *opts.Footer
+	}
+	if opts.ServerSide != nil {
+		options["serverSide"] = *opts.ServerSide
+	}
+	if opts.ScrollHeight != nil {
+		options["scrollHeight"] = *opts.ScrollHeight
+	}
+
+	return options
+}
+
+// printComponent builds the component JSON for the Angular frontend.
+// staticData should be nil for AJAX mode, or the pre-formatted data for static mode.
+func (tc *tableCore) printComponent(trans core.TranslateFunc, staticData []map[string]any) map[string]any {
+	// Build base component structure
+	result := map[string]any{
+		"type": "table",
+	}
+
+	// Add display class if set
+	if tc.options.Display != nil {
+		result["display"] = *tc.options.Display
+	}
+
+	// Build data section
+	dataSection := make(map[string]any)
+
+	// Add filter flag
+	if tc.hasFilter != nil {
+		dataSection["hasFilter"] = *tc.hasFilter
+	} else {
+		dataSection["hasFilter"] = tc.filter != nil
+	}
+
+	// Add fields
+	dataSection["fields"] = tc.exportFields(trans)
+
+	// Add options
+	dataSection["options"] = tc.exportOptions(trans)
+
+	// Determine mode: AJAX (url set) vs Static (data set)
+	if tc.url != nil {
+		// AJAX mode: URL for dynamic loading
+		dataSection["url"] = tc.url.PrintPrefix()
+		dataSection["data"] = nil
+		dataSection["components"] = nil
+	} else {
+		// Static mode: embedded data
+		dataSection["url"] = nil
+		dataSection["data"] = staticData
+		dataSection["components"] = nil
+	}
+
+	result["data"] = dataSection
+
+	// If filter exists, automatically wrap table in Query component
+	if tc.filter != nil {
+		// Extra-Daten aus Form=false-Feldern sammeln
+		fields := tc.filter.GetFields()
+		extraData := make(map[string]any)
+		for _, f := range fields {
+			if !f.GetForm() {
+				extraData[f.GetID()] = f.GetDefault()
+			}
+		}
+
+		// Sichtbare Felder exportieren (ExportForFrontend überspringt Form=false)
+		filterForm := tc.filter.ExportForFrontend()
+
+		saveStateId := tc.options.SaveStateId
+		q := query.NewQuery(filterForm, saveStateId, tc.options.Display)
+
+		if len(extraData) > 0 {
+			q.SetExtraData(extraData)
+		}
+
+		q.AddArray(result)
+		return q.Print(trans)
+	}
+
+	return result
+}
+
+// hideFieldByID hides a single field by its ID in the fieldBases slice.
+// Returns true if the field was found.
+func (tc *tableCore) hideFieldByID(fieldID string) bool {
+	for _, f := range tc.fieldBases {
+		if f.id == fieldID {
+			f.hide = true
+			return true
+		}
+	}
+	return false
+}
+
+// showFieldByID shows a single field by its ID in the fieldBases slice.
+// Returns true if the field was found.
+func (tc *tableCore) showFieldByID(fieldID string) bool {
+	for _, f := range tc.fieldBases {
+		if f.id == fieldID {
+			f.hide = false
+			return true
+		}
+	}
+	return false
+}
+
+// hideFieldsByID hides multiple fields by their IDs in the fieldBases slice.
+func (tc *tableCore) hideFieldsByID(fieldIDs []string) {
+	if len(fieldIDs) == 0 {
+		return
+	}
+	hideMap := make(map[string]bool, len(fieldIDs))
+	for _, id := range fieldIDs {
+		hideMap[id] = true
+	}
+	for _, f := range tc.fieldBases {
+		if hideMap[f.id] {
+			f.hide = true
+		}
+	}
+}
+
+// showFieldsByID shows multiple fields by their IDs in the fieldBases slice.
+func (tc *tableCore) showFieldsByID(fieldIDs []string) {
+	if len(fieldIDs) == 0 {
+		return
+	}
+	showMap := make(map[string]bool, len(fieldIDs))
+	for _, id := range fieldIDs {
+		showMap[id] = true
+	}
+	for _, f := range tc.fieldBases {
+		if showMap[f.id] {
+			f.hide = false
+		}
+	}
+}
+
+// GetFieldMetas returns metadata for all fields. This is the public API for
+// external consumers that need field information (renderers, exporters).
+func (tc *tableCore) GetFieldMetas() []FieldMeta {
+	metas := make([]FieldMeta, len(tc.fieldBases))
+	for i, f := range tc.fieldBases {
+		metas[i] = FieldMeta{
+			ID:     f.id,
+			Name:   f.name,
+			Type:   string(f.fieldType),
+			Hidden: f.hide,
+			Align:  f.align,
+			CSV:    f.csv,
+		}
+	}
+	return metas
+}
+
+// ============================================================================
+// Generic methods on Table[T] (must use T)
+// ============================================================================
 
 // GetData returns formatted table data for a specific output type.
 // This is where the magic happens: raw row structs are converted to formatted map[string]any
@@ -167,269 +743,6 @@ func (t *Table[T]) buildFieldMap() map[string]func(T) any {
 	return fieldMap
 }
 
-// getFields returns all fields
-func (t *Table[T]) getFields() []*field[T] {
-	return t.fields
-}
-
-// GetContext returns the UiContext
-func (t *Table[T]) GetContext() *uicontext.UiContext {
-	return t.ctx
-}
-
-// GetTranslator returns the translator function
-func (t *Table[T]) GetTranslator() core.TranslateFunc {
-	return t.translator
-}
-
-// GetURL returns the table URL
-func (t *Table[T]) GetURL() *xurl.Url {
-	return t.url
-}
-
-// GetFilter returns the filter FormGroup
-func (t *Table[T]) GetFilter() *group.FormGroup {
-	return t.filter
-}
-
-// LoadFilterData parses filter data from request, detects CSV flag, and returns parsed filter values.
-// This is the main method controllers should use for handling table data requests.
-//
-// Returns:
-//   - Parsed filter values (empty map if no filter)
-//   - Error if parsing/validation fails
-//
-// Side effects:
-//   - Sets outputType to OutputCSV if _csv flag is true
-//   - Stores raw filter data in filterData field
-//
-// Example:
-//
-//	tbl := buildDeviceTable(ctx, translator)
-//	parsedFilters, err := tbl.LoadFilterData(c)
-//	if err != nil {
-//	    return wc.BadRequest(err.Error())
-//	}
-//	rows := fetchDevicesWithFilters(parsedFilters)
-//	tbl.SetData(rows)
-//	return wc.TableDataFromTable(tbl)
-func (t *Table[T]) LoadFilterData(c echo.Context) (map[string]any, error) {
-	// Parse request body (contains filter fields + _csv flag)
-	var requestData map[string]interface{}
-	if err := c.Bind(&requestData); err != nil {
-		slog.Debug("LoadFilterData: failed to bind request body, using empty map", "error", err)
-		requestData = make(map[string]interface{})
-	}
-
-	// Check for CSV flag and set output type (only if CSV export is enabled in options)
-	if t.options.Csv == nil || *t.options.Csv {
-		if csvVal, ok := requestData["_csv"]; ok {
-			if csvBool, isBool := csvVal.(bool); isBool && csvBool {
-				t.outputType = OutputCSV
-			} else if csvStr, isStr := csvVal.(string); isStr && csvStr == "true" {
-				t.outputType = OutputCSV
-			}
-		}
-	}
-
-	// Check for Excel flag and set output type (only if Excel export is enabled in options)
-	if t.options.Excel == nil || *t.options.Excel {
-		if excelVal, ok := requestData["_excel"]; ok {
-			if excelBool, isBool := excelVal.(bool); isBool && excelBool {
-				t.outputType = OutputExcel
-			} else if excelStr, isStr := excelVal.(string); isStr && excelStr == "true" {
-				t.outputType = OutputExcel
-			}
-		}
-	}
-
-	// Store filter data (exclude _csv, _excel and flags)
-	t.filterData = make(map[string]any)
-	for k, v := range requestData {
-		if k == "_csv" || k == "_excel" {
-			continue
-		}
-		// Check if field is a flag
-		isFlag := false
-		for _, flag := range t.flags {
-			if k == flag {
-				isFlag = true
-				break
-			}
-		}
-		if !isFlag {
-			t.filterData[k] = v
-		}
-	}
-
-	// Parse filter values (if filter exists)
-	if t.filter != nil {
-		parsedFilters, err := t.filter.ParseAndValidate(t.filterData)
-		if err != nil {
-			return nil, err
-		}
-		return parsedFilters, nil
-	}
-
-	// No filter - return raw data excluding pagination params
-	// (pagination params are kept in filterData for LoadPaginationParams)
-	result := make(map[string]any)
-	for k, v := range t.filterData {
-		// Exclude server-side pagination params from returned filter data
-		if k == "_page" || k == "_pageSize" || k == "_sort" || k == "_sortDir" || k == "_search" {
-			continue
-		}
-		result[k] = v
-	}
-	return result, nil
-}
-
-// SetFilterData manually sets filter data (for testing or special cases).
-// For normal use, prefer LoadFilterData() which handles request parsing automatically.
-func (t *Table[T]) SetFilterData(data map[string]any) *Table[T] {
-	t.filterData = data
-	return t
-}
-
-// GetFilterData returns the raw filter data from the request.
-func (t *Table[T]) GetFilterData() map[string]any {
-	return t.filterData
-}
-
-// AddButtonTop adds a button to the table's top toolbar.
-// Useful for adding action buttons (PDF, Excel, etc.) after building the table.
-func (t *Table[T]) AddButtonTop(btn *button.TableButton) {
-	t.options.ButtonsTop = append(t.options.ButtonsTop, btn)
-}
-
-// SetFlags sets UI-only filter fields that should be excluded from parsed data.
-// Flags are typically used for frontend state that shouldn't be sent to the backend.
-func (t *Table[T]) SetFlags(flags ...string) *Table[T] {
-	t.flags = flags
-	return t
-}
-
-// PaginationParams holds server-side pagination parameters from request.
-// These are extracted from request body when server-side pagination is enabled.
-type PaginationParams struct {
-	Page     int    // 0-based page index (from _page)
-	PageSize int    // Items per page (from _pageSize)
-	Sort     string // Column ID to sort by (from _sort, optional)
-	SortDir  string // "asc" or "desc" (from _sortDir, optional)
-	Search   string // Search text (from _search, optional)
-}
-
-// LoadPaginationParams extracts server-side pagination parameters from request body.
-// Call this AFTER LoadFilterData() to get pagination parameters.
-// Returns default values (page=0, pageSize=50) if parameters are not present.
-//
-// Example:
-//
-//	filters, _ := tbl.LoadFilterData(c)
-//	pagination := tbl.LoadPaginationParams()
-//	devices, total := dbm.Device.FindWithPagination(filters, pagination.Page, pagination.PageSize)
-func (t *Table[T]) LoadPaginationParams() PaginationParams {
-	params := PaginationParams{
-		Page:     0,
-		PageSize: 50, // Default page size
-		SortDir:  "asc",
-	}
-
-	// Use ItemsPerPage from options as default if set
-	if t.options.ItemsPerPage != nil {
-		params.PageSize = *t.options.ItemsPerPage
-	}
-
-	// Extract from stored filter data (set by LoadFilterData)
-	if t.filterData == nil {
-		return params
-	}
-
-	// _page (0-based)
-	if pageVal, ok := t.filterData["_page"]; ok {
-		switch v := pageVal.(type) {
-		case float64:
-			params.Page = int(v)
-		case int:
-			params.Page = v
-		case int64:
-			params.Page = int(v)
-		}
-	}
-
-	// _pageSize
-	if pageSizeVal, ok := t.filterData["_pageSize"]; ok {
-		switch v := pageSizeVal.(type) {
-		case float64:
-			params.PageSize = int(v)
-		case int:
-			params.PageSize = v
-		case int64:
-			params.PageSize = int(v)
-		}
-	}
-
-	// _sort
-	if sortVal, ok := t.filterData["_sort"]; ok {
-		if s, ok := sortVal.(string); ok {
-			params.Sort = s
-		}
-	}
-
-	// _sortDir
-	if sortDirVal, ok := t.filterData["_sortDir"]; ok {
-		if s, ok := sortDirVal.(string); ok && (s == "asc" || s == "desc") {
-			params.SortDir = s
-		}
-	}
-
-	// _search
-	if searchVal, ok := t.filterData["_search"]; ok {
-		if s, ok := searchVal.(string); ok {
-			params.Search = s
-		}
-	}
-
-	// Validate sort against defined field IDs to prevent SQL injection
-	if params.Sort != "" {
-		valid := false
-		for _, f := range t.fields {
-			if f.id == params.Sort {
-				valid = true
-				break
-			}
-		}
-		if !valid {
-			params.Sort = ""
-		}
-	}
-
-	// Clamp page size to prevent memory exhaustion
-	if params.PageSize < 1 {
-		params.PageSize = 50
-	}
-	if params.PageSize > 1000 {
-		params.PageSize = 1000
-	}
-
-	// Prevent negative page index
-	if params.Page < 0 {
-		params.Page = 0
-	}
-
-	// Limit search string length to prevent performance issues
-	if len(params.Search) > 200 {
-		params.Search = params.Search[:200]
-	}
-
-	return params
-}
-
-// GetOptions returns the table options
-func (t *Table[T]) GetOptions() TableOptions {
-	return t.options
-}
-
 // CalculateFooter computes footer aggregations for all fields with footer enabled.
 // Returns a map of field_id -> aggregated_value (formatted).
 func (t *Table[T]) CalculateFooter(output OutputType) map[string]any {
@@ -514,186 +827,65 @@ func toFloat64(value any) float64 {
 }
 
 // ============================================================================
-// Table Mutation Methods
+// Table Mutation Methods (generic thin wrappers)
 // ============================================================================
 
 // SetData sets or updates the table data after building.
-// This allows reusing the same table definition for both page and data endpoints.
-// When data is set, the URL is cleared to force static mode.
-//
-// Example:
-//
-//	// Shared table definition
-//	tbl := buildDeviceTable(ctx, translator)
-//
-//	// Data endpoint: set data and return formatted rows
-//	tbl.SetData(deviceRows)
-//	return tbl.GetData(OutputWeb)
 func (t *Table[T]) SetData(data []T) {
 	t.data = data
 	t.url = nil // Clear URL to force static mode
 }
 
 // SetURL sets or updates the AJAX data URL after building.
-// This allows reusing the same table definition for both page and data endpoints.
-// When URL is set, the data is cleared to force AJAX mode.
-//
-// Example:
-//
-//	// Shared table definition
-//	tbl := buildDeviceTable(ctx, translator)
-//
-//	// Page endpoint: set URL and return component definition
-//	tbl.SetURL(component.NewUrl("/Portal/Device/TableData", ""))
-//	return tbl.Print(translator)
 func (t *Table[T]) SetURL(url *xurl.Url) {
 	t.url = url
 	t.data = nil // Clear data to force AJAX mode
 }
 
-// GetOutputType returns the current output type (Web, CSV, PDF, Excel).
-// This determines how data is formatted when calling GetData() or ToTableDataResponse().
-func (t *Table[T]) GetOutputType() OutputType {
-	return t.outputType
-}
-
-// AddComponent adds a component (e.g., MultiProgress, Chart, Info) to display alongside the table.
-// Components are included in Web output but excluded from CSV/PDF/Excel exports.
-//
-// This is useful for adding statistics, charts, or informational messages above/below the table.
-// Components are rendered in the order they are added.
-//
-// Example usage:
-//
-//	// Add statistics progress bars
-//	kundeProgress := component.NewMultiProgress("Customers", 5, true, nil)
-//	kundeProgress.AddLine("Customer A", 10, component.ColorPrimary, nil)
-//	table.AddComponent(kundeProgress)
-//
-//	// Add informational message
-//	info := component.NewInfo("Note: Data refreshed hourly", core.ColorAccent)
-//	table.AddComponent(info)
-//
-//	return wc.TableDataFromTable(table)
+// AddComponent adds a component to display alongside the table.
 func (t *Table[T]) AddComponent(comp core.Component) *Table[T] {
 	t.components = append(t.components, comp)
 	return t
 }
 
-// HideField hides a single field by its ID. The field will be excluded from GetData() output.
-// This can be called after Build() to conditionally hide columns based on filters or permissions.
-//
-// Example:
-//
-//	tbl := builder.Build()
-//	if !user.IsAdmin() {
-//	    tbl.HideField("internal_id")
-//	}
-//	tbl.SetData(rows)
+// HideField hides a single field by its ID.
 func (t *Table[T]) HideField(fieldID string) *Table[T] {
-	for _, f := range t.fields {
-		if f.id == fieldID {
-			f.hide = true
-			return t
-		}
+	if !t.tableCore.hideFieldByID(fieldID) {
+		slog.Warn("HideField: field not found", "fieldID", fieldID)
 	}
-	slog.Warn("HideField: field not found", "fieldID", fieldID)
 	return t
 }
 
 // ShowField shows a previously hidden field by its ID.
-// This can be called after Build() to conditionally show columns.
-//
-// Example:
-//
-//	tbl := builder.Build()
-//	if user.HasPermission("view_costs") {
-//	    tbl.ShowField("cost")
-//	}
-//	tbl.SetData(rows)
 func (t *Table[T]) ShowField(fieldID string) *Table[T] {
-	for _, f := range t.fields {
-		if f.id == fieldID {
-			f.hide = false
-			return t
-		}
+	if !t.tableCore.showFieldByID(fieldID) {
+		slog.Warn("ShowField: field not found", "fieldID", fieldID)
 	}
-	slog.Warn("ShowField: field not found", "fieldID", fieldID)
 	return t
 }
 
-// HideFields hides multiple fields by their IDs. The fields will be excluded from GetData() output.
-// This is more efficient than calling HideField multiple times.
-//
-// Example:
-//
-//	tbl := builder.Build()
-//	if !user.IsAdmin() {
-//	    tbl.HideFields("device_id", "internal_notes", "cost")
-//	}
-//	tbl.SetData(rows)
+// HideFields hides multiple fields by their IDs.
 func (t *Table[T]) HideFields(fieldIDs ...string) *Table[T] {
-	if len(fieldIDs) == 0 {
-		return t
-	}
-
-	// Build map for O(1) lookup
-	hideMap := make(map[string]bool, len(fieldIDs))
-	for _, id := range fieldIDs {
-		hideMap[id] = true
-	}
-
-	// Set hide flag on matching fields
-	for _, f := range t.fields {
-		if hideMap[f.id] {
-			f.hide = true
-		}
-	}
+	t.tableCore.hideFieldsByID(fieldIDs)
 	return t
 }
 
 // ShowFields shows multiple previously hidden fields by their IDs.
-// This is more efficient than calling ShowField multiple times.
-//
-// Example:
-//
-//	tbl := builder.Build()
-//	if user.HasPermission("view_all") {
-//	    tbl.ShowFields("device_id", "internal_notes", "cost")
-//	}
-//	tbl.SetData(rows)
 func (t *Table[T]) ShowFields(fieldIDs ...string) *Table[T] {
-	if len(fieldIDs) == 0 {
-		return t
-	}
-
-	// Build map for O(1) lookup
-	showMap := make(map[string]bool, len(fieldIDs))
-	for _, id := range fieldIDs {
-		showMap[id] = true
-	}
-
-	// Clear hide flag on matching fields
-	for _, f := range t.fields {
-		if showMap[f.id] {
-			f.hide = false
-		}
-	}
+	t.tableCore.showFieldsByID(fieldIDs)
 	return t
 }
 
-// SetOutputType sets the output type for the table.
-// This affects data formatting in subsequent GetData() or ToTableDataResponse() calls.
-//
-// Example:
-//
-//	// Check for CSV request parameter
-//	if wc.QueryParam("_csv") == "true" {
-//	    tbl.SetOutputType(table.OutputCSV)
-//	}
-//	return wc.TableDataFromTable(tbl)
-func (t *Table[T]) SetOutputType(output OutputType) {
-	t.outputType = output
+// SetFilterData manually sets filter data.
+func (t *Table[T]) SetFilterData(data map[string]any) *Table[T] {
+	t.filterData = data
+	return t
+}
+
+// SetFlags sets UI-only filter fields that should be excluded from parsed data.
+func (t *Table[T]) SetFlags(flags ...string) *Table[T] {
+	t.flags = flags
+	return t
 }
 
 // ============================================================================
@@ -701,218 +893,25 @@ func (t *Table[T]) SetOutputType(output OutputType) {
 // ============================================================================
 
 // Print implements the core.Component interface, returning JSON for the Angular frontend.
-//
-// The output format depends on table configuration:
-// - AJAX mode (url != nil): Component definition with URL for dynamic data loading
-// - Static mode (url == nil, data != nil): Component definition with embedded data
+// The generic wrapper delegates to non-generic printComponent, only calling GetData when needed.
 func (t *Table[T]) Print(translator core.TranslateFunc) map[string]any {
-	// Use provided translator or fall back to table's translator
 	trans := translator
 	if trans == nil {
 		trans = t.translator
 	}
 
-	// Build base component structure
-	result := map[string]any{
-		"type": "table",
+	// For static mode (no URL), get data first (this is the only T-dependent part)
+	var staticData []map[string]any
+	if t.url == nil {
+		staticData = t.GetData(OutputWeb)
 	}
 
-	// Add display class if set
-	if t.options.Display != nil {
-		result["display"] = *t.options.Display
-	}
-
-	// Build data section
-	dataSection := make(map[string]any)
-
-	// Add filter flag
-	if t.hasFilter != nil {
-		dataSection["hasFilter"] = *t.hasFilter
-	} else {
-		dataSection["hasFilter"] = t.filter != nil
-	}
-
-	// Add fields
-	dataSection["fields"] = t.exportFields(trans)
-
-	// Add options
-	dataSection["options"] = t.exportOptions(trans)
-
-	// Determine mode: AJAX (url set) vs Static (data set)
-	if t.url != nil {
-		// AJAX mode: URL for dynamic loading
-		dataSection["url"] = t.url.PrintPrefix()
-		dataSection["data"] = nil
-		dataSection["components"] = nil
-	} else {
-		// Static mode: embedded data
-		dataSection["url"] = nil
-		dataSection["data"] = t.GetData(OutputWeb)
-		dataSection["components"] = nil
-	}
-
-	result["data"] = dataSection
-
-	// If filter exists, automatically wrap table in Query component
-	if t.filter != nil {
-		// Extra-Daten aus Form=false-Feldern sammeln
-		fields := t.filter.GetFields()
-		extraData := make(map[string]any)
-		for _, f := range fields {
-			if !f.GetForm() {
-				extraData[f.GetID()] = f.GetDefault()
-			}
-		}
-
-		// Sichtbare Felder exportieren (ExportForFrontend überspringt Form=false)
-		filterForm := t.filter.ExportForFrontend()
-
-		saveStateId := t.options.SaveStateId
-		query := query.NewQuery(filterForm, saveStateId, t.options.Display)
-
-		if len(extraData) > 0 {
-			query.SetExtraData(extraData)
-		}
-
-		query.AddArray(result)
-		return query.Print(trans)
-	}
-
-	return result
+	// Delegate to non-generic printComponent
+	return t.tableCore.printComponent(trans, staticData)
 }
 
 // ExportFields is the public version of exportFields that allows external packages
 // (like dialog) to access field definitions for building dialog tables.
 func (t *Table[T]) ExportFields() []map[string]any {
-	return t.exportFields(t.translator)
-}
-
-// exportOptions converts TableOptions to JSON map for component output.
-// Matches component.Table options format exactly.
-func (t *Table[T]) exportOptions(translator core.TranslateFunc) map[string]any {
-	opts := t.options
-	options := make(map[string]any)
-
-	// Add all options that are set
-	if opts.Class != nil {
-		options["class"] = *opts.Class
-	}
-	if opts.Title != nil {
-		options["title"] = *opts.Title
-	}
-	if opts.TextNoData != nil {
-		options["textNoData"] = *opts.TextNoData
-	}
-	if opts.EmptyState != nil {
-		options["emptyState"] = opts.EmptyState.PrintData(translator)
-	}
-	if opts.ItemsPerPage != nil {
-		options["itemsPerPage"] = *opts.ItemsPerPage
-	}
-	if opts.PageSizes != nil && len(opts.PageSizes) > 0 {
-		options["pageSizes"] = opts.PageSizes
-	}
-
-	// ButtonsTop: Add CSV button if enabled, then export all buttons
-	var topButtons []*button.TableButton
-	if opts.ButtonsTop != nil {
-		topButtons = append(topButtons, opts.ButtonsTop...)
-	}
-
-	// Auto-generate CSV download button if CSV option enabled and URL exists
-	if opts.Csv != nil && *opts.Csv && t.url != nil {
-		csvBtn := button.NewTableButton(
-			core.ButtonActionDownload,
-			"csv",
-			t.url,
-			"CSV",
-			core.ColorAccent,
-			false,
-			map[string]any{"data": map[string]bool{"_csv": true}},
-		)
-		topButtons = append(topButtons, csvBtn)
-	}
-
-	// Auto-generate Excel download button if Excel option enabled and URL exists
-	if opts.Excel != nil && *opts.Excel && t.url != nil {
-		excelBtn := button.NewTableButton(
-			core.ButtonActionDownload,
-			"explicit",
-			t.url,
-			"Excel",
-			core.ColorAccent,
-			false,
-			map[string]any{"data": map[string]bool{"_excel": true}},
-		)
-		topButtons = append(topButtons, excelBtn)
-	}
-
-	// Export ButtonsTop in same format as SelectButtons
-	if len(topButtons) > 0 {
-		buttons := make([]map[string]any, len(topButtons))
-		for i, btn := range topButtons {
-			buttons[i] = btn.Print(translator)
-		}
-		options["buttons"] = map[string]any{"buttons": buttons}
-	}
-
-	if opts.Reload != nil {
-		options["reload"] = *opts.Reload
-	}
-	if opts.Dense != nil {
-		options["dense"] = *opts.Dense
-	}
-	if opts.Pagination != nil {
-		options["pagination"] = *opts.Pagination
-	}
-	if opts.Search != nil {
-		options["search"] = *opts.Search
-	}
-	if opts.MinWidth != nil {
-		options["minWidth"] = *opts.MinWidth
-	}
-	if opts.Query != nil {
-		options["query"] = *opts.Query
-	}
-	if opts.Csv != nil {
-		options["csv"] = *opts.Csv
-	}
-	if opts.SaveState != nil && opts.SaveStateId != nil {
-		options["saveState"] = *opts.SaveState
-		options["saveStateId"] = *opts.SaveStateId
-	}
-	if opts.SaveInput != nil {
-		options["saveInput"] = *opts.SaveInput
-	}
-	if opts.SaveInputUrl != nil {
-		options["saveInputUrl"] = *opts.SaveInputUrl
-	}
-	if opts.Borders != nil {
-		options["borders"] = *opts.Borders
-	}
-	if opts.BordersHeader != nil {
-		options["bordersHeader"] = *opts.BordersHeader
-	}
-	if opts.Select != nil {
-		options["select"] = *opts.Select
-	}
-	// SelectButtons: serialize each button component
-	if opts.SelectButtons != nil && len(opts.SelectButtons) > 0 {
-		buttons := make([]map[string]any, len(opts.SelectButtons))
-		for i, btn := range opts.SelectButtons {
-			buttons[i] = btn.Print(translator)
-		}
-		options["selectButtons"] = buttons
-	}
-	if opts.Footer != nil {
-		options["footer"] = *opts.Footer
-	}
-	if opts.ServerSide != nil {
-		options["serverSide"] = *opts.ServerSide
-	}
-	if opts.ScrollHeight != nil {
-		options["scrollHeight"] = *opts.ScrollHeight
-	}
-
-	return options
+	return t.tableCore.exportFields(t.translator)
 }

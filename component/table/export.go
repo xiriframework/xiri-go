@@ -18,9 +18,9 @@ import (
 //	tbl.SetData(devices)
 //	return wc.TableData(tbl.ToServerSideResponse(totalCount))
 func (t *Table[T]) ToServerSideResponse(totalCount int) *TableDataResponse {
-	response := t.ToTableDataResponse()
-	response.WithTotalCount(totalCount)
-	return response
+	resp := t.ToTableDataResponse()
+	resp.WithTotalCount(totalCount)
+	return resp
 }
 
 // DataResponse returns a DataResult by delegating to ToTableDataResponse().DataResponse().
@@ -46,7 +46,7 @@ func (t *Table[T]) ToTableDataResponse() *TableDataResponse {
 	data := t.GetData(t.outputType)
 
 	// Create response with outputType
-	response := NewTableDataResponse(data, t.outputType)
+	resp := NewTableDataResponse(data, t.outputType)
 
 	// Add field definitions for CSV header generation (internal only, not in JSON output)
 	// Export fields with translator (use empty translator if not set)
@@ -56,16 +56,16 @@ func (t *Table[T]) ToTableDataResponse() *TableDataResponse {
 	}
 
 	// For CSV output, filter out fields with csv=false
+	// Uses non-generic exportFieldsForCSV from tableCore via promotion
 	if t.outputType == OutputCSV {
 		fields := t.exportFieldsForCSV(trans)
-		response.withFieldsForCSV(fields)
+		resp.withFieldsForCSV(fields)
 	} else if t.outputType == OutputExcel {
 		fields := t.exportFieldsForCSV(trans)
-		response.withFieldsForCSV(fields)
+		resp.withFieldsForCSV(fields)
 	} else if t.fieldsCanChange {
 		fields := t.exportFields(trans)
-		response.WithFields(fields)
-		// response.withFieldsForCSV(fields)
+		resp.WithFields(fields)
 	}
 
 	// Add components (only for Web output, excluded from CSV/PDF/Excel)
@@ -74,53 +74,13 @@ func (t *Table[T]) ToTableDataResponse() *TableDataResponse {
 		// Calculate and add footer if any fields have aggregations
 		footer := t.CalculateFooter(t.outputType)
 		if len(footer) > 0 {
-			response.WithFooter(footer)
+			resp.WithFooter(footer)
 		}
 
 		for _, comp := range t.components {
-			response.AddComponent(comp)
+			resp.AddComponent(comp)
 		}
 	}
 
-	return response
-}
-
-// exportFields converts field[T] array to JSON array for component output.
-// Each field is converted to tableFieldJSON format for JSON serialization.
-// Hidden fields are excluded from the output.
-func (t *Table[T]) exportFields(translator core.TranslateFunc) []map[string]any {
-	fields := make([]map[string]any, 0, len(t.fields))
-	for _, f := range t.fields {
-		// Skip hidden fields
-		if f.hide {
-			continue
-		}
-
-		// Convert to tableFieldJSON for JSON serialization
-		jsonField := f.toTableField()
-		fields = append(fields, jsonField.print(translator))
-	}
-	return fields
-}
-
-// exportFieldsForCSV converts field[T] array to JSON array for CSV export only.
-// This filters out fields where csv=false or fields that are hidden.
-func (t *Table[T]) exportFieldsForCSV(translator core.TranslateFunc) []map[string]any {
-	csvFields := make([]map[string]any, 0, len(t.fields))
-	for _, f := range t.fields {
-		// Skip hidden fields first
-		if f.hide {
-			continue
-		}
-
-		// Skip fields with csv=false
-		if !f.csv {
-			continue
-		}
-
-		// Convert to tableFieldJSON for JSON serialization
-		jsonField := f.toTableField()
-		csvFields = append(csvFields, jsonField.print(translator))
-	}
-	return csvFields
+	return resp
 }
