@@ -53,7 +53,13 @@ git push origin "$VERSION"
 # Create GitHub release
 if command -v gh &>/dev/null; then
   echo "Creating GitHub release..."
-  gh release create "$VERSION" --title "$VERSION" --generate-notes
+  PREV_TAG=$(git tag -l 'v*' --sort=-v:refname | sed -n '2p')
+  if [[ -n "$PREV_TAG" ]]; then
+    NOTES=$(git log --pretty=format:"- %s" "$PREV_TAG..$VERSION")
+  else
+    NOTES=$(git log --pretty=format:"- %s" "$VERSION")
+  fi
+  gh release create "$VERSION" --title "$VERSION" --notes "$NOTES"
 else
   echo "Warning: 'gh' CLI not found — skipping GitHub release creation."
   echo "Install: https://cli.github.com/"
