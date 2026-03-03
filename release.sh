@@ -50,6 +50,15 @@ git tag "$VERSION"
 echo "Pushing tag to origin..."
 git push origin "$VERSION"
 
+# Create GitHub release
+if command -v gh &>/dev/null; then
+  echo "Creating GitHub release..."
+  gh release create "$VERSION" --title "$VERSION" --generate-notes
+else
+  echo "Warning: 'gh' CLI not found — skipping GitHub release creation."
+  echo "Install: https://cli.github.com/"
+fi
+
 # Trigger Go module proxy
 echo "Triggering Go module proxy..."
 GOPROXY=proxy.golang.org go list -m "github.com/xiriframework/xiri-go@$VERSION"
