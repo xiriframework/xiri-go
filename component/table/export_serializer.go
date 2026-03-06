@@ -43,11 +43,11 @@ func (i *fieldIcon) withOption(key string, value any) *fieldIcon {
 }
 
 // toMap converts fieldIcon to map[string]any for JSON serialization.
-func (i *fieldIcon) toMap(translator core.TranslateFunc) map[string]any {
+func (i *fieldIcon) toMap(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
 		"icon":  i.icon,
 		"color": string(i.color),
-		"hint":  translate(translator, i.hint),
+		"hint":  core.Translate(ctx, i.hint),
 	}
 	// Merge custom options
 	for k, v := range i.options {
@@ -133,10 +133,10 @@ type tableFieldJSON struct {
 //   - Handles type-specific rendering (buttons → array, icons → map)
 //   - Translates user-facing strings
 //   - Preserves exact JSON structure for backward compatibility
-func (tf *tableFieldJSON) print(translator core.TranslateFunc) map[string]any {
+func (tf *tableFieldJSON) print(ctx *core.UiContext) map[string]any {
 	ret := map[string]any{
 		"id":     tf.ID,
-		"name":   translate(translator, tf.name),
+		"name":   core.Translate(ctx, tf.name),
 		"format": string(tf.fieldType),
 	}
 
@@ -206,7 +206,7 @@ func (tf *tableFieldJSON) print(translator core.TranslateFunc) map[string]any {
 		// Create array with proper size
 		buttonsArray := make([]any, maxKey+1)
 		for key, button := range tf.buttons {
-			iconData := button.icon.toMap(translator)
+			iconData := button.icon.toMap(ctx)
 			iconData["action"] = string(button.action)
 			if button.action == FieldButtonActionMenu && len(button.menuItems) > 0 {
 				menuItems := make([]map[string]any, len(button.menuItems))
@@ -215,7 +215,7 @@ func (tf *tableFieldJSON) print(translator core.TranslateFunc) map[string]any {
 						"action": string(item.action),
 						"icon":   item.icon,
 						"color":  string(item.color),
-						"text":   translate(translator, item.text),
+						"text":   core.Translate(ctx, item.text),
 					}
 				}
 				iconData["menuItems"] = menuItems
@@ -228,7 +228,7 @@ func (tf *tableFieldJSON) print(translator core.TranslateFunc) map[string]any {
 		// Icons: convert map to JSON object
 		iconsMap := make(map[string]any)
 		for value, icon := range tf.icons {
-			iconsMap[value] = icon.toMap(translator)
+			iconsMap[value] = icon.toMap(ctx)
 		}
 		ret["icons"] = iconsMap
 
@@ -249,11 +249,3 @@ func (tf *tableFieldJSON) print(translator core.TranslateFunc) map[string]any {
 // Helper Functions
 // ============================================================================
 
-// translate is a helper function for translating user-facing strings.
-// Returns the original key if no translator is provided.
-func translate(translator core.TranslateFunc, key string) string {
-	if translator == nil {
-		return key
-	}
-	return translator(key)
-}

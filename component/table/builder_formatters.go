@@ -8,7 +8,7 @@ import (
 	"github.com/xiriframework/xiri-go/formatter"
 	"github.com/xiriframework/xiri-go/types/distance"
 	"github.com/xiriframework/xiri-go/types/pressure"
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // ============================================================================
@@ -17,13 +17,13 @@ import (
 // ============================================================================
 
 func createIdFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		return toInt64(value)
 	})
 }
 
 func createIntegerFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		num := toInt64(value)
 		switch output {
 		case OutputWeb, OutputPDF:
@@ -36,7 +36,7 @@ func createIntegerFormatter() OutputFormatter {
 }
 
 func createFloatFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		num := toFloat64(value)
 		switch output {
 		case OutputWeb, OutputPDF:
@@ -51,7 +51,7 @@ func createFloatFormatter(decimals int) OutputFormatter {
 }
 
 func createTextFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return ""
 		}
@@ -62,7 +62,7 @@ func createTextFormatter() OutputFormatter {
 // createPassthroughFormatter returns a formatter that preserves complex data structures (maps, arrays)
 // for JSON serialization. For CSV output, converts to string representation.
 func createPassthroughFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return nil
 		}
@@ -78,7 +78,7 @@ func createPassthroughFormatter() OutputFormatter {
 // createText2Formatter returns a formatter for two-line text fields.
 // Expects [2]string array: [0] = primary text, [1] = secondary text
 func createText2Formatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -99,7 +99,7 @@ func createText2Formatter() OutputFormatter {
 // createText2IntFormatter returns a formatter for two-line integer fields.
 // Expects [2]int array: [0] = primary value, [1] = secondary value
 func createText2IntFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -128,7 +128,7 @@ func createText2IntFormatter() OutputFormatter {
 // createText2FloatFormatter returns a formatter for two-line float fields.
 // Expects [2]float64 array: [0] = primary value, [1] = secondary value
 func createText2FloatFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -161,7 +161,7 @@ func createText2FloatFormatter(decimals int) OutputFormatter {
 // createText2DateTimeFormatter returns a formatter for two-line datetime fields.
 // Expects [2]time.Time array: [0] = primary time, [1] = secondary time
 func createText2DateTimeFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -215,7 +215,7 @@ func createText2DateTimeFormatter() OutputFormatter {
 // createText2DateFormatter returns a formatter for two-line date fields.
 // Expects [2]time.Time array: [0] = primary date, [1] = secondary date
 func createText2DateFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -269,7 +269,7 @@ func createText2DateFormatter() OutputFormatter {
 // createText2DistanceFormatter returns a formatter for two-line distance fields.
 // Expects [2]float64 array (values in kilometers): [0] = primary, [1] = secondary
 func createText2DistanceFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -306,7 +306,7 @@ func createText2DistanceFormatter(decimals int) OutputFormatter {
 // createText2SpeedFormatter returns a formatter for two-line speed fields.
 // Expects [2]float64 array (values in km/h): [0] = primary, [1] = secondary
 func createText2SpeedFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -351,7 +351,7 @@ func createText2SpeedFormatter(decimals int) OutputFormatter {
 // createText2BoolFormatter returns a formatter for two-line boolean fields.
 // Expects [2]bool array: [0] = primary value, [1] = secondary value
 func createText2BoolFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -387,7 +387,7 @@ func createText2BoolFormatter() OutputFormatter {
 // Web/PDF: "HH:MM" or "Xd HH:MM" format.
 // CSV/Excel: integer minutes.
 func createTimeLengthFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		seconds := toInt64(value)
 
 		switch output {
@@ -403,7 +403,7 @@ func createTimeLengthFormatter() OutputFormatter {
 // createText2TimeLengthFormatter returns a formatter for two-line time duration fields.
 // Expects [2]int64 array (values in seconds): [0] = primary, [1] = secondary
 func createText2TimeLengthFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -441,7 +441,7 @@ func createText2TimeLengthFormatter() OutputFormatter {
 // createTextNFormatter returns a formatter for variable-line text fields.
 // Expects []string slice.
 func createTextNFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return []string{}
 		}
@@ -459,7 +459,7 @@ func createTextNFormatter() OutputFormatter {
 // createIntegerNFormatter returns a formatter for variable-line integer fields.
 // Expects []int slice.
 func createIntegerNFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return []string{}
 		}
@@ -492,7 +492,7 @@ func createIntegerNFormatter() OutputFormatter {
 // createFloatNFormatter returns a formatter for variable-line float fields.
 // Expects []float64 slice.
 func createFloatNFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return []string{}
 		}
@@ -526,7 +526,7 @@ func createFloatNFormatter(decimals int) OutputFormatter {
 // createDateTimeNFormatter returns a formatter for variable-line datetime fields.
 // Expects []time.Time slice.
 func createDateTimeNFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return []string{}
 		}
@@ -571,7 +571,7 @@ func createDateTimeNFormatter() OutputFormatter {
 // createDateNFormatter returns a formatter for variable-line date fields.
 // Expects []time.Time slice.
 func createDateNFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return []string{}
 		}
@@ -616,7 +616,7 @@ func createDateNFormatter() OutputFormatter {
 // createDistanceNFormatter returns a formatter for variable-line distance fields.
 // Expects []float64 slice (values in kilometers).
 func createDistanceNFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return []string{}
 		}
@@ -654,7 +654,7 @@ func createDistanceNFormatter(decimals int) OutputFormatter {
 // createSpeedNFormatter returns a formatter for variable-line speed fields.
 // Expects []float64 slice (values in km/h).
 func createSpeedNFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return []string{}
 		}
@@ -700,7 +700,7 @@ func createSpeedNFormatter(decimals int) OutputFormatter {
 // createBoolNFormatter returns a formatter for variable-line boolean fields.
 // Expects []bool slice.
 func createBoolNFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return []string{}
 		}
@@ -729,7 +729,7 @@ func createBoolNFormatter() OutputFormatter {
 // createTimeLengthNFormatter returns a formatter for variable-line time duration fields.
 // Expects []int64 slice (values in seconds).
 func createTimeLengthNFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return []string{}
 		}
@@ -788,7 +788,7 @@ func formatTimeLength(seconds int64) string {
 // For OutputWeb: Returns [2]string array (GetData() will split into two fields).
 // For OutputPDF/OutputCSV/OutputExcel: Returns just the display text.
 func createLinkFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		if value == nil {
 			return [2]string{"", ""}
 		}
@@ -804,7 +804,7 @@ func createLinkFormatter() OutputFormatter {
 }
 
 func createBoolFormatter(trueText, falseText string) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		b, ok := value.(bool)
 		if !ok {
 			return ""
@@ -817,7 +817,7 @@ func createBoolFormatter(trueText, falseText string) OutputFormatter {
 }
 
 func createDateTimeFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		timestamp := toInt64(value)
 		if timestamp == 0 {
 			return ""
@@ -843,7 +843,7 @@ func createDateTimeFormatter() OutputFormatter {
 }
 
 func createDateFormatter() OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		timestamp := toInt64(value)
 		if timestamp == 0 {
 			return ""
@@ -869,7 +869,7 @@ func createDateFormatter() OutputFormatter {
 }
 
 func createDistanceFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		km := toFloat64(value)
 		distanceUnit := ctx.Distance
 
@@ -888,7 +888,7 @@ func createDistanceFormatter(decimals int) OutputFormatter {
 }
 
 func createPressureFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		bar := toFloat64(value)
 		pressureUnit := ctx.Pressure
 
@@ -912,7 +912,7 @@ func createPressureFormatter(decimals int) OutputFormatter {
 }
 
 func createSpeedFormatter(decimals int) OutputFormatter {
-	return FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		kmh := toFloat64(value)
 		distanceUnit := ctx.Distance // Speed uses distance unit
 

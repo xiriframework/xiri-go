@@ -48,17 +48,17 @@ func (i *ImageText) WithDisplay(d string) *ImageText {
 }
 
 // Print returns the JSON representation of the imagetext component.
-func (i *ImageText) Print(translator core.TranslateFunc) map[string]any {
+func (i *ImageText) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
 		"url":  i.url,
 		"info": i.info,
 	}
 
 	if i.header != nil {
-		data["header"] = core.Translate(translator, *i.header)
+		data["header"] = core.Translate(ctx, *i.header)
 	}
 	if i.headerSub != nil {
-		data["headerSub"] = core.Translate(translator, *i.headerSub)
+		data["headerSub"] = core.Translate(ctx, *i.headerSub)
 	}
 	if i.headerIcon != nil {
 		data["headerIcon"] = *i.headerIcon

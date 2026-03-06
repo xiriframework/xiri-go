@@ -63,7 +63,7 @@ func (g *StatGrid) WithReload(reload bool) *StatGrid {
 }
 
 // Print returns the JSON representation of the stat grid component.
-func (g *StatGrid) Print(translator core.TranslateFunc) map[string]any {
+func (g *StatGrid) Print(ctx *core.UiContext) map[string]any {
 	var data map[string]any
 
 	if g.url != nil {
@@ -75,14 +75,14 @@ func (g *StatGrid) Print(translator core.TranslateFunc) map[string]any {
 			data["reload"] = *g.reload
 		}
 	} else {
-		data = g.printData(translator)
+		data = g.printData(ctx)
 	}
 
 	if g.columns != nil {
 		data["columns"] = *g.columns
 	}
 	if g.title != nil {
-		data["title"] = core.Translate(translator, *g.title)
+		data["title"] = core.Translate(ctx, *g.title)
 	}
 
 	result := map[string]any{
@@ -98,29 +98,29 @@ func (g *StatGrid) Print(translator core.TranslateFunc) map[string]any {
 }
 
 // PrintData returns only the data portion of the stat grid (for use in data endpoints).
-func (g *StatGrid) PrintData(translator core.TranslateFunc) map[string]any {
-	data := g.printData(translator)
+func (g *StatGrid) PrintData(ctx *core.UiContext) map[string]any {
+	data := g.printData(ctx)
 
 	if g.columns != nil {
 		data["columns"] = *g.columns
 	}
 	if g.title != nil {
-		data["title"] = core.Translate(translator, *g.title)
+		data["title"] = core.Translate(ctx, *g.title)
 	}
 
 	return data
 }
 
 // DataResponse returns a DataResult wrapping the stat grid data in {"data": ...} envelope.
-func (g *StatGrid) DataResponse(translator core.TranslateFunc) response.DataResult {
-	return response.NewJSONDataResult(g.PrintData(translator))
+func (g *StatGrid) DataResponse(ctx *core.UiContext) response.DataResult {
+	return response.NewJSONDataResult(g.PrintData(ctx))
 }
 
 // printData builds the data map used by both Print and PrintData.
-func (g *StatGrid) printData(translator core.TranslateFunc) map[string]any {
+func (g *StatGrid) printData(ctx *core.UiContext) map[string]any {
 	statsData := make([]map[string]any, len(g.stats))
 	for i, s := range g.stats {
-		statsData[i] = s.PrintData(translator)
+		statsData[i] = s.PrintData(ctx)
 	}
 	return map[string]any{
 		"stats": statsData,

@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/xiriframework/xiri-go/types/locale"
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // ToUnixTimestamp converts Go time.Time to Unix timestamp in SECONDS
@@ -84,7 +84,7 @@ func FormatTimestampToTextRange(timestamp int64, includeTime bool, timezone stri
 }
 
 // FormatTimestampDateTime formats a Unix timestamp to date and time without seconds
-func FormatTimestampDateTime(timestamp int64, ctx *uicontext.UiContext) string {
+func FormatTimestampDateTime(timestamp int64, ctx *core.UiContext) string {
 	if timestamp == 0 {
 		return "-"
 	}
@@ -93,7 +93,7 @@ func FormatTimestampDateTime(timestamp int64, ctx *uicontext.UiContext) string {
 }
 
 // FormatTimestampDate formats a Unix timestamp to date
-func FormatTimestampDate(timestamp int64, ctx *uicontext.UiContext) string {
+func FormatTimestampDate(timestamp int64, ctx *core.UiContext) string {
 	if timestamp == 0 {
 		return "-"
 	}
@@ -140,7 +140,7 @@ func timeLayout(loc locale.Locale) string {
 }
 
 // FormatDate formats a time.Time to date
-func FormatDate(t time.Time, ctx *uicontext.UiContext) string {
+func FormatDate(t time.Time, ctx *core.UiContext) string {
 	if t.IsZero() {
 		return "-"
 	}
@@ -154,7 +154,7 @@ func FormatDate(t time.Time, ctx *uicontext.UiContext) string {
 }
 
 // FormatDateTime formats a time.Time to datetime
-func FormatDateTime(t time.Time, ctx *uicontext.UiContext) string {
+func FormatDateTime(t time.Time, ctx *core.UiContext) string {
 	if t.IsZero() {
 		return "-"
 	}
@@ -168,7 +168,7 @@ func FormatDateTime(t time.Time, ctx *uicontext.UiContext) string {
 }
 
 // FormatTime formats a time.Time to time only
-func FormatTime(t time.Time, ctx *uicontext.UiContext) string {
+func FormatTime(t time.Time, ctx *core.UiContext) string {
 	if t.IsZero() {
 		return "-"
 	}
@@ -182,7 +182,7 @@ func FormatTime(t time.Time, ctx *uicontext.UiContext) string {
 }
 
 // FormatTimestampFullDate formats a Unix timestamp to full date (Y-m-d H:i format)
-func FormatTimestampFullDate(timestamp int64, ctx *uicontext.UiContext) string {
+func FormatTimestampFullDate(timestamp int64, ctx *core.UiContext) string {
 	return FormatTimestampDateTime(timestamp, ctx)
 }
 

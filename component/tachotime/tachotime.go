@@ -148,7 +148,7 @@ func convertTachoTimeDriveDay(day TachoTimeDriveDay) []interface{} {
 }
 
 // Print implements core.Component. Returns the JSON representation of the tachograph chart.
-func (t *TachoTime) Print(translator core.TranslateFunc) map[string]any {
+func (t *TachoTime) Print(ctx *core.UiContext) map[string]any {
 	// Convert each TachoTimeDay to use array format for activities, driveblocks, and drivedays
 	convertedDays := make([]map[string]any, len(t.data))
 

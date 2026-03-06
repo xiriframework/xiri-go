@@ -100,7 +100,7 @@ func (s *Stat) WithReload(reload bool) *Stat {
 }
 
 // Print returns the JSON representation of the stat component.
-func (s *Stat) Print(translator core.TranslateFunc) map[string]any {
+func (s *Stat) Print(ctx *core.UiContext) map[string]any {
 	var data map[string]any
 
 	if s.url != nil {
@@ -111,7 +111,7 @@ func (s *Stat) Print(translator core.TranslateFunc) map[string]any {
 			data["reload"] = *s.reload
 		}
 	} else {
-		data = s.printData(translator)
+		data = s.printData(ctx)
 	}
 
 	result := map[string]any{
@@ -127,20 +127,20 @@ func (s *Stat) Print(translator core.TranslateFunc) map[string]any {
 }
 
 // PrintData returns only the data portion of the stat (for use in data endpoints and StatGrid).
-func (s *Stat) PrintData(translator core.TranslateFunc) map[string]any {
-	return s.printData(translator)
+func (s *Stat) PrintData(ctx *core.UiContext) map[string]any {
+	return s.printData(ctx)
 }
 
 // DataResponse returns a DataResult wrapping the stat data in {"data": ...} envelope.
-func (s *Stat) DataResponse(translator core.TranslateFunc) response.DataResult {
-	return response.NewJSONDataResult(s.PrintData(translator))
+func (s *Stat) DataResponse(ctx *core.UiContext) response.DataResult {
+	return response.NewJSONDataResult(s.PrintData(ctx))
 }
 
 // printData builds the data map used by both Print and PrintData.
-func (s *Stat) printData(translator core.TranslateFunc) map[string]any {
+func (s *Stat) printData(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
 		"value": s.value,
-		"label": core.Translate(translator, s.label),
+		"label": core.Translate(ctx, s.label),
 	}
 
 	if s.icon != nil {

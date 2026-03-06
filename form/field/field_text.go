@@ -3,7 +3,7 @@ package field
 import (
 	"fmt"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // TextField represents a free-text field
@@ -114,7 +114,7 @@ func NewTextFieldWithLength(id, name string, required bool, currentValue string,
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *TextField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *TextField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

@@ -258,7 +258,7 @@ func (b *TableBuilder[T]) AddMultiEditButton(url string) *TableBuilder[T] {
 		core.ButtonActionDialog,
 		"edit",
 		xurl.NewUrl(url),
-		b.table.translator("BEARBEITEN"),
+		"BEARBEITEN", // Translation key, resolved lazily at Print time
 		core.ColorPrimary,
 		false,
 		nil,
@@ -278,7 +278,7 @@ func (b *TableBuilder[T]) AddMultiDeleteButton(url string) *TableBuilder[T] {
 		core.ButtonActionDialog,
 		"delete",
 		xurl.NewUrl(url),
-		b.table.translator("LOESCHEN"),
+		"LOESCHEN", // Translation key, resolved lazily at Print time
 		core.ColorWarning,
 		false,
 		nil,

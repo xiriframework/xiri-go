@@ -3,7 +3,7 @@ package field
 import (
 	"fmt"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // ModelListField represents a multiple model/object selection form field
@@ -28,7 +28,7 @@ type ModelListField struct {
 
 // LoadOptions implements FieldOptionsLoader interface
 // Loads model options using the configured LoaderFunc
-func (f *ModelListField) LoadOptions(ctx *uicontext.UiContext) error {
+func (f *ModelListField) LoadOptions(ctx *core.UiContext) error {
 	if f.LoaderFunc == nil {
 		// No loader function = options are static or loaded externally
 		return nil
@@ -160,7 +160,7 @@ func NewModelListField(id, name string, required bool, modelType string, current
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *ModelListField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *ModelListField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

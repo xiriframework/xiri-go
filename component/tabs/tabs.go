@@ -56,9 +56,9 @@ func (t *Tab) AddContent(component core.Component) *Tab {
 }
 
 // Print serializes the Tab to a map for JSON output
-func (t *Tab) Print(translator core.TranslateFunc) map[string]any {
+func (t *Tab) Print(ctx *core.UiContext) map[string]any {
 	result := map[string]any{
-		"label": core.Translate(translator, t.label),
+		"label": core.Translate(ctx, t.label),
 	}
 
 	if t.icon != nil {
@@ -78,7 +78,7 @@ func (t *Tab) Print(translator core.TranslateFunc) map[string]any {
 	if len(t.data) > 0 {
 		data := make([]map[string]any, len(t.data))
 		for i, comp := range t.data {
-			data[i] = comp.Print(translator)
+			data[i] = comp.Print(ctx)
 		}
 		result["data"] = data
 	} else {
@@ -174,13 +174,13 @@ func (t *Tabs) WithDisplay(display string) *Tabs {
 }
 
 // Print serializes the Tabs to a map for JSON output
-func (t *Tabs) Print(translator core.TranslateFunc) map[string]any {
+func (t *Tabs) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{}
 
 	// Convert tabs
 	tabsData := make([]map[string]any, len(t.tabs))
 	for i, tab := range t.tabs {
-		tabsData[i] = tab.Print(translator)
+		tabsData[i] = tab.Print(ctx)
 	}
 	data["tabs"] = tabsData
 

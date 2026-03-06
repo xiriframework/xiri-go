@@ -49,13 +49,13 @@ func (p *PageHeader) WithDisplay(display string) *PageHeader {
 }
 
 // Print returns the JSON representation of the page header component.
-func (p *PageHeader) Print(translator core.TranslateFunc) map[string]any {
+func (p *PageHeader) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
-		"title": core.Translate(translator, p.title),
+		"title": core.Translate(ctx, p.title),
 	}
 
 	if p.subtitle != nil {
-		data["subtitle"] = core.Translate(translator, *p.subtitle)
+		data["subtitle"] = core.Translate(ctx, *p.subtitle)
 	}
 	if p.icon != nil {
 		data["icon"] = *p.icon
@@ -64,7 +64,7 @@ func (p *PageHeader) Print(translator core.TranslateFunc) map[string]any {
 		data["iconColor"] = string(*p.iconColor)
 	}
 	if p.buttons != nil {
-		data["buttons"] = p.buttons.PrintData(translator)
+		data["buttons"] = p.buttons.PrintData(ctx)
 	}
 
 	result := map[string]any{

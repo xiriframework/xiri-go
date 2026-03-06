@@ -3,7 +3,7 @@ package field
 import (
 	"fmt"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // SelectField represents a dropdown/select field with predefined options
@@ -144,7 +144,7 @@ func NewSelectField(id, name string, required bool, options []SelectOption) *Sel
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *SelectField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *SelectField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

@@ -1,7 +1,7 @@
 package field
 
 import (
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // FieldType represents the type of form field
@@ -63,7 +63,7 @@ type FormField interface {
 	// ExportForFrontend exports the field definition for the frontend
 	// The ctx parameter is used for translations and the value parameter
 	// is the current field value (from form data)
-	ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{}
+	ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{}
 }
 
 // ValueBinder is an interface for fields that support binding a raw value.
@@ -75,7 +75,7 @@ type ValueBinder interface {
 // FieldOptionsLoader is an interface for fields that load their options dynamically
 // (e.g., Model, ModelList fields). The loader implementation is project-specific.
 type FieldOptionsLoader interface {
-	LoadOptions(ctx *uicontext.UiContext) error
+	LoadOptions(ctx *core.UiContext) error
 }
 
 // BaseField provides common functionality for all form fields
@@ -131,7 +131,7 @@ func (f *BaseField) IsDisabled() bool {
 }
 
 // GetBaseExport returns common export fields for all field types
-func (f *BaseField) GetBaseExport(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *BaseField) GetBaseExport(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	result := map[string]interface{}{
 		"id":       f.ID,
 		"type":     string(f.Type),
@@ -142,21 +142,12 @@ func (f *BaseField) GetBaseExport(ctx *uicontext.UiContext, value interface{}) m
 		"form":     f.Form,
 	}
 
-	// Translate name if context available
-	if ctx != nil && ctx.Translate != nil {
-		result["name"] = ctx.Translate(f.Name)
-		if f.Hint != "" {
-			result["hint"] = ctx.Translate(f.Hint)
-		} else {
-			result["hint"] = nil
-		}
+	// Translate name and hint (SafeTranslate returns key unchanged if ctx/Translate is nil)
+	result["name"] = ctx.SafeTranslate(f.Name)
+	if f.Hint != "" {
+		result["hint"] = ctx.SafeTranslate(f.Hint)
 	} else {
-		result["name"] = f.Name
-		if f.Hint != "" {
-			result["hint"] = f.Hint
-		} else {
-			result["hint"] = nil
-		}
+		result["hint"] = nil
 	}
 
 	// Add showWhen conditions if any

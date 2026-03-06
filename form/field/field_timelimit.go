@@ -3,7 +3,7 @@ package field
 import (
 	"fmt"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // TimeLimitField represents a time limit form field with weekdays and time range
@@ -153,7 +153,7 @@ func (f *TimeLimitField) Parse(raw interface{}) (interface{}, error) {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *TimeLimitField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *TimeLimitField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}
@@ -165,7 +165,7 @@ func (f *TimeLimitField) ExportForFrontend(ctx *uicontext.UiContext, value inter
 	result["subtype"] = "timelimit"
 
 	// Translation texts for frontend labels
-	t := ctx.Translate
+	t := ctx.SafeTranslate
 	result["texts"] = map[string]interface{}{
 		"check":    t("TL.CHECK"),
 		"weekdays": t("TL.WEEKDAYS"),

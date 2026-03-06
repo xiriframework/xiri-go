@@ -4,14 +4,14 @@ import (
 	"fmt"
 
 	"github.com/xiriframework/xiri-go/form/field"
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // FormGroup represents a collection of form fields
 type FormGroup struct {
 	fields []field.FormField
 	index  map[string]field.FormField // For quick lookup by ID
-	ctx    *uicontext.UiContext
+	ctx    *core.UiContext
 }
 
 // NewFormGroup creates a new form group without context
@@ -30,7 +30,7 @@ func NewFormGroup(fields []field.FormField) *FormGroup {
 }
 
 // NewFormGroupWithContext creates a new form group with user context
-func NewFormGroupWithContext(fields []field.FormField, ctx *uicontext.UiContext) (*FormGroup, error) {
+func NewFormGroupWithContext(fields []field.FormField, ctx *core.UiContext) (*FormGroup, error) {
 	index := make(map[string]field.FormField)
 	for _, f := range fields {
 		index[f.GetID()] = f
@@ -52,7 +52,7 @@ func NewFormGroupWithContext(fields []field.FormField, ctx *uicontext.UiContext)
 
 // SetContext sets the user context
 // Also triggers loading of field options for Model/ModelList fields
-func (fg *FormGroup) SetContext(ctx *uicontext.UiContext) error {
+func (fg *FormGroup) SetContext(ctx *core.UiContext) error {
 	fg.ctx = ctx
 
 	// Auto-load field options when context is set
@@ -132,16 +132,11 @@ func (fg *FormGroup) GetTranslatedName(fieldID string) string {
 		return fieldID
 	}
 
-	name := f.GetName()
-	if fg.ctx != nil && fg.ctx.Translate != nil {
-		return fg.ctx.Translate(name)
-	}
-
-	return name
+	return fg.ctx.SafeTranslate(f.GetName())
 }
 
 // GetContext returns the user context
-func (fg *FormGroup) GetContext() *uicontext.UiContext {
+func (fg *FormGroup) GetContext() *core.UiContext {
 	return fg.ctx
 }
 

@@ -80,8 +80,8 @@ func NewQueryWithFormGroup(
 }
 
 // Add adds a dynamic component to the query
-func (q *Query) Add(component core.Component, translator core.TranslateFunc) *Query {
-	q.data = append(q.data, component.Print(translator))
+func (q *Query) Add(component core.Component, ctx *core.UiContext) *Query {
+	q.data = append(q.data, component.Print(ctx))
 	return q
 }
 
@@ -116,7 +116,7 @@ func (q *Query) WithDisplay(display string) *Query {
 }
 
 // Print returns the JSON representation of the query
-func (q *Query) Print(translator core.TranslateFunc) map[string]any {
+func (q *Query) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
 		"fields":      q.filterForm,
 		"dyn":         q.data,
@@ -136,7 +136,7 @@ func (q *Query) Print(translator core.TranslateFunc) map[string]any {
 	}
 
 	if q.buttonLine != nil {
-		data["buttonline"] = q.buttonLine.Print(translator)
+		data["buttonline"] = q.buttonLine.Print(ctx)
 	}
 
 	return map[string]any{

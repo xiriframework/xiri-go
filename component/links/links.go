@@ -55,10 +55,10 @@ func (l *Links) WithDisplay(d string) *Links {
 }
 
 // Print returns the JSON representation of the links component.
-func (l *Links) Print(translator core.TranslateFunc) map[string]any {
+func (l *Links) Print(ctx *core.UiContext) map[string]any {
 	buttonData := make([]map[string]any, len(l.buttons))
 	for i, btn := range l.buttons {
-		buttonData[i] = btn.Print(translator)
+		buttonData[i] = btn.Print(ctx)
 	}
 
 	data := map[string]any{
@@ -66,10 +66,10 @@ func (l *Links) Print(translator core.TranslateFunc) map[string]any {
 	}
 
 	if l.header != nil {
-		data["header"] = core.Translate(translator, *l.header)
+		data["header"] = core.Translate(ctx, *l.header)
 	}
 	if l.headerSub != nil {
-		data["headerSub"] = core.Translate(translator, *l.headerSub)
+		data["headerSub"] = core.Translate(ctx, *l.headerSub)
 	}
 	if l.headerIcon != nil {
 		data["headerIcon"] = *l.headerIcon

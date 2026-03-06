@@ -64,14 +64,14 @@ func (i *Item) IconColor(color string) *Item {
 }
 
 // Print returns the JSON representation of the timeline component.
-func (t *Timeline) Print(translator core.TranslateFunc) map[string]any {
+func (t *Timeline) Print(ctx *core.UiContext) map[string]any {
 	items := make([]map[string]any, len(t.items))
 	for idx, item := range t.items {
 		entry := map[string]any{
-			"title": core.Translate(translator, item.title),
+			"title": core.Translate(ctx, item.title),
 		}
 		if item.description != "" {
-			entry["description"] = core.Translate(translator, item.description)
+			entry["description"] = core.Translate(ctx, item.description)
 		}
 		if item.datetime != "" {
 			entry["datetime"] = item.datetime

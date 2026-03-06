@@ -8,8 +8,7 @@ import (
 // buildSecurityTestTable creates a table with fields "id", "name", "status"
 // for use in pagination/sort security tests.
 func buildSecurityTestTable() *Table[testDeviceRow] {
-	ctx := testContext()
-	builder := NewBuilder[testDeviceRow](ctx, testTranslator)
+	builder := NewBuilder[testDeviceRow]()
 	builder.IdField("id", "device.id", func(r testDeviceRow) int64 { return r.ID })
 	builder.TextField("name", "device.name", func(r testDeviceRow) string { return r.Name })
 	builder.BoolField("status", "device.active", func(r testDeviceRow) bool { return r.Active })

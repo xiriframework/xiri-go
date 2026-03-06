@@ -11,7 +11,6 @@ import (
 	"github.com/xiriframework/xiri-go/component/query"
 	xurl "github.com/xiriframework/xiri-go/component/url"
 	"github.com/xiriframework/xiri-go/form/group"
-	"github.com/xiriframework/xiri-go/uicontext"
 )
 
 // tableCore contains all type-independent table state and configuration.
@@ -20,8 +19,6 @@ import (
 type tableCore struct {
 	fieldBases      []*fieldBase
 	fieldsCanChange bool
-	ctx             *uicontext.UiContext
-	translator      core.TranslateFunc
 
 	// Table configuration
 	url        *xurl.Url
@@ -77,16 +74,6 @@ type TableOptions struct {
 // ============================================================================
 // Non-generic methods on tableCore (exist only once in the binary)
 // ============================================================================
-
-// GetContext returns the UiContext
-func (tc *tableCore) GetContext() *uicontext.UiContext {
-	return tc.ctx
-}
-
-// GetTranslator returns the translator function
-func (tc *tableCore) GetTranslator() core.TranslateFunc {
-	return tc.translator
-}
 
 // GetURL returns the table URL
 func (tc *tableCore) GetURL() *xurl.Url {
@@ -334,21 +321,21 @@ func (tc *tableCore) LoadPaginationParams() PaginationParams {
 // exportFields converts fieldBase array to JSON array for component output.
 // Each field is converted to tableFieldJSON format for JSON serialization.
 // Hidden fields are excluded from the output.
-func (tc *tableCore) exportFields(translator core.TranslateFunc) []map[string]any {
+func (tc *tableCore) exportFields(ctx *core.UiContext) []map[string]any {
 	fields := make([]map[string]any, 0, len(tc.fieldBases))
 	for _, f := range tc.fieldBases {
 		if f.hide {
 			continue
 		}
 		jsonField := f.toTableField()
-		fields = append(fields, jsonField.print(translator))
+		fields = append(fields, jsonField.print(ctx))
 	}
 	return fields
 }
 
 // exportFieldsForCSV converts fieldBase array to JSON array for CSV export only.
 // This filters out fields where csv=false or fields that are hidden.
-func (tc *tableCore) exportFieldsForCSV(translator core.TranslateFunc) []map[string]any {
+func (tc *tableCore) exportFieldsForCSV(ctx *core.UiContext) []map[string]any {
 	csvFields := make([]map[string]any, 0, len(tc.fieldBases))
 	for _, f := range tc.fieldBases {
 		if f.hide {
@@ -358,14 +345,14 @@ func (tc *tableCore) exportFieldsForCSV(translator core.TranslateFunc) []map[str
 			continue
 		}
 		jsonField := f.toTableField()
-		csvFields = append(csvFields, jsonField.print(translator))
+		csvFields = append(csvFields, jsonField.print(ctx))
 	}
 	return csvFields
 }
 
 // exportOptions converts TableOptions to JSON map for component output.
 // Matches component.Table options format exactly.
-func (tc *tableCore) exportOptions(translator core.TranslateFunc) map[string]any {
+func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 	opts := tc.options
 	options := make(map[string]any)
 
@@ -377,10 +364,10 @@ func (tc *tableCore) exportOptions(translator core.TranslateFunc) map[string]any
 		options["title"] = *opts.Title
 	}
 	if opts.TextNoData != nil {
-		options["textNoData"] = *opts.TextNoData
+		options["textNoData"] = core.Translate(ctx, *opts.TextNoData)
 	}
 	if opts.EmptyState != nil {
-		options["emptyState"] = opts.EmptyState.PrintData(translator)
+		options["emptyState"] = opts.EmptyState.PrintData(ctx)
 	}
 	if opts.ItemsPerPage != nil {
 		options["itemsPerPage"] = *opts.ItemsPerPage
@@ -427,7 +414,7 @@ func (tc *tableCore) exportOptions(translator core.TranslateFunc) map[string]any
 	if len(topButtons) > 0 {
 		buttons := make([]map[string]any, len(topButtons))
 		for i, btn := range topButtons {
-			buttons[i] = btn.Print(translator)
+			buttons[i] = btn.Print(ctx)
 		}
 		options["buttons"] = map[string]any{"buttons": buttons}
 	}
@@ -476,7 +463,7 @@ func (tc *tableCore) exportOptions(translator core.TranslateFunc) map[string]any
 	if opts.SelectButtons != nil && len(opts.SelectButtons) > 0 {
 		buttons := make([]map[string]any, len(opts.SelectButtons))
 		for i, btn := range opts.SelectButtons {
-			buttons[i] = btn.Print(translator)
+			buttons[i] = btn.Print(ctx)
 		}
 		options["selectButtons"] = buttons
 	}
@@ -495,7 +482,7 @@ func (tc *tableCore) exportOptions(translator core.TranslateFunc) map[string]any
 
 // printComponent builds the component JSON for the Angular frontend.
 // staticData should be nil for AJAX mode, or the pre-formatted data for static mode.
-func (tc *tableCore) printComponent(trans core.TranslateFunc, staticData []map[string]any) map[string]any {
+func (tc *tableCore) printComponent(ctx *core.UiContext, staticData []map[string]any) map[string]any {
 	// Build base component structure
 	result := map[string]any{
 		"type": "table",
@@ -517,10 +504,10 @@ func (tc *tableCore) printComponent(trans core.TranslateFunc, staticData []map[s
 	}
 
 	// Add fields
-	dataSection["fields"] = tc.exportFields(trans)
+	dataSection["fields"] = tc.exportFields(ctx)
 
 	// Add options
-	dataSection["options"] = tc.exportOptions(trans)
+	dataSection["options"] = tc.exportOptions(ctx)
 
 	// Determine mode: AJAX (url set) vs Static (data set)
 	if tc.url != nil {
@@ -559,7 +546,7 @@ func (tc *tableCore) printComponent(trans core.TranslateFunc, staticData []map[s
 		}
 
 		q.AddArray(result)
-		return q.Print(trans)
+		return q.Print(ctx)
 	}
 
 	return result
@@ -645,7 +632,7 @@ func (tc *tableCore) GetFieldMetas() []FieldMeta {
 // GetData returns formatted table data for a specific output type.
 // This is where the magic happens: raw row structs are converted to formatted map[string]any
 // with all formatters applied and locale/unit conversions done automatically.
-func (t *Table[T]) GetData(output OutputType) []map[string]any {
+func (t *Table[T]) GetData(ctx *core.UiContext, output OutputType) []map[string]any {
 	// Build field accessor map for Row interface
 	fieldMap := t.buildFieldMap()
 
@@ -673,7 +660,7 @@ func (t *Table[T]) GetData(output OutputType) []map[string]any {
 			value := f.accessor(rowData)
 
 			// Format with access to entire row (for cross-field dependencies)
-			formatted := f.format(value, row, output, t.ctx)
+			formatted := f.format(value, row, output, ctx)
 
 			// Special handling for Link fields in OutputWeb/OutputPDF
 			// Link fields output TWO fields: fieldName (display text) and fieldNameLink (URL)
@@ -745,7 +732,7 @@ func (t *Table[T]) buildFieldMap() map[string]func(T) any {
 
 // CalculateFooter computes footer aggregations for all fields with footer enabled.
 // Returns a map of field_id -> aggregated_value (formatted).
-func (t *Table[T]) CalculateFooter(output OutputType) map[string]any {
+func (t *Table[T]) CalculateFooter(ctx *core.UiContext, output OutputType) map[string]any {
 	footer := make(map[string]any)
 	fieldMap := t.buildFieldMap()
 
@@ -770,7 +757,7 @@ func (t *Table[T]) CalculateFooter(output OutputType) map[string]any {
 		// Use first row for Row context (for device-specific formatting)
 		if len(t.data) > 0 {
 			row := newTypedRow(t.data[0], fieldMap)
-			formatted := f.format(aggregated, row, output, t.ctx)
+			formatted := f.format(aggregated, row, output, ctx)
 			footer[f.id] = formatted
 		} else {
 			// For empty tables, use raw aggregated value without formatting
@@ -894,24 +881,19 @@ func (t *Table[T]) SetFlags(flags ...string) *Table[T] {
 
 // Print implements the core.Component interface, returning JSON for the Angular frontend.
 // The generic wrapper delegates to non-generic printComponent, only calling GetData when needed.
-func (t *Table[T]) Print(translator core.TranslateFunc) map[string]any {
-	trans := translator
-	if trans == nil {
-		trans = t.translator
-	}
-
+func (t *Table[T]) Print(ctx *core.UiContext) map[string]any {
 	// For static mode (no URL), get data first (this is the only T-dependent part)
 	var staticData []map[string]any
 	if t.url == nil {
-		staticData = t.GetData(OutputWeb)
+		staticData = t.GetData(ctx, OutputWeb)
 	}
 
 	// Delegate to non-generic printComponent
-	return t.tableCore.printComponent(trans, staticData)
+	return t.tableCore.printComponent(ctx, staticData)
 }
 
 // ExportFields is the public version of exportFields that allows external packages
 // (like dialog) to access field definitions for building dialog tables.
-func (t *Table[T]) ExportFields() []map[string]any {
-	return t.tableCore.exportFields(t.translator)
+func (t *Table[T]) ExportFields(ctx *core.UiContext) []map[string]any {
+	return t.tableCore.exportFields(ctx)
 }

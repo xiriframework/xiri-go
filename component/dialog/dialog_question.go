@@ -25,13 +25,11 @@ func NewDialogDelete(
 	headerText *string,
 	okText *string,
 	closeText *string,
-	translator core.TranslateFunc,
 ) Dialog {
 	texts := resolveDialogTexts(
-		headerText, "Delete", "Delete",
-		okText, "Ok", "Ok",
-		closeText, "Back", "Back",
-		translator,
+		headerText, "Delete",
+		okText, "Ok",
+		closeText, "Back",
 	)
 
 	content := DialogQuestionContent{
@@ -71,13 +69,11 @@ func NewDialogWarning(
 	headerText *string,
 	okText *string,
 	closeText *string,
-	translator core.TranslateFunc,
 ) Dialog {
 	texts := resolveDialogTexts(
-		headerText, "Warning", "Warning",
-		okText, "Ok", "Ok",
-		closeText, "Back", "Back",
-		translator,
+		headerText, "Warning",
+		okText, "Ok",
+		closeText, "Back",
 	)
 
 	content := DialogQuestionContent{

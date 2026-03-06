@@ -3,7 +3,7 @@ package field
 import (
 	"fmt"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // ArrayField represents an array/list form field
@@ -105,7 +105,7 @@ func NewArrayField(id, name string, required bool, itemType string, defaultValue
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *ArrayField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *ArrayField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

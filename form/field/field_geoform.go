@@ -3,7 +3,7 @@ package field
 import (
 	"fmt"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // GeoformField represents a geometry form field for geofencing/map drawing
@@ -223,7 +223,7 @@ func (f *GeoformField) Parse(raw interface{}) (interface{}, error) {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *GeoformField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *GeoformField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	// Get base export fields
 	result := f.BaseField.GetBaseExport(ctx, nil)
 

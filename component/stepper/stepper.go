@@ -63,7 +63,7 @@ func (s *Stepper) WithDisplay(display string) *Stepper {
 }
 
 // Print returns the JSON representation of the stepper
-func (s *Stepper) Print(translator core.TranslateFunc) map[string]any {
+func (s *Stepper) Print(ctx *core.UiContext) map[string]any {
 	stepArray := make([]map[string]any, s.steps)
 
 	for i := 1; i <= s.steps; i++ {
@@ -115,8 +115,8 @@ func (s *Stepper) Print(translator core.TranslateFunc) map[string]any {
 			},
 			"fields": s.fields[i-1],
 			"buttons": []map[string]any{
-				backBtn.Print(translator),
-				nextBtn.Print(translator),
+				backBtn.Print(ctx),
+				nextBtn.Print(ctx),
 			},
 		}
 	}
@@ -149,7 +149,7 @@ func NewStepperStep(
 }
 
 // Print returns the next step's field configuration
-func (ss *StepperStep) Print(translator core.TranslateFunc) map[string]any {
+func (ss *StepperStep) Print(ctx *core.UiContext) map[string]any {
 	return map[string]any{
 		"fields": ss.fields,
 		"step":   ss.step,

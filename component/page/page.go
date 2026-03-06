@@ -27,42 +27,45 @@ func (b BreadcrumbItem) print() map[string]any {
 	}
 }
 
-// Page represents a page container with breadcrumbs and components.
-type Page struct {
-	translator core.TranslateFunc
-	bread      []BreadcrumbItem
-	data       []map[string]any
-	extra      map[string]any
+// pageEntry stores either a lazy component or a raw map for later rendering.
+type pageEntry struct {
+	component core.Component
+	raw       map[string]any
+	newRow    bool
 }
 
-// NewPage creates a new page container with the given translator.
-func NewPage(translator core.TranslateFunc) *Page {
+// Page represents a page container with breadcrumbs and components.
+type Page struct {
+	bread   []BreadcrumbItem
+	entries []pageEntry
+	extra   map[string]any
+}
+
+// NewPage creates a new page container.
+func NewPage() *Page {
 	return &Page{
-		translator: translator,
-		bread:      make([]BreadcrumbItem, 0),
-		data:       make([]map[string]any, 0),
-		extra:      make(map[string]any),
+		bread:   make([]BreadcrumbItem, 0),
+		entries: make([]pageEntry, 0),
+		extra:   make(map[string]any),
 	}
 }
 
-// Add adds a component to the page.
+// Add adds a component to the page. The component is rendered lazily when Print is called.
 func (p *Page) Add(component core.Component) *Page {
-	printed := component.Print(p.translator)
-	p.data = append(p.data, printed)
+	p.entries = append(p.entries, pageEntry{component: component})
 	return p
 }
 
 // AddNewRow adds a component to the page and forces it to start a new grid row.
+// The component is rendered lazily when Print is called.
 func (p *Page) AddNewRow(component core.Component) *Page {
-	printed := component.Print(p.translator)
-	printed["newRow"] = true
-	p.data = append(p.data, printed)
+	p.entries = append(p.entries, pageEntry{component: component, newRow: true})
 	return p
 }
 
 // AddOld adds a raw component map to the page (for backwards compatibility).
 func (p *Page) AddOld(component map[string]any) *Page {
-	p.data = append(p.data, component)
+	p.entries = append(p.entries, pageEntry{raw: component})
 	return p
 }
 
@@ -88,7 +91,8 @@ func (p *Page) Bread(name string, u *url.Url, extern bool) *Page {
 }
 
 // Print returns the JSON representation of the page.
-func (p *Page) Print(translator core.TranslateFunc) map[string]any {
+// Components added via Add/AddNewRow are rendered lazily here with the given ctx.
+func (p *Page) Print(ctx *core.UiContext) map[string]any {
 	result := make(map[string]any)
 
 	// Add breadcrumbs if any
@@ -100,8 +104,21 @@ func (p *Page) Print(translator core.TranslateFunc) map[string]any {
 		result["bread"] = breadData
 	}
 
-	// Add data
-	result["data"] = p.data
+	// Render entries lazily
+	data := make([]map[string]any, 0, len(p.entries))
+	for _, e := range p.entries {
+		var printed map[string]any
+		if e.component != nil {
+			printed = e.component.Print(ctx)
+		} else {
+			printed = e.raw
+		}
+		if e.newRow {
+			printed["newRow"] = true
+		}
+		data = append(data, printed)
+	}
+	result["data"] = data
 
 	// Merge extra fields at root level
 	for key, value := range p.extra {

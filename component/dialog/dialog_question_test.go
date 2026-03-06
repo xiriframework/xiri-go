@@ -20,6 +20,7 @@ func TestNewDialogDelete(t *testing.T) {
 			return translations[key]
 		}
 
+		mockCtx := &core.UiContext{Translate: mockTranslator}
 		dialog := NewDialogDelete(
 			"Delete this item?",
 			testUrl,
@@ -27,10 +28,9 @@ func TestNewDialogDelete(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			mockTranslator,
 		)
 
-		result := dialog.Print(nil)
+		result := dialog.Print(mockCtx)
 
 		if result["header"] != "Löschen" {
 			t.Errorf("header = %v, want Löschen", result["header"])
@@ -90,7 +90,6 @@ func TestNewDialogDelete(t *testing.T) {
 			&customHeader,
 			&customOk,
 			&customClose,
-			nil,
 		)
 
 		result := dialog.Print(nil)
@@ -125,7 +124,6 @@ func TestNewDialogDelete(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			nil,
 		)
 
 		result := dialog.Print(nil)
@@ -146,7 +144,6 @@ func TestNewDialogDelete(t *testing.T) {
 		dialog := NewDialogDelete(
 			"Delete?",
 			testUrl,
-			nil,
 			nil,
 			nil,
 			nil,
@@ -184,7 +181,6 @@ func TestNewDialogWarning(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			nil,
 		)
 
 		result := dialog.Print(nil)
@@ -212,6 +208,7 @@ func TestNewDialogWarning(t *testing.T) {
 			return key
 		}
 
+		mockCtx := &core.UiContext{Translate: mockTranslator}
 		dialog := NewDialogWarning(
 			"This action cannot be undone",
 			testUrl,
@@ -219,10 +216,9 @@ func TestNewDialogWarning(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			mockTranslator,
 		)
 
-		result := dialog.Print(nil)
+		result := dialog.Print(mockCtx)
 
 		if result["header"] != "Achtung" {
 			t.Errorf("header = %v, want Achtung", result["header"])
@@ -237,7 +233,6 @@ func TestNewDialogWarning(t *testing.T) {
 			testUrl,
 			nil,
 			&customHeader,
-			nil,
 			nil,
 			nil,
 		)

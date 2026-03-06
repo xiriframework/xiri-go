@@ -1,5 +1,4 @@
-// Package uicontext provides the UiContext struct with user preferences for UI rendering.
-package uicontext
+package core
 
 import (
 	"github.com/xiriframework/xiri-go/types/distance"
@@ -18,7 +17,7 @@ type UiContext struct {
 	Locale    locale.Locale
 	Distance  distance.Distance
 	Pressure  pressure.Pressure
-	Translate func(key string) string // Injected per-project translation function
+	Translate TranslateFunc // Injected per-project translation function
 }
 
 // SafeTranslate returns the translated string for the given key.

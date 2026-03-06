@@ -1,7 +1,7 @@
 package field
 
 import (
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 import "fmt"
@@ -58,7 +58,7 @@ func NewSerialField(id, name string) *SerialField {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *SerialField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *SerialField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

@@ -54,7 +54,7 @@ func (l *List) WithReload(reload bool) *List {
 }
 
 // Print returns the JSON representation of the list
-func (l *List) Print(translator core.TranslateFunc) map[string]any {
+func (l *List) Print(ctx *core.UiContext) map[string]any {
 	if l.url != nil {
 		return map[string]any{
 			"type":    "list",
@@ -69,26 +69,26 @@ func (l *List) Print(translator core.TranslateFunc) map[string]any {
 	return map[string]any{
 		"type":    "list",
 		"display": l.display,
-		"data":    l.printData(translator),
+		"data":    l.printData(ctx),
 	}
 }
 
 // PrintData returns only the data portion of the list (for use in data endpoints).
-func (l *List) PrintData(translator core.TranslateFunc) map[string]any {
-	return l.printData(translator)
+func (l *List) PrintData(ctx *core.UiContext) map[string]any {
+	return l.printData(ctx)
 }
 
 // DataResponse returns a DataResult wrapping the list data in {"data": ...} envelope.
-func (l *List) DataResponse(translator core.TranslateFunc) response.DataResult {
-	return response.NewJSONDataResult(l.PrintData(translator))
+func (l *List) DataResponse(ctx *core.UiContext) response.DataResult {
+	return response.NewJSONDataResult(l.PrintData(ctx))
 }
 
 // printData builds the data map used by both Print and PrintData.
-func (l *List) printData(translator core.TranslateFunc) map[string]any {
+func (l *List) printData(ctx *core.UiContext) map[string]any {
 	allSections := make([]map[string]any, 0, len(l.rawSections)+len(l.sections))
 	allSections = append(allSections, l.rawSections...)
 	for _, s := range l.sections {
-		allSections = append(allSections, s.Print(translator))
+		allSections = append(allSections, s.Print(ctx))
 	}
 
 	return map[string]any{
@@ -127,11 +127,11 @@ func (ls *ListSection) WithName(name string) *ListSection {
 }
 
 // Print returns the JSON representation of the list section
-func (ls *ListSection) Print(translator core.TranslateFunc) map[string]any {
+func (ls *ListSection) Print(ctx *core.UiContext) map[string]any {
 	allData := make([]map[string]any, 0, len(ls.rawData)+len(ls.items))
 	allData = append(allData, ls.rawData...)
 	for _, item := range ls.items {
-		allData = append(allData, item.Print(translator))
+		allData = append(allData, item.Print(ctx))
 	}
 
 	return map[string]any{
@@ -214,7 +214,7 @@ func (lsi *ListSectionItem) WithIsFavorite(isFavorite bool) *ListSectionItem {
 }
 
 // Print returns the JSON representation of the list section item
-func (lsi *ListSectionItem) Print(translator core.TranslateFunc) map[string]any {
+func (lsi *ListSectionItem) Print(ctx *core.UiContext) map[string]any {
 	result := map[string]any{
 		"name":         lsi.name,
 		"url":          lsi.url.PrintPrefix(),

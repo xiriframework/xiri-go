@@ -25,10 +25,9 @@ func NewDialogForm(
 	extra map[string]any,
 	okText *string,
 	closeText *string,
-	translator core.TranslateFunc,
 ) Dialog {
-	ok := resolveText(okText, "Ok", "Ok", translator)
-	closeBtn := resolveText(closeText, "Back", "Back", translator)
+	ok := resolveText(okText, "Ok")
+	closeBtn := resolveText(closeText, "Back")
 
 	buttons := buildStandardButtons(closeBtn, ok, u)
 
@@ -63,7 +62,6 @@ func NewDialogFormMultiDelete(
 	headerText *string,
 	okText *string,
 	closeText *string,
-	translator core.TranslateFunc,
 ) Dialog {
 	extra := map[string]interface{}{
 		"data": selectedIDs,
@@ -77,7 +75,6 @@ func NewDialogFormMultiDelete(
 		headerText,
 		okText,
 		closeText,
-		translator,
 	)
 }
 
@@ -105,7 +102,6 @@ func NewDialogFormMultiEdit(
 	header string,
 	okText string,
 	closeText string,
-	translator core.TranslateFunc,
 ) Dialog {
 	extra := map[string]interface{}{
 		"data": selectedIDs,
@@ -119,6 +115,5 @@ func NewDialogFormMultiEdit(
 		extra,
 		&okText,
 		&closeText,
-		translator,
 	)
 }

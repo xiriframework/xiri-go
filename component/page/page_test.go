@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewPage_Empty(t *testing.T) {
-	p := NewPage(nil)
+	p := NewPage()
 	result := p.Print(nil)
 
 	data, ok := result["data"].([]map[string]any)
@@ -25,7 +25,7 @@ func TestNewPage_Empty(t *testing.T) {
 }
 
 func TestNewPage_WithBreadcrumbs(t *testing.T) {
-	p := NewPage(nil)
+	p := NewPage()
 	u := url.NewUrl("/Portal/Device/Table")
 	p.Bread("Home", nil, false)
 	p.Bread("Devices", u, false)
@@ -56,7 +56,7 @@ func TestNewPage_WithBreadcrumbs(t *testing.T) {
 }
 
 func TestNewPage_WithExtra(t *testing.T) {
-	p := NewPage(nil)
+	p := NewPage()
 	p.Extra("title", "Test Page")
 	p.Extra("version", 2)
 
@@ -84,7 +84,7 @@ func TestBreadcrumbItem_Print(t *testing.T) {
 }
 
 func TestNewPage_JSONSnapshot(t *testing.T) {
-	p := NewPage(nil)
+	p := NewPage()
 	u := url.NewUrl("/Portal/Home")
 	p.Bread("Home", u, false)
 

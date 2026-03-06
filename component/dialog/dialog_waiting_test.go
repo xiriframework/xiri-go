@@ -18,7 +18,6 @@ func TestNewDialogWaiting(t *testing.T) {
 			3000,
 			nil,
 			nil,
-			nil,
 		)
 
 		result := dialog.Print(nil)
@@ -71,6 +70,7 @@ func TestNewDialogWaiting(t *testing.T) {
 			return key
 		}
 
+		mockCtx := &core.UiContext{Translate: mockTranslator}
 		dialog := NewDialogWaiting(
 			"Loading...",
 			testUrl,
@@ -78,10 +78,9 @@ func TestNewDialogWaiting(t *testing.T) {
 			5000,
 			nil,
 			nil,
-			mockTranslator,
 		)
 
-		result := dialog.Print(nil)
+		result := dialog.Print(mockCtx)
 
 		buttons, ok := result["buttons"].([]map[string]any)
 		if !ok {
@@ -103,7 +102,6 @@ func TestNewDialogWaiting(t *testing.T) {
 			2000,
 			nil,
 			&closeText,
-			nil,
 		)
 
 		result := dialog.Print(nil)
@@ -181,7 +179,6 @@ func TestDialogWaiting_Print_States(t *testing.T) {
 			testUrl,
 			"Processing",
 			1000,
-			nil,
 			nil,
 			nil,
 		)

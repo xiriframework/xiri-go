@@ -25,7 +25,7 @@ func (it *InfoText) WithDisplay(display string) *InfoText {
 }
 
 // Print returns the JSON representation of the info text
-func (it *InfoText) Print(translator core.TranslateFunc) map[string]any {
+func (it *InfoText) Print(ctx *core.UiContext) map[string]any {
 	return map[string]any{
 		"type":    "infotext",
 		"display": it.display,
@@ -117,7 +117,7 @@ func (ip *InfoPoint) WithDisplay(display string) *InfoPoint {
 }
 
 // Print returns the JSON representation of the info point
-func (ip *InfoPoint) Print(translator core.TranslateFunc) map[string]any {
+func (ip *InfoPoint) Print(ctx *core.UiContext) map[string]any {
 	return map[string]any{
 		"type":    "infopoint",
 		"display": ip.display,

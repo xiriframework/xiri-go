@@ -5,7 +5,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // IntField represents an integer field with optional min/max bounds
@@ -153,7 +153,7 @@ func NewNumberField(id, name string, required bool, defaultValue float64) *IntFi
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *IntField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *IntField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

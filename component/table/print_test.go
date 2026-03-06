@@ -8,7 +8,7 @@ import (
 	"github.com/xiriframework/xiri-go/types/language"
 	"github.com/xiriframework/xiri-go/types/locale"
 	"github.com/xiriframework/xiri-go/types/timezone"
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // Test row struct
@@ -32,12 +32,13 @@ func testTranslator(key string) string {
 }
 
 // Test context
-func testContext() *uicontext.UiContext {
-	return &uicontext.UiContext{
-		Timezone: timezone.EuropeVienna,
-		Lang:     language.Deutsch,
-		Locale:   locale.De,
-		Distance: distance.Kilometer,
+func testContext() *core.UiContext {
+	return &core.UiContext{
+		Timezone:  timezone.EuropeVienna,
+		Lang:      language.Deutsch,
+		Locale:    locale.De,
+		Distance:  distance.Kilometer,
+		Translate: testTranslator,
 	}
 }
 
@@ -47,14 +48,14 @@ func TestPrintAJAXMode(t *testing.T) {
 
 	url := xurl.NewUrl("/Portal/Device/TableData")
 
-	builder := NewBuilder[testDeviceRow](ctx, testTranslator)
+	builder := NewBuilder[testDeviceRow]()
 	builder.IdField("id", "device.id", func(r testDeviceRow) int64 { return r.ID })
 	builder.TextField("name", "device.name", func(r testDeviceRow) string { return r.Name })
 	tbl := builder.Build()
 	tbl.SetURL(url)
 
 	// Call Print() - should produce AJAX mode JSON
-	output := tbl.Print(testTranslator)
+	output := tbl.Print(ctx)
 
 	// Verify structure
 	if output["type"] != "table" {
@@ -100,7 +101,7 @@ func TestPrintStaticMode(t *testing.T) {
 		{ID: 2, Name: "Device 2", Active: false},
 	}
 
-	builder := NewBuilder[testDeviceRow](ctx, testTranslator)
+	builder := NewBuilder[testDeviceRow]()
 	builder.IdField("id", "device.id", func(r testDeviceRow) int64 { return r.ID })
 	builder.TextField("name", "device.name", func(r testDeviceRow) string { return r.Name })
 	builder.BoolField("active", "device.active", func(r testDeviceRow) bool { return r.Active }).
@@ -109,7 +110,7 @@ func TestPrintStaticMode(t *testing.T) {
 	tbl.SetData(rows)
 
 	// Call Print() - should produce static mode JSON
-	output := tbl.Print(testTranslator)
+	output := tbl.Print(ctx)
 
 	// Verify structure
 	if output["type"] != "table" {
@@ -151,21 +152,25 @@ func TestPrintStaticMode(t *testing.T) {
 
 // TestPrintWithTranslator verifies translator is properly passed to fields
 func TestPrintWithTranslator(t *testing.T) {
-	ctx := testContext()
-
-	translator := func(key string) string {
-		if key == "device.id" {
-			return "Translated ID"
-		}
-		return key
+	ctx := &core.UiContext{
+		Timezone:  timezone.EuropeVienna,
+		Lang:      language.Deutsch,
+		Locale:    locale.De,
+		Distance:  distance.Kilometer,
+		Translate: func(key string) string {
+			if key == "device.id" {
+				return "Translated ID"
+			}
+			return key
+		},
 	}
 
-	builder := NewBuilder[testDeviceRow](ctx, testTranslator)
+	builder := NewBuilder[testDeviceRow]()
 	builder.IdField("id", "device.id", func(r testDeviceRow) int64 { return r.ID })
 	tbl := builder.Build()
 	tbl.SetData([]testDeviceRow{{ID: 1}})
 
-	output := tbl.Print(translator)
+	output := tbl.Print(ctx)
 
 	data := output["data"].(map[string]any)
 	fields := data["fields"].([]map[string]any)
@@ -176,19 +181,16 @@ func TestPrintWithTranslator(t *testing.T) {
 	}
 }
 
-// TestPrintFallbackTranslator verifies fallback to table's translator if nil passed
-func TestPrintFallbackTranslator(t *testing.T) {
-	ctx := testContext()
-
-	builder := NewBuilder[testDeviceRow](ctx, testTranslator)
+// TestPrintNilCtx verifies that Print(nil) does not panic
+func TestPrintNilCtx(t *testing.T) {
+	builder := NewBuilder[testDeviceRow]()
 	builder.IdField("id", "device.id", func(r testDeviceRow) int64 { return r.ID })
 	tbl := builder.Build()
 	tbl.SetData([]testDeviceRow{{ID: 1}})
 
-	// Pass nil translator - should fall back to table's translator
+	// Pass nil ctx - should not panic, fields returned with untranslated keys
 	output := tbl.Print(nil)
 
-	// Should not panic, should use table's translator
 	if output["type"] != "table" {
 		t.Errorf("Expected type 'table', got %v", output["type"])
 	}

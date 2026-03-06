@@ -8,64 +8,35 @@ import (
 )
 
 func TestResolveText(t *testing.T) {
-	mockTranslator := func(key string) string {
-		translations := map[string]string{
-			"Delete":  "Löschen",
-			"Ok":      "Bestätigen",
-			"Back":    "Zurück",
-			"Warning": "Warnung",
-		}
-		if val, ok := translations[key]; ok {
-			return val
-		}
-		return key
-	}
-
 	tests := []struct {
-		name           string
-		customText     *string
-		translationKey string
-		defaultText    string
-		translator     core.TranslateFunc
-		expected       string
+		name       string
+		customText *string
+		defaultKey string
+		expected   string
 	}{
 		{
-			name:           "Custom text takes priority",
-			customText:     stringPtr("Custom Delete"),
-			translationKey: "Delete",
-			defaultText:    "Delete",
-			translator:     mockTranslator,
-			expected:       "Custom Delete",
+			name:       "Custom text takes priority",
+			customText: stringPtr("Custom Delete"),
+			defaultKey: "Delete",
+			expected:   "Custom Delete",
 		},
 		{
-			name:           "Translation when no custom text",
-			customText:     nil,
-			translationKey: "Delete",
-			defaultText:    "Delete",
-			translator:     mockTranslator,
-			expected:       "Löschen",
+			name:       "Default key when no custom text",
+			customText: nil,
+			defaultKey: "Delete",
+			expected:   "Delete",
 		},
 		{
-			name:           "Default when no custom text or translator",
-			customText:     nil,
-			translationKey: "Delete",
-			defaultText:    "Delete",
-			translator:     nil,
-			expected:       "Delete",
-		},
-		{
-			name:           "Empty custom text is used",
-			customText:     stringPtr(""),
-			translationKey: "Delete",
-			defaultText:    "Delete",
-			translator:     mockTranslator,
-			expected:       "",
+			name:       "Empty custom text is used",
+			customText: stringPtr(""),
+			defaultKey: "Delete",
+			expected:   "",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := resolveText(tt.customText, tt.translationKey, tt.defaultText, tt.translator)
+			result := resolveText(tt.customText, tt.defaultKey)
 			if result != tt.expected {
 				t.Errorf("resolveText() = %q, want %q", result, tt.expected)
 			}
@@ -74,25 +45,11 @@ func TestResolveText(t *testing.T) {
 }
 
 func TestResolveDialogTexts(t *testing.T) {
-	mockTranslator := func(key string) string {
-		translations := map[string]string{
-			"Delete":  "Löschen",
-			"Ok":      "Bestätigen",
-			"Back":    "Zurück",
-			"Warning": "Warnung",
-		}
-		if val, ok := translations[key]; ok {
-			return val
-		}
-		return key
-	}
-
 	tests := []struct {
 		name       string
 		headerText *string
 		okText     *string
 		closeText  *string
-		translator core.TranslateFunc
 		expected   dialogTexts
 	}{
 		{
@@ -100,7 +57,6 @@ func TestResolveDialogTexts(t *testing.T) {
 			headerText: stringPtr("Custom Header"),
 			okText:     stringPtr("Custom OK"),
 			closeText:  stringPtr("Custom Close"),
-			translator: mockTranslator,
 			expected: dialogTexts{
 				Header: "Custom Header",
 				Ok:     "Custom OK",
@@ -108,23 +64,10 @@ func TestResolveDialogTexts(t *testing.T) {
 			},
 		},
 		{
-			name:       "All translations",
+			name:       "All defaults",
 			headerText: nil,
 			okText:     nil,
 			closeText:  nil,
-			translator: mockTranslator,
-			expected: dialogTexts{
-				Header: "Löschen",
-				Ok:     "Bestätigen",
-				Close:  "Zurück",
-			},
-		},
-		{
-			name:       "All defaults (no translator)",
-			headerText: nil,
-			okText:     nil,
-			closeText:  nil,
-			translator: nil,
 			expected: dialogTexts{
 				Header: "Delete",
 				Ok:     "Ok",
@@ -132,15 +75,14 @@ func TestResolveDialogTexts(t *testing.T) {
 			},
 		},
 		{
-			name:       "Mixed custom and translation",
+			name:       "Mixed custom and default",
 			headerText: stringPtr("My Header"),
 			okText:     nil,
 			closeText:  nil,
-			translator: mockTranslator,
 			expected: dialogTexts{
 				Header: "My Header",
-				Ok:     "Bestätigen",
-				Close:  "Zurück",
+				Ok:     "Ok",
+				Close:  "Back",
 			},
 		},
 	}
@@ -148,10 +90,9 @@ func TestResolveDialogTexts(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := resolveDialogTexts(
-				tt.headerText, "Delete", "Delete",
-				tt.okText, "Ok", "Ok",
-				tt.closeText, "Back", "Back",
-				tt.translator,
+				tt.headerText, "Delete",
+				tt.okText, "Ok",
+				tt.closeText, "Back",
 			)
 			if result != tt.expected {
 				t.Errorf("resolveDialogTexts() = %+v, want %+v", result, tt.expected)

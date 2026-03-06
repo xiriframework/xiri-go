@@ -6,25 +6,13 @@ import (
 	"github.com/xiriframework/xiri-go/component/url"
 )
 
-// resolveText resolves text with priority: custom > translation > default
-//
-// Priority order:
-//  1. customText (if provided and non-nil)
-//  2. translator(translationKey) (if translator is provided)
-//  3. defaultText (fallback)
-func resolveText(
-	customText *string,
-	translationKey string,
-	defaultText string,
-	translator core.TranslateFunc,
-) string {
+// resolveText returns the custom text if provided, otherwise the default key.
+// Translation happens lazily at Print time via core.Translate.
+func resolveText(customText *string, defaultKey string) string {
 	if customText != nil {
 		return *customText
 	}
-	if translator != nil {
-		return translator(translationKey)
-	}
-	return defaultText
+	return defaultKey
 }
 
 // dialogTexts holds resolved text values for standard dialog elements
@@ -34,19 +22,17 @@ type dialogTexts struct {
 	Close  string
 }
 
-// resolveDialogTexts resolves all standard dialog texts using the priority system
-//
-// For each text field, the priority is: custom > translation > default
+// resolveDialogTexts returns custom texts or default keys for standard dialog elements.
+// Translation happens lazily at Print time via core.Translate.
 func resolveDialogTexts(
-	headerText *string, headerKey, headerDefault string,
-	okText *string, okKey, okDefault string,
-	closeText *string, closeKey, closeDefault string,
-	translator core.TranslateFunc,
+	headerText *string, headerDefault string,
+	okText *string, okDefault string,
+	closeText *string, closeDefault string,
 ) dialogTexts {
 	return dialogTexts{
-		Header: resolveText(headerText, headerKey, headerDefault, translator),
-		Ok:     resolveText(okText, okKey, okDefault, translator),
-		Close:  resolveText(closeText, closeKey, closeDefault, translator),
+		Header: resolveText(headerText, headerDefault),
+		Ok:     resolveText(okText, okDefault),
+		Close:  resolveText(closeText, closeDefault),
 	}
 }
 

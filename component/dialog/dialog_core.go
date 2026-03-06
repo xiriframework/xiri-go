@@ -6,45 +6,13 @@ import (
 	"github.com/xiriframework/xiri-go/component/core"
 )
 
-// DialogQuestionContent represents content for question-type dialogs (delete, warning)
-type DialogQuestionContent struct {
-	Icon     string `json:"icon"`
-	Question string `json:"question"`
-}
-
-// Print returns the JSON representation of question content
-func (d DialogQuestionContent) Print(translator core.TranslateFunc) map[string]any {
-	return map[string]any{
-		"icon":     d.Icon,
-		"question": d.Question,
-	}
-}
-
-// DialogWaitingContent represents content for waiting dialogs
-type DialogWaitingContent struct {
-	Icon string `json:"icon"`
-	Text string `json:"text"`
-}
-
-// Print returns the JSON representation of waiting content
-func (d DialogWaitingContent) Print(translator core.TranslateFunc) map[string]any {
-	return map[string]any{
-		"icon": d.Icon,
-		"text": d.Text,
-	}
-}
-
-// DialogContent is an interface for content that needs custom serialization
-type DialogContent interface {
-	Print(translator core.TranslateFunc) map[string]any
-}
-
 // Dialog represents any component that can be rendered as a dialog
 type Dialog interface {
-	Print(translator core.TranslateFunc) map[string]any
+	Print(ctx *core.UiContext) map[string]any
 	WithExtra(extra map[string]any) Dialog
 	WithOptions(options map[string]any) Dialog
 	WithOption(key string, value any) Dialog
+	SetButtons(buttons []*button.Button) Dialog
 }
 
 // dialogImpl represents a dialog/modal component
@@ -125,6 +93,12 @@ func (d *dialogImpl) WithOption(key string, value any) Dialog {
 	return d
 }
 
+// SetButtons replaces the dialog's buttons
+func (d *dialogImpl) SetButtons(buttons []*button.Button) Dialog {
+	d.buttons = buttons
+	return d
+}
+
 // Print returns the JSON representation of the dialog
 //
 // The output structure matches Angular's XiriDialogSettings interface:
@@ -134,10 +108,10 @@ func (d *dialogImpl) WithOption(key string, value any) Dialog {
 //   - extra: Additional data passed to frontend
 //   - buttons: Array of button configurations
 //   - [options]: Any keys from options map are merged at root level
-func (d *dialogImpl) Print(translator core.TranslateFunc) map[string]any {
+func (d *dialogImpl) Print(ctx *core.UiContext) map[string]any {
 	buttonData := make([]map[string]any, len(d.buttons))
 	for i, btn := range d.buttons {
-		buttonData[i] = btn.Print(translator)
+		buttonData[i] = btn.Print(ctx)
 	}
 
 	content := d.content
@@ -147,13 +121,13 @@ func (d *dialogImpl) Print(translator core.TranslateFunc) map[string]any {
 
 	var processedContent any
 	if contentPrinter, ok := content.(DialogContent); ok {
-		processedContent = contentPrinter.Print(translator)
+		processedContent = contentPrinter.Print(ctx)
 	} else {
 		processedContent = content
 	}
 
 	data := map[string]any{
-		"header":  d.header,
+		"header":  core.Translate(ctx, d.header),
 		"type":    string(d.dialogType),
 		"content": processedContent,
 		"extra":   d.extra,

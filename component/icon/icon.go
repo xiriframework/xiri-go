@@ -49,11 +49,11 @@ func (i *Icon) WithOption(key string, value any) *Icon {
 }
 
 // Print returns the JSON representation of the icon
-func (i *Icon) Print(translator core.TranslateFunc) map[string]any {
+func (i *Icon) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
 		"icon":  i.icon,
 		"color": string(i.color),
-		"hint":  core.Translate(translator, i.hint),
+		"hint":  core.Translate(ctx, i.hint),
 	}
 
 	// Merge options into data

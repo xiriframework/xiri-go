@@ -3,7 +3,7 @@ package field
 import (
 	"fmt"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // ChipsField represents a tag/chip input form field
@@ -82,7 +82,7 @@ func (f *ChipsField) BindValue(raw interface{}) error {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *ChipsField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *ChipsField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

@@ -24,7 +24,6 @@ func TestNewDialogForm(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			nil,
 		)
 
 		result := dialog.Print(nil)
@@ -66,6 +65,7 @@ func TestNewDialogForm(t *testing.T) {
 		}
 
 		fields := []map[string]any{}
+		mockCtx := &core.UiContext{Translate: mockTranslator}
 		dialog := NewDialogForm(
 			fields,
 			testUrl,
@@ -73,10 +73,9 @@ func TestNewDialogForm(t *testing.T) {
 			nil,
 			nil,
 			nil,
-			mockTranslator,
 		)
 
-		result := dialog.Print(nil)
+		result := dialog.Print(mockCtx)
 
 		buttons, ok := result["buttons"].([]map[string]any)
 		if !ok {
@@ -103,7 +102,6 @@ func TestNewDialogForm(t *testing.T) {
 			nil,
 			&okText,
 			&closeText,
-			nil,
 		)
 
 		result := dialog.Print(nil)
@@ -134,7 +132,6 @@ func TestNewDialogForm(t *testing.T) {
 			extra,
 			nil,
 			nil,
-			nil,
 		)
 
 		result := dialog.Print(nil)
@@ -158,7 +155,6 @@ func TestNewDialogFormMultiDelete(t *testing.T) {
 			testUrl,
 			selectedIDs,
 			"Delete 3 items?",
-			nil,
 			nil,
 			nil,
 			nil,
@@ -211,7 +207,6 @@ func TestNewDialogFormMultiDelete(t *testing.T) {
 			&header,
 			&okText,
 			&closeText,
-			nil,
 		)
 
 		result := dialog.Print(nil)
@@ -247,7 +242,6 @@ func TestNewDialogFormMultiEdit(t *testing.T) {
 			"Edit 3 Users",
 			"Save Changes",
 			"Cancel",
-			nil,
 		)
 
 		result := dialog.Print(nil)

@@ -144,10 +144,10 @@ func (td *TableDataResponse) AddComponent(comp core.Component) *TableDataRespons
 //	{
 //	  "excel": <binary bytes>
 //	}
-func (td *TableDataResponse) Print(translator core.TranslateFunc) map[string]any {
+func (td *TableDataResponse) Print(ctx *core.UiContext) map[string]any {
 	// Handle CSV output
 	if td.outputType == OutputCSV {
-		csvString := td.generateCSV(translator)
+		csvString := td.generateCSV(ctx)
 		return map[string]any{
 			"csv": csvString,
 		}
@@ -155,7 +155,7 @@ func (td *TableDataResponse) Print(translator core.TranslateFunc) map[string]any
 
 	// Handle Excel output
 	if td.outputType == OutputExcel {
-		excelBytes, err := td.generateExcel(translator)
+		excelBytes, err := td.generateExcel(ctx)
 		if err != nil {
 			// On error, return empty Excel data
 			return map[string]any{
@@ -191,7 +191,7 @@ func (td *TableDataResponse) Print(translator core.TranslateFunc) map[string]any
 	if len(td.components) > 0 {
 		components := make([]map[string]any, 0, len(td.components))
 		for _, comp := range td.components {
-			printed := comp.Print(translator)
+			printed := comp.Print(ctx)
 			if printed != nil && len(printed) > 0 {
 				components = append(components, printed)
 			}
@@ -207,8 +207,8 @@ func (td *TableDataResponse) Print(translator core.TranslateFunc) map[string]any
 
 // DataResponse returns a DataResult with the appropriate response type (JSON, CSV, or Excel).
 // Table responses are NOT wrapped in {"data": ...} — they have their own top-level structure.
-func (td *TableDataResponse) DataResponse(translator core.TranslateFunc) response.DataResult {
-	printed := td.Print(translator)
+func (td *TableDataResponse) DataResponse(ctx *core.UiContext) response.DataResult {
+	printed := td.Print(ctx)
 
 	if csv, ok := printed["csv"].(string); ok {
 		return response.NewCSVDataResult(csv)
@@ -324,7 +324,7 @@ func sanitizeExportValue(s string) string {
 // generateCSV creates a CSV string from the table data.
 // Uses semicolon (;) delimiter for Excel compatibility.
 // Only includes fields that are marked as CSV-enabled.
-func (td *TableDataResponse) generateCSV(translator core.TranslateFunc) string {
+func (td *TableDataResponse) generateCSV(ctx *core.UiContext) string {
 	td.expandNFieldColumns()
 
 	buf := new(bytes.Buffer)
@@ -416,7 +416,7 @@ func (td *TableDataResponse) generateCSV(translator core.TranslateFunc) string {
 // generateExcel creates an Excel (.xlsx) file from the table data.
 // Uses excelize library to create a properly formatted Excel workbook.
 // Only includes fields that are marked as CSV-enabled (same logic as CSV).
-func (td *TableDataResponse) generateExcel(translator core.TranslateFunc) ([]byte, error) {
+func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) {
 	td.expandNFieldColumns()
 
 	// If no data, return empty Excel file

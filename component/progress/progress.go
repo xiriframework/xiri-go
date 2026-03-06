@@ -114,7 +114,7 @@ func (mp *MultiProgress) WithReload(reload bool) *MultiProgress {
 }
 
 // Print returns the JSON representation of the multi-progress
-func (mp *MultiProgress) Print(translator core.TranslateFunc) map[string]any {
+func (mp *MultiProgress) Print(ctx *core.UiContext) map[string]any {
 	if mp.url != nil {
 		return map[string]any{
 			"type":    "multiprogress",
@@ -127,7 +127,7 @@ func (mp *MultiProgress) Print(translator core.TranslateFunc) map[string]any {
 		}
 	}
 
-	data := mp.printData(translator)
+	data := mp.printData(ctx)
 	if data == nil {
 		return map[string]any{}
 	}
@@ -141,18 +141,18 @@ func (mp *MultiProgress) Print(translator core.TranslateFunc) map[string]any {
 
 // PrintData returns only the data portion of the multi-progress (for use in data endpoints).
 // Returns nil when there is no data.
-func (mp *MultiProgress) PrintData(translator core.TranslateFunc) map[string]any {
-	return mp.printData(translator)
+func (mp *MultiProgress) PrintData(ctx *core.UiContext) map[string]any {
+	return mp.printData(ctx)
 }
 
 // DataResponse returns a DataResult wrapping the progress data in {"data": ...} envelope.
-func (mp *MultiProgress) DataResponse(translator core.TranslateFunc) response.DataResult {
-	return response.NewJSONDataResult(mp.PrintData(translator))
+func (mp *MultiProgress) DataResponse(ctx *core.UiContext) response.DataResult {
+	return response.NewJSONDataResult(mp.PrintData(ctx))
 }
 
 // printData builds the data map used by both Print and PrintData.
 // Returns nil when there is no data.
-func (mp *MultiProgress) printData(translator core.TranslateFunc) map[string]any {
+func (mp *MultiProgress) printData(ctx *core.UiContext) map[string]any {
 	if len(mp.data) == 0 {
 		return nil
 	}

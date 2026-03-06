@@ -1,7 +1,7 @@
 package field
 
 import (
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // HeaderField represents a header/section label (non-interactive)
@@ -42,7 +42,7 @@ func NewHeaderField(id, content string) *HeaderField {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *HeaderField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *HeaderField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	result := f.BaseField.GetBaseExport(ctx, f.Content)
 	if f.Collapsible {
 		result["collapsible"] = true

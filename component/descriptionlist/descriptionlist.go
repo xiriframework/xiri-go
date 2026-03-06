@@ -79,11 +79,11 @@ func (d *DescriptionList) WithDisplay(display string) *DescriptionList {
 }
 
 // Print returns the JSON representation of the description list component.
-func (d *DescriptionList) Print(translator core.TranslateFunc) map[string]any {
+func (d *DescriptionList) Print(ctx *core.UiContext) map[string]any {
 	itemsData := make([]map[string]any, len(d.items))
 	for idx, item := range d.items {
 		entry := map[string]any{
-			"label": core.Translate(translator, item.label),
+			"label": core.Translate(ctx, item.label),
 			"value": item.value,
 		}
 		if item.icon != nil {

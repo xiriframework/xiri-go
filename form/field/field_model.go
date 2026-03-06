@@ -5,7 +5,7 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // ModelOption represents a single option in a model dropdown
@@ -17,7 +17,7 @@ type ModelOption struct {
 
 // ModelLoaderFunc is a function type for loading model options.
 // The loader implementation is project-specific (e.g., database-backed).
-type ModelLoaderFunc func(ctx *uicontext.UiContext, modelType string) ([]ModelOption, error)
+type ModelLoaderFunc func(ctx *core.UiContext, modelType string) ([]ModelOption, error)
 
 // ModelField represents a single model/object selection form field
 // This is used to select a single object from a list (dropdown/autocomplete)
@@ -38,7 +38,7 @@ type ModelField struct {
 
 // LoadOptions implements FieldOptionsLoader interface
 // Loads model options using the configured LoaderFunc
-func (f *ModelField) LoadOptions(ctx *uicontext.UiContext) error {
+func (f *ModelField) LoadOptions(ctx *core.UiContext) error {
 	if f.LoaderFunc == nil {
 		// No loader function = options are static or loaded externally
 		return nil
@@ -152,7 +152,7 @@ func NewModelField(id, name string, required bool, modelType string, currentValu
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *ModelField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *ModelField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

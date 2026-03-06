@@ -4,7 +4,7 @@ package builder
 import (
 	"github.com/xiriframework/xiri-go/form/field"
 	"github.com/xiriframework/xiri-go/form/group"
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // FormBuilder provides a fluent API for building forms
@@ -13,7 +13,7 @@ import (
 // KEY FEATURE: After BindAndValidate(), access values via field.Value (type-safe, no assertions!)
 type FormBuilder struct {
 	fields    []field.FormField
-	ctx       *uicontext.UiContext
+	ctx       *core.UiContext
 	translate func(string) string
 
 	// Optional hook for edit edge cases (e.g., checking if current value is in options list)
@@ -27,7 +27,7 @@ type FormBuilder struct {
 //   - translate: Translation function for field labels
 //
 // Returns a FormBuilder that can be used to define form fields via method chaining.
-func NewFormBuilder(ctx *uicontext.UiContext, translate func(string) string) *FormBuilder {
+func NewFormBuilder(ctx *core.UiContext, translate func(string) string) *FormBuilder {
 	return &FormBuilder{
 		fields:    make([]field.FormField, 0),
 		ctx:       ctx,

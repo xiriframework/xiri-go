@@ -3,9 +3,7 @@ package table
 import (
 	"log/slog"
 
-	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/form/group"
-	"github.com/xiriframework/xiri-go/uicontext"
 )
 
 // TableBuilder provides a fluent API for building type-safe tables.
@@ -13,25 +11,19 @@ type TableBuilder[T any] struct {
 	table *Table[T]
 }
 
-// NewBuilder creates a new table builder with the given context and translator.
-//
-// Parameters:
-//   - ctx: User context with locale/language/timezone/unit preferences
-//   - translator: Translation function for field labels
+// NewBuilder creates a new table builder.
 //
 // Example:
 //
-//	builder := table.NewBuilder[DeviceRow](ctx, translator)
-func NewBuilder[T any](ctx *uicontext.UiContext, translator core.TranslateFunc) *TableBuilder[T] {
+//	builder := table.NewBuilder[DeviceRow]()
+func NewBuilder[T any]() *TableBuilder[T] {
 	// Set common defaults for table options
 	defaultTrue := true
-	defaultTextNoData := translator("KEINEDATEN")
+	defaultTextNoData := "KEINEDATEN" // Translation key, resolved lazily at Print time
 
 	return &TableBuilder[T]{
 		table: &Table[T]{
 			tableCore: tableCore{
-				ctx:        ctx,
-				translator: translator,
 				fieldBases: make([]*fieldBase, 0),
 				options: TableOptions{
 					Pagination: &defaultTrue, // Default: enabled

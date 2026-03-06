@@ -42,7 +42,7 @@ type Device struct {
 }
 
 func handleDeviceTable(ctx *uicontext.UiContext, translate func(string) string) map[string]any {
-    builder := table.NewBuilder[Device](ctx, translate)
+    builder := table.NewBuilder[Device]()
 
     builder.IdField("id", "device.id", func(r Device) int64 { return r.ID })
     builder.TextField("name", "device.name", func(r Device) string { return r.Name })

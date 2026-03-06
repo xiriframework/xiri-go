@@ -1,6 +1,6 @@
 package table
 
-import "github.com/xiriframework/xiri-go/uicontext"
+import "github.com/xiriframework/xiri-go/component/core"
 
 // OutputFormatter formats a field value for a specific output type.
 // Formatters receive the entire row for cross-field dependencies (e.g., distance formatter needs device_id).
@@ -18,7 +18,7 @@ type OutputFormatter interface {
 	//
 	// Returns:
 	//   Formatted value - typically a string, but can be any (e.g., for web number fields)
-	Format(value any, row Row, output OutputType, ctx *uicontext.UiContext) any
+	Format(value any, row Row, output OutputType, ctx *core.UiContext) any
 }
 
 // FormatterFunc is a function adapter for the OutputFormatter interface.
@@ -26,12 +26,12 @@ type OutputFormatter interface {
 //
 // Example:
 //
-//	upperCaseFormatter := FormatterFunc(func(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+//	upperCaseFormatter := FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 //	    return strings.ToUpper(fmt.Sprint(value))
 //	})
-type FormatterFunc func(any, Row, OutputType, *uicontext.UiContext) any
+type FormatterFunc func(any, Row, OutputType, *core.UiContext) any
 
 // Format implements the OutputFormatter interface
-func (f FormatterFunc) Format(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+func (f FormatterFunc) Format(value any, row Row, output OutputType, ctx *core.UiContext) any {
 	return f(value, row, output, ctx)
 }

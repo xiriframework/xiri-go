@@ -1,7 +1,7 @@
 package field
 
 import (
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 import "fmt"
@@ -86,7 +86,7 @@ func NewJsonField(id, name string, required bool, defaultValue map[string]interf
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *JsonField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *JsonField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

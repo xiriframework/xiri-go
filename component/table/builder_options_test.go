@@ -10,7 +10,6 @@ import (
 	"github.com/xiriframework/xiri-go/types/language"
 	"github.com/xiriframework/xiri-go/types/locale"
 	"github.com/xiriframework/xiri-go/types/timezone"
-	"github.com/xiriframework/xiri-go/uicontext"
 )
 
 // Test row struct
@@ -20,12 +19,13 @@ type testOptionRow struct {
 }
 
 // Test context
-func testOptionContext() *uicontext.UiContext {
-	return &uicontext.UiContext{
-		Timezone: timezone.EuropeVienna,
-		Lang:     language.Deutsch,
-		Locale:   locale.De,
-		Distance: distance.Kilometer,
+func testOptionContext() *core.UiContext {
+	return &core.UiContext{
+		Timezone:  timezone.EuropeVienna,
+		Lang:      language.Deutsch,
+		Locale:    locale.De,
+		Distance:  distance.Kilometer,
+		Translate: testOptionTranslator,
 	}
 }
 
@@ -36,8 +36,7 @@ func testOptionTranslator(key string) string {
 
 // TestSetBooleanOptions tests all boolean option setters
 func TestSetBooleanOptions(t *testing.T) {
-	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	builder.
 		SetDense(true).
@@ -88,8 +87,7 @@ func TestSetBooleanOptions(t *testing.T) {
 
 // TestSetStringOptions tests all string option setters
 func TestSetStringOptions(t *testing.T) {
-	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	builder.
 		SetClass("custom-table").
@@ -132,8 +130,7 @@ func TestSetStringOptions(t *testing.T) {
 
 // TestSetNumericOptions tests numeric option setters
 func TestSetNumericOptions(t *testing.T) {
-	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	builder.SetItemsPerPage(50)
 
@@ -147,8 +144,7 @@ func TestSetNumericOptions(t *testing.T) {
 
 // TestSetSliceOptions tests slice option setters
 func TestSetSliceOptions(t *testing.T) {
-	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	pageSizes := []int{10, 25, 50, 100}
 	builder.SetPageSizes(pageSizes)
@@ -166,10 +162,8 @@ func TestSetSliceOptions(t *testing.T) {
 
 // TestSetSelectButtonsAutoLogic tests the auto-logic for Select when SetSelectButtons is called
 func TestSetSelectButtonsAutoLogic(t *testing.T) {
-	ctx := testOptionContext()
-
 	// Test 1: Setting non-empty buttons auto-enables Select
-	builder1 := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder1 := NewBuilder[testOptionRow]()
 	btn1 := button.NewTableButton(core.ButtonActionLink, "edit", xurl.NewUrl("/edit"), "Edit tooltip", core.ColorPrimary, false, nil)
 	btn2 := button.NewTableButton(core.ButtonActionDialog, "delete", xurl.NewUrl("/delete"), "Delete tooltip", core.ColorWarning, false, nil)
 
@@ -185,7 +179,7 @@ func TestSetSelectButtonsAutoLogic(t *testing.T) {
 	}
 
 	// Test 2: Setting empty buttons auto-disables Select
-	builder2 := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder2 := NewBuilder[testOptionRow]()
 	builder2.SetSelectButtons([]*button.TableButton{})
 	tbl2 := builder2.Build()
 	opts2 := tbl2.GetOptions()
@@ -195,7 +189,7 @@ func TestSetSelectButtonsAutoLogic(t *testing.T) {
 	}
 
 	// Test 3: Setting nil buttons auto-disables Select
-	builder3 := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder3 := NewBuilder[testOptionRow]()
 	builder3.SetSelectButtons(nil)
 	tbl3 := builder3.Build()
 	opts3 := tbl3.GetOptions()
@@ -207,8 +201,7 @@ func TestSetSelectButtonsAutoLogic(t *testing.T) {
 
 // TestAddSelectButton tests the AddSelectButton helper method
 func TestAddSelectButton(t *testing.T) {
-	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	btn1 := button.NewTableButton(core.ButtonActionLink, "edit", xurl.NewUrl("/edit"), "Edit tooltip", core.ColorPrimary, false, nil)
 	btn2 := button.NewTableButton(core.ButtonActionDialog, "delete", xurl.NewUrl("/delete"), "Delete tooltip", core.ColorWarning, false, nil)
@@ -232,8 +225,7 @@ func TestAddSelectButton(t *testing.T) {
 
 // TestClearSelectButtons tests the ClearSelectButtons method
 func TestClearSelectButtons(t *testing.T) {
-	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	// Add buttons first
 	btn1 := button.NewTableButton(core.ButtonActionLink, "edit", xurl.NewUrl("/edit"), "Edit tooltip", core.ColorPrimary, false, nil)
@@ -255,8 +247,7 @@ func TestClearSelectButtons(t *testing.T) {
 
 // TestSelectButtonsOverrideSelect tests that explicit SetSelect can override auto-logic
 func TestSelectButtonsOverrideSelect(t *testing.T) {
-	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	btn1 := button.NewTableButton(core.ButtonActionLink, "edit", xurl.NewUrl("/edit"), "Edit tooltip", core.ColorPrimary, false, nil)
 
@@ -279,7 +270,7 @@ func TestSelectButtonsOverrideSelect(t *testing.T) {
 // TestSelectButtonsJSONExport tests that SelectButtons are properly exported in JSON
 func TestSelectButtonsJSONExport(t *testing.T) {
 	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	btn1 := button.NewTableButton(core.ButtonActionLink, "edit", xurl.NewUrl("/edit"), "Edit tooltip", core.ColorPrimary, false, nil)
 	btn2 := button.NewTableButton(core.ButtonActionDialog, "delete", xurl.NewUrl("/delete"), "Delete tooltip", core.ColorWarning, false, nil)
@@ -289,7 +280,7 @@ func TestSelectButtonsJSONExport(t *testing.T) {
 	builder.AddSelectButton(btn2)
 
 	tbl := builder.Build()
-	output := tbl.Print(testOptionTranslator)
+	output := tbl.Print(ctx)
 
 	data, ok := output["data"].(map[string]any)
 	if !ok {
@@ -321,7 +312,7 @@ func TestSelectButtonsJSONExport(t *testing.T) {
 // TestAddMultiEditButton tests the AddMultiEditButton helper
 func TestAddMultiEditButton(t *testing.T) {
 	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	builder.AddMultiEditButton("/Portal/Device/MultiEdit")
 
@@ -339,7 +330,7 @@ func TestAddMultiEditButton(t *testing.T) {
 	}
 
 	// Verify button properties by checking JSON output
-	output := tbl.Print(testOptionTranslator)
+	output := tbl.Print(ctx)
 	data, _ := output["data"].(map[string]any)
 	options, _ := data["options"].(map[string]any)
 	selectButtons, _ := options["selectButtons"].([]map[string]any)
@@ -363,7 +354,7 @@ func TestAddMultiEditButton(t *testing.T) {
 // TestAddMultiDeleteButton tests the AddMultiDeleteButton helper
 func TestAddMultiDeleteButton(t *testing.T) {
 	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	builder.AddMultiDeleteButton("/Portal/Device/MultiDel")
 
@@ -381,7 +372,7 @@ func TestAddMultiDeleteButton(t *testing.T) {
 	}
 
 	// Verify button properties by checking JSON output
-	output := tbl.Print(testOptionTranslator)
+	output := tbl.Print(ctx)
 	data, _ := output["data"].(map[string]any)
 	options, _ := data["options"].(map[string]any)
 	selectButtons, _ := options["selectButtons"].([]map[string]any)
@@ -405,7 +396,7 @@ func TestAddMultiDeleteButton(t *testing.T) {
 // TestAddMultiEditAndDeleteButtons tests the combined helper
 func TestAddMultiEditAndDeleteButtons(t *testing.T) {
 	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	builder.AddMultiEditAndDeleteButtons("/Portal/Device/MultiEdit", "/Portal/Device/MultiDel")
 
@@ -423,7 +414,7 @@ func TestAddMultiEditAndDeleteButtons(t *testing.T) {
 	}
 
 	// Verify button properties by checking JSON output
-	output := tbl.Print(testOptionTranslator)
+	output := tbl.Print(ctx)
 	data, _ := output["data"].(map[string]any)
 	options, _ := data["options"].(map[string]any)
 	selectButtons, _ := options["selectButtons"].([]map[string]any)
@@ -453,8 +444,7 @@ func TestAddMultiEditAndDeleteButtons(t *testing.T) {
 
 // TestMultiButtonMethodChaining tests that helpers can be chained with other methods
 func TestMultiButtonMethodChaining(t *testing.T) {
-	ctx := testOptionContext()
-	builder := NewBuilder[testOptionRow](ctx, testOptionTranslator)
+	builder := NewBuilder[testOptionRow]()
 
 	builder.
 		SetDense(true).

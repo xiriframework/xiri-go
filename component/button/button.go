@@ -30,8 +30,8 @@ type TableButton struct {
 }
 
 // Print renders the TableButton to JSON format by delegating to the underlying Button
-func (tb *TableButton) Print(translator core.TranslateFunc) map[string]any {
-	return tb.button.Print(translator)
+func (tb *TableButton) Print(ctx *core.UiContext) map[string]any {
+	return tb.button.Print(ctx)
 }
 
 // GetButton returns the underlying Button for internal use.
@@ -427,7 +427,7 @@ func (b *Button) WithOption(key string, value any) *Button {
 }
 
 // Print returns the JSON representation of the button
-func (b *Button) Print(translator core.TranslateFunc) map[string]any {
+func (b *Button) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
 		"action":   string(b.action),
 		"url":      b.url.PrintPrefix(),
@@ -435,7 +435,7 @@ func (b *Button) Print(translator core.TranslateFunc) map[string]any {
 		"color":    string(b.color),
 		"disabled": b.disabled,
 		"default":  b.isDefault,
-		"hint":     core.Translate(translator, b.hint),
+		"hint":     core.Translate(ctx, b.hint),
 		"target":   b.target,
 		"tabIndex": b.tabIndex,
 	}
@@ -451,10 +451,10 @@ func (b *Button) Print(translator core.TranslateFunc) map[string]any {
 	} else if b.buttonType == core.ButtonTypeIconText {
 		// For icon+text type, include both
 		data["icon"] = b.icon
-		data["text"] = core.Translate(translator, b.text)
+		data["text"] = core.Translate(ctx, b.text)
 	} else {
 		// For other types, use text field
-		data["text"] = core.Translate(translator, b.text)
+		data["text"] = core.Translate(ctx, b.text)
 	}
 
 	// Add filename for download action

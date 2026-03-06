@@ -45,38 +45,38 @@ func (es *EmptyState) WithDisplay(display string) *EmptyState {
 }
 
 // Print returns the JSON representation of the empty state component.
-func (es *EmptyState) Print(translator core.TranslateFunc) map[string]any {
+func (es *EmptyState) Print(ctx *core.UiContext) map[string]any {
 	return map[string]any{
 		"type":    "empty-state",
 		"display": es.display,
-		"data":    es.printData(translator),
+		"data":    es.printData(ctx),
 	}
 }
 
 // PrintData returns only the data portion (for use in table options).
-func (es *EmptyState) PrintData(translator core.TranslateFunc) map[string]any {
-	return es.printData(translator)
+func (es *EmptyState) PrintData(ctx *core.UiContext) map[string]any {
+	return es.printData(ctx)
 }
 
 // DataResponse returns a DataResult wrapping the empty state data in {"data": ...} envelope.
-func (es *EmptyState) DataResponse(translator core.TranslateFunc) response.DataResult {
-	return response.NewJSONDataResult(es.PrintData(translator))
+func (es *EmptyState) DataResponse(ctx *core.UiContext) response.DataResult {
+	return response.NewJSONDataResult(es.PrintData(ctx))
 }
 
 // printData builds the data map used by both Print and PrintData.
-func (es *EmptyState) printData(translator core.TranslateFunc) map[string]any {
+func (es *EmptyState) printData(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
 		"icon":      es.icon,
 		"iconColor": string(es.iconColor),
-		"title":     core.Translate(translator, es.title),
+		"title":     core.Translate(ctx, es.title),
 	}
 
 	if es.description != nil {
-		data["description"] = core.Translate(translator, *es.description)
+		data["description"] = core.Translate(ctx, *es.description)
 	}
 
 	if es.button != nil {
-		data["button"] = es.button.Print(translator)
+		data["button"] = es.button.Print(ctx)
 	}
 
 	return data

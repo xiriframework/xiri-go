@@ -142,18 +142,18 @@ func (c *Card) WithMaxHeight(maxHeight string) *Card {
 }
 
 // Print returns the JSON representation of the card
-func (c *Card) Print(translator core.TranslateFunc) map[string]any {
+func (c *Card) Print(ctx *core.UiContext) map[string]any {
 	var data map[string]any
 
 	if c.url != nil {
 		// AJAX mode: header + buttons + URL, skip static content
-		data = c.printHeader(translator)
+		data = c.printHeader(ctx)
 		data["url"] = c.url.PrintPrefix()
 		if c.reload != nil {
 			data["reload"] = *c.reload
 		}
 	} else {
-		data = c.printData(translator)
+		data = c.printData(ctx)
 	}
 
 	return map[string]any{
@@ -164,17 +164,17 @@ func (c *Card) Print(translator core.TranslateFunc) map[string]any {
 }
 
 // PrintData returns only the data portion of the card (for use in data endpoints).
-func (c *Card) PrintData(translator core.TranslateFunc) map[string]any {
-	return c.printData(translator)
+func (c *Card) PrintData(ctx *core.UiContext) map[string]any {
+	return c.printData(ctx)
 }
 
 // DataResponse returns a DataResult wrapping the card data in {"data": ...} envelope.
-func (c *Card) DataResponse(translator core.TranslateFunc) response.DataResult {
-	return response.NewJSONDataResult(c.PrintData(translator))
+func (c *Card) DataResponse(ctx *core.UiContext) response.DataResult {
+	return response.NewJSONDataResult(c.PrintData(ctx))
 }
 
 // printHeader builds the header/buttons/type map shared by both URL and static paths.
-func (c *Card) printHeader(translator core.TranslateFunc) map[string]any {
+func (c *Card) printHeader(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
 		"header":          c.header,
 		"headerSub":       c.headerSub,
@@ -186,8 +186,8 @@ func (c *Card) printHeader(translator core.TranslateFunc) map[string]any {
 	}
 
 	// Translate header if needed
-	if c.translate && translator != nil {
-		data["header"] = translator(c.header)
+	if c.translate {
+		data["header"] = core.Translate(ctx, c.header)
 	}
 
 	// Add top buttons if any
@@ -196,7 +196,7 @@ func (c *Card) printHeader(translator core.TranslateFunc) map[string]any {
 		for _, btn := range c.buttonsTop {
 			btnLine.Add(btn)
 		}
-		data["buttonsTop"] = btnLine.PrintData(translator)
+		data["buttonsTop"] = btnLine.PrintData(ctx)
 	}
 
 	// Add bottom buttons if any
@@ -205,7 +205,7 @@ func (c *Card) printHeader(translator core.TranslateFunc) map[string]any {
 		for _, btn := range c.buttonsBottom {
 			btnLine.Add(btn)
 		}
-		data["buttonsBottom"] = btnLine.PrintData(translator)
+		data["buttonsBottom"] = btnLine.PrintData(ctx)
 	}
 
 	if c.collapsible != nil {
@@ -222,8 +222,8 @@ func (c *Card) printHeader(translator core.TranslateFunc) map[string]any {
 }
 
 // printData builds the full data map (header + content) used by both Print and PrintData.
-func (c *Card) printData(translator core.TranslateFunc) map[string]any {
-	data := c.printHeader(translator)
+func (c *Card) printData(ctx *core.UiContext) map[string]any {
+	data := c.printHeader(ctx)
 
 	// Add content based on card type
 	if c.cardType == core.CardTypeTable {

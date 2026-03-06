@@ -155,7 +155,7 @@ func TestTranslation(t *testing.T) {
 		WithDescription("BESCHREIBUNG")
 
 	// With translator
-	result := es.Print(testTranslator)
+	result := es.Print(&core.UiContext{Translate: testTranslator})
 	data := result["data"].(map[string]any)
 
 	if data["title"] != "Keine Einträge" {
@@ -178,7 +178,7 @@ func TestPrintDataWithTranslation(t *testing.T) {
 	es := New("inbox", core.ColorGray, "KEINE_EINTRAEGE").
 		WithDescription("BESCHREIBUNG")
 
-	data := es.PrintData(testTranslator)
+	data := es.PrintData(&core.UiContext{Translate: testTranslator})
 
 	if data["title"] != "Keine Einträge" {
 		t.Errorf("Expected translated title, got %v", data["title"])

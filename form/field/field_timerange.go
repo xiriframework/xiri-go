@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // TimeRangeField represents a date/time range form field
@@ -102,7 +102,7 @@ func (f *TimeRangeField) BindValue(raw interface{}) error {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *TimeRangeField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *TimeRangeField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	// Get base export fields
 	result := f.BaseField.GetBaseExport(ctx, nil)
 

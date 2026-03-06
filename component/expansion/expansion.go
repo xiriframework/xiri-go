@@ -70,13 +70,13 @@ func (p *Panel) AddContent(component core.Component) *Panel {
 }
 
 // Print serializes the Panel to a map for JSON output
-func (p *Panel) Print(translator core.TranslateFunc) map[string]any {
+func (p *Panel) Print(ctx *core.UiContext) map[string]any {
 	result := map[string]any{
-		"title": core.Translate(translator, p.title),
+		"title": core.Translate(ctx, p.title),
 	}
 
 	if p.description != nil {
-		result["description"] = core.Translate(translator, *p.description)
+		result["description"] = core.Translate(ctx, *p.description)
 	}
 	if p.icon != nil {
 		result["icon"] = *p.icon
@@ -98,7 +98,7 @@ func (p *Panel) Print(translator core.TranslateFunc) map[string]any {
 	if len(p.data) > 0 {
 		data := make([]map[string]any, len(p.data))
 		for i, comp := range p.data {
-			data[i] = comp.Print(translator)
+			data[i] = comp.Print(ctx)
 		}
 		result["data"] = data
 	} else {
@@ -180,13 +180,13 @@ func (e *Expansion) WithDisplay(display string) *Expansion {
 }
 
 // Print serializes the Expansion to a map for JSON output
-func (e *Expansion) Print(translator core.TranslateFunc) map[string]any {
+func (e *Expansion) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{}
 
 	// Convert panels
 	panelsData := make([]map[string]any, len(e.panels))
 	for i, panel := range e.panels {
-		panelsData[i] = panel.Print(translator)
+		panelsData[i] = panel.Print(ctx)
 	}
 	data["panels"] = panelsData
 

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // TimeField represents a single date/time form field
@@ -150,7 +150,7 @@ func NewTimeField(id, name string, required bool, defaultValue int64) *TimeField
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *TimeField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *TimeField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

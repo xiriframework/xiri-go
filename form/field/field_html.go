@@ -1,7 +1,7 @@
 package field
 
 import (
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // HtmlField represents HTML content display (non-interactive)
@@ -40,7 +40,7 @@ func NewHtmlField(id, content string) *HtmlField {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *HtmlField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *HtmlField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	return f.BaseField.GetBaseExport(ctx, f.Content)
 }
 

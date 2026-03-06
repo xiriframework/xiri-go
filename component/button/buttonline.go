@@ -41,11 +41,11 @@ func (bl *ButtonLine) WithDisplay(display string) *ButtonLine {
 }
 
 // Print returns the full component JSON representation
-func (bl *ButtonLine) Print(translator core.TranslateFunc) map[string]any {
+func (bl *ButtonLine) Print(ctx *core.UiContext) map[string]any {
 	// Serialize buttons
 	buttonData := make([]map[string]any, len(bl.buttons))
 	for i, button := range bl.buttons {
-		buttonData[i] = button.Print(translator)
+		buttonData[i] = button.Print(ctx)
 	}
 
 	return map[string]any{
@@ -59,11 +59,11 @@ func (bl *ButtonLine) Print(translator core.TranslateFunc) map[string]any {
 }
 
 // PrintData returns just the data portion (without type wrapper)
-func (bl *ButtonLine) PrintData(translator core.TranslateFunc) map[string]any {
+func (bl *ButtonLine) PrintData(ctx *core.UiContext) map[string]any {
 	// Serialize buttons
 	buttonData := make([]map[string]any, len(bl.buttons))
 	for i, button := range bl.buttons {
-		buttonData[i] = button.Print(translator)
+		buttonData[i] = button.Print(ctx)
 	}
 
 	return map[string]any{
@@ -73,16 +73,16 @@ func (bl *ButtonLine) PrintData(translator core.TranslateFunc) map[string]any {
 }
 
 // DataResponse returns a DataResult wrapping the button line data in {"data": ...} envelope.
-func (bl *ButtonLine) DataResponse(translator core.TranslateFunc) response.DataResult {
-	return response.NewJSONDataResult(bl.PrintData(translator))
+func (bl *ButtonLine) DataResponse(ctx *core.UiContext) response.DataResult {
+	return response.NewJSONDataResult(bl.PrintData(ctx))
 }
 
 // PrintButtons returns just the buttons array
-func (bl *ButtonLine) PrintButtons(translator core.TranslateFunc) []map[string]any {
+func (bl *ButtonLine) PrintButtons(ctx *core.UiContext) []map[string]any {
 	// Serialize buttons
 	buttonData := make([]map[string]any, len(bl.buttons))
 	for i, button := range bl.buttons {
-		buttonData[i] = button.Print(translator)
+		buttonData[i] = button.Print(ctx)
 	}
 	return buttonData
 }

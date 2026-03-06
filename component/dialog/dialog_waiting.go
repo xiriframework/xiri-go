@@ -42,14 +42,8 @@ func NewDialogWaiting(
 	checkTime int,
 	extra map[string]any,
 	closeText *string,
-	translator core.TranslateFunc,
 ) Dialog {
-	closeBtn := "Back"
-	if closeText != nil {
-		closeBtn = *closeText
-	} else if translator != nil {
-		closeBtn = translator("Back")
-	}
+	closeBtn := resolveText(closeText, "Back")
 
 	content := DialogWaitingContent{
 		Icon: "help_outline",
@@ -115,10 +109,10 @@ func NewDialogWaitingDone(u string, blocked string) Dialog {
 //   - WaitingStateInitial: Full dialog structure with polling config
 //   - WaitingStateNotDone: {"done": false} to continue polling
 //   - WaitingStateDone: {"done": true, "url": ..., "blocked": ...} to complete
-func (dw *DialogWaiting) Print(translator core.TranslateFunc) map[string]any {
+func (dw *DialogWaiting) Print(ctx *core.UiContext) map[string]any {
 	switch dw.waitingType {
 	case WaitingStateInitial:
-		return dw.dialogImpl.Print(translator)
+		return dw.dialogImpl.Print(ctx)
 	case WaitingStateNotDone:
 		return map[string]any{
 			"done": false,
@@ -130,6 +124,6 @@ func (dw *DialogWaiting) Print(translator core.TranslateFunc) map[string]any {
 			"blocked": dw.waitingBlocked,
 		}
 	default:
-		return dw.dialogImpl.Print(translator)
+		return dw.dialogImpl.Print(ctx)
 	}
 }

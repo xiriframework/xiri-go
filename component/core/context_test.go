@@ -1,4 +1,4 @@
-package uicontext
+package core
 
 import "testing"
 

@@ -16,7 +16,6 @@ import (
 	"github.com/xiriframework/xiri-go/types/locale"
 	"github.com/xiriframework/xiri-go/types/pressure"
 	"github.com/xiriframework/xiri-go/types/timezone"
-	"github.com/xiriframework/xiri-go/uicontext"
 )
 
 // ============================================================================
@@ -117,24 +116,26 @@ func exampleTranslator(key string) string {
 }
 
 // Example UiContext (German user, km preference)
-func exampleContext() *uicontext.UiContext {
-	return &uicontext.UiContext{
-		Timezone: timezone.EuropeVienna,
-		Lang:     language.Deutsch,
-		Locale:   locale.De, // German locale (comma decimal separator)
-		Distance: distance.Kilometer,
-		Pressure: pressure.Bar,
+func exampleContext() *core.UiContext {
+	return &core.UiContext{
+		Timezone:  timezone.EuropeVienna,
+		Lang:      language.Deutsch,
+		Locale:    locale.De, // German locale (comma decimal separator)
+		Distance:  distance.Kilometer,
+		Pressure:  pressure.Bar,
+		Translate: exampleTranslator,
 	}
 }
 
 // Example UiContext (English user, miles preference)
-func exampleContextEnglish() *uicontext.UiContext {
-	return &uicontext.UiContext{
-		Timezone: timezone.EuropeLondon, // UK timezone
-		Lang:     language.Englisch,     // English
-		Locale:   locale.EnGB,           // English locale (dot decimal separator)
-		Distance: distance.Miles,
-		Pressure: pressure.Psi,
+func exampleContextEnglish() *core.UiContext {
+	return &core.UiContext{
+		Timezone:  timezone.EuropeLondon, // UK timezone
+		Lang:      language.Englisch,     // English
+		Locale:    locale.EnGB,           // English locale (dot decimal separator)
+		Distance:  distance.Miles,
+		Pressure:  pressure.Psi,
+		Translate: exampleTranslator,
 	}
 }
 
@@ -239,7 +240,7 @@ func TestExample01_IntegerField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// ID field - returns int64 value
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
@@ -248,7 +249,7 @@ func TestExample01_IntegerField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Verify format: ["1", 1]
 	if idValue, ok := data[0]["id"].([]any); ok {
@@ -257,14 +258,14 @@ func TestExample01_IntegerField(t *testing.T) {
 	}
 
 	// ID field with alignment and width
-	builder2 := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder2 := table.NewBuilder[DeviceTableRow]()
 	builder2.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
 	}).AlignRight().WithWidth("80px")
 
 	tbl2 := builder2.Build()
 	tbl.SetData(rows)
-	_ = tbl2.Print(exampleTranslator)
+	_ = tbl2.Print(exampleContext())
 }
 
 // TestExample02_FloatField demonstrates float number field
@@ -272,7 +273,7 @@ func TestExample02_FloatField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Float field with 2 decimals
 	builder.FloatField("distance", "device.distance", func(r DeviceTableRow) float64 {
@@ -281,7 +282,7 @@ func TestExample02_FloatField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// German locale uses comma: ["196,50", 196.5]
 	if distValue, ok := data[0]["distance"].([]any); ok {
@@ -290,14 +291,14 @@ func TestExample02_FloatField(t *testing.T) {
 	}
 
 	// Float field with 3 decimals and footer sum
-	builder2 := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder2 := table.NewBuilder[DeviceTableRow]()
 	builder2.FloatField("distance", "device.distance", func(r DeviceTableRow) float64 {
 		return r.DistanceKm
 	}).WithDecimals(3).WithFooterSum().AlignRight()
 
 	tbl2 := builder2.Build()
 	tbl.SetData(rows)
-	footer := tbl2.CalculateFooter(table.OutputWeb)
+	footer := tbl2.CalculateFooter(ctx, table.OutputWeb)
 
 	if footerDist, ok := footer["distance"].([]any); ok {
 		fmt.Printf("Footer sum: %v\n", footerDist)
@@ -310,7 +311,7 @@ func TestExample03_TextField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Text field - simple string output
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
@@ -324,7 +325,7 @@ func TestExample03_TextField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Text field returns string directly
 	if nameValue, ok := data[0]["name"].(string); ok {
@@ -338,7 +339,7 @@ func TestExample04_BoolField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Bool field with Yes/No text
 	builder.BoolField("active", "device.active", func(r DeviceTableRow) bool {
@@ -347,7 +348,7 @@ func TestExample04_BoolField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Bool field returns formatted text
 	if activeValue, ok := data[0]["active"].(string); ok {
@@ -356,14 +357,14 @@ func TestExample04_BoolField(t *testing.T) {
 	}
 
 	// Bool field with footer count
-	builder2 := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder2 := table.NewBuilder[DeviceTableRow]()
 	builder2.BoolField("active", "device.active", func(r DeviceTableRow) bool {
 		return r.Active
 	}).WithBoolText("Active", "Inactive").WithFooterCount()
 
 	tbl2 := builder2.Build()
 	tbl.SetData(rows)
-	footer := tbl2.CalculateFooter(table.OutputWeb)
+	footer := tbl2.CalculateFooter(ctx, table.OutputWeb)
 
 	if footerCount, ok := footer["active"].(int); ok {
 		fmt.Printf("Active count: %d\n", footerCount)
@@ -376,7 +377,7 @@ func TestExample05_DateTimeField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// DateTime field - respects user timezone
 	builder.DateTimeField("last_seen", "device.last_seen", func(r DeviceTableRow) time.Time {
@@ -385,7 +386,7 @@ func TestExample05_DateTimeField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// DateTime formatted with user timezone
 	if lastSeenValue, ok := data[0]["last_seen"].(string); ok {
@@ -394,7 +395,7 @@ func TestExample05_DateTimeField(t *testing.T) {
 	}
 
 	// Different format for CSV
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	if csvLastSeen, ok := csvData[0]["last_seen"].(string); ok {
 		fmt.Printf("DateTime CSV output: %s\n", csvLastSeen)
 		// Output: 2021-12-20 12:26:40 (ISO format)
@@ -406,7 +407,7 @@ func TestExample06_DateField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Date field - date only, no time
 	builder.DateField("created", "device.created", func(r DeviceTableRow) time.Time {
@@ -415,7 +416,7 @@ func TestExample06_DateField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Date formatted without time
 	if createdValue, ok := data[0]["created"].(string); ok {
@@ -429,7 +430,7 @@ func TestExample07_DistanceField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Distance field with device-specific units
 	// German user default: km, but each device can override
@@ -444,7 +445,7 @@ func TestExample07_DistanceField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Distance formatted with unit: ["196,50 km", 196.5]
 	if distValue, ok := data[0]["distance"].([]any); ok {
@@ -454,7 +455,7 @@ func TestExample07_DistanceField(t *testing.T) {
 
 	// Test with English user (miles)
 	ctxEnglish := exampleContextEnglish()
-	builder2 := table.NewBuilder[DeviceTableRow](ctxEnglish, exampleTranslator)
+	builder2 := table.NewBuilder[DeviceTableRow]()
 	builder2.DistanceField("distance", "device.distance", func(r DeviceTableRow) float64 {
 		return r.DistanceKm
 	}).WithDecimals(2)
@@ -464,7 +465,7 @@ func TestExample07_DistanceField(t *testing.T) {
 
 	tbl2 := builder2.Build()
 	tbl2.SetData(rows)
-	data2 := tbl2.GetData(table.OutputWeb)
+	data2 := tbl2.GetData(ctxEnglish, table.OutputWeb)
 
 	// Distance converted to miles: ["122.09 mi", 122.09]
 	if distValue2, ok := data2[0]["distance"].([]any); ok {
@@ -478,7 +479,7 @@ func TestExample08_SpeedField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Speed field with device-specific units
 	builder.SpeedField("speed", "device.speed", func(r DeviceTableRow) float64 {
@@ -491,7 +492,7 @@ func TestExample08_SpeedField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Speed formatted with unit: ["80,0 km/h", 80.0]
 	if speedValue, ok := data[0]["speed"].([]any); ok {
@@ -501,7 +502,7 @@ func TestExample08_SpeedField(t *testing.T) {
 
 	// Test with English user (mph)
 	ctxEnglish := exampleContextEnglish()
-	builder2 := table.NewBuilder[DeviceTableRow](ctxEnglish, exampleTranslator)
+	builder2 := table.NewBuilder[DeviceTableRow]()
 	builder2.SpeedField("speed", "device.speed", func(r DeviceTableRow) float64 {
 		return r.SpeedKmh
 	}).WithDecimals(1)
@@ -511,7 +512,7 @@ func TestExample08_SpeedField(t *testing.T) {
 
 	tbl2 := builder2.Build()
 	tbl2.SetData(rows)
-	data2 := tbl2.GetData(table.OutputWeb)
+	data2 := tbl2.GetData(ctxEnglish, table.OutputWeb)
 
 	// Speed converted to mph: ["49.7 mph", 49.7]
 	if speedValue2, ok := data2[0]["speed"].([]any); ok {
@@ -525,7 +526,7 @@ func TestExample09_PressureField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Pressure field with device-specific units
 	builder.PressureField("pressure", "device.pressure", func(r DeviceTableRow) float64 {
@@ -538,7 +539,7 @@ func TestExample09_PressureField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Pressure formatted with unit: ["2,50 bar", 2.5]
 	if pressureValue, ok := data[0]["pressure"].([]any); ok {
@@ -548,7 +549,7 @@ func TestExample09_PressureField(t *testing.T) {
 
 	// Test with English user (psi)
 	ctxEnglish := exampleContextEnglish()
-	builder2 := table.NewBuilder[DeviceTableRow](ctxEnglish, exampleTranslator)
+	builder2 := table.NewBuilder[DeviceTableRow]()
 	builder2.PressureField("pressure", "device.pressure", func(r DeviceTableRow) float64 {
 		return r.PressureBar
 	}).WithDecimals(2)
@@ -558,7 +559,7 @@ func TestExample09_PressureField(t *testing.T) {
 
 	tbl2 := builder2.Build()
 	tbl2.SetData(rows)
-	data2 := tbl2.GetData(table.OutputWeb)
+	data2 := tbl2.GetData(ctxEnglish, table.OutputWeb)
 
 	// Pressure converted to psi: ["36.26 psi", 36.26]
 	if pressureValue2, ok := data2[0]["pressure"].([]any); ok {
@@ -572,7 +573,7 @@ func TestExample10_IconField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
 		return r.Name
@@ -592,7 +593,7 @@ func TestExample10_IconField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Output icon field data
 	fmt.Printf("Icon field for Device 1 (online): %v\n", data[0]["status"])
@@ -608,7 +609,7 @@ func TestExample11_ButtonsField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
@@ -631,7 +632,7 @@ func TestExample11_ButtonsField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Output buttons field data
 	fmt.Printf("Buttons field for Device 1: %v\n", data[0]["actions"])
@@ -648,7 +649,7 @@ func TestExample12_LinkField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
 		return r.Name
@@ -661,7 +662,7 @@ func TestExample12_LinkField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Link field outputs TWO separate fields: "url" (display text) and "urlLink" (URL)
 	if urlText, ok := data[0]["url"].(string); ok {
@@ -675,7 +676,7 @@ func TestExample12_LinkField(t *testing.T) {
 
 	// Web output: Two separate fields for clickable link
 	// CSV/PDF/Excel output: Display text only (single field)
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	if csvText, ok := csvData[0]["url"].(string); ok {
 		fmt.Printf("Link field CSV output: %s\n", csvText)
 		// Output: View Device 1
@@ -687,7 +688,7 @@ func TestExample13_HtmlField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
 		return r.Name
@@ -704,7 +705,7 @@ func TestExample13_HtmlField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Html field returns HTML string
 	if htmlValue, ok := data[0]["notes"].(string); ok {
@@ -714,7 +715,7 @@ func TestExample13_HtmlField(t *testing.T) {
 
 	// Web output: rendered HTML
 	// CSV output: plain text (HTML tags stripped in real implementation)
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	if csvNotes, ok := csvData[0]["notes"].(string); ok {
 		fmt.Printf("Html field CSV output: %s\n", csvNotes)
 	}
@@ -725,7 +726,7 @@ func TestExample14_Text2Field(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
 		return r.Name
@@ -738,7 +739,7 @@ func TestExample14_Text2Field(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Text2 field returns [2]string: [primary, secondary]
 	if deviceInfo, ok := data[0]["device_info"].([2]string); ok {
@@ -757,7 +758,7 @@ func TestExample15_InputField(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
@@ -779,7 +780,7 @@ func TestExample15_InputField(t *testing.T) {
 		Build()
 	tbl.SetData(rows)
 
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Input field returns string value
 	if notesValue, ok := data[0]["notes"].(string); ok {
@@ -788,7 +789,7 @@ func TestExample15_InputField(t *testing.T) {
 	}
 
 	// The table options include the save URL for all input fields
-	options := tbl.Print(exampleTranslator)["data"].(map[string]any)["options"].(map[string]any)
+	options := tbl.Print(exampleContext())["data"].(map[string]any)["options"].(map[string]any)
 	if saveUrl, ok := options["saveInputUrl"].(string); ok {
 		fmt.Printf("Table save input URL: %s\n", saveUrl)
 		// Output: /Portal/Device/UpdateField
@@ -803,10 +804,9 @@ func TestExample15_InputField(t *testing.T) {
 
 // TestExample16_HeaderField demonstrates header field (section divider)
 func TestExample16_HeaderField(t *testing.T) {
-	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Header field - creates a visual section divider in the table
 	// Often used to group related columns or mark important sections
@@ -832,7 +832,7 @@ func TestExample16_HeaderField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	// Header fields appear in the field definitions
 	var headerCount int
@@ -868,7 +868,7 @@ func TestExample17_Text2IntField(t *testing.T) {
 		},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Text2IntField - displays two integers side-by-side
 	builder.Text2IntField("trips", "device.trips", func(r DeviceTableRow) [2]int {
@@ -877,7 +877,7 @@ func TestExample17_Text2IntField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Web output: [2]string with locale-aware formatting
 	trips := data[0]["trips"].([2]string)
@@ -885,7 +885,7 @@ func TestExample17_Text2IntField(t *testing.T) {
 	// Output: ["5", "1.234"] (German locale uses dot for thousands)
 
 	// CSV output: combined with " - " separator
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	fmt.Printf("CSV Trips: %s\n", csvData[0]["trips"])
 	// Output: "5 - 1234"
 }
@@ -901,7 +901,7 @@ func TestExample18_Text2FloatField(t *testing.T) {
 		},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Text2FloatField - current vs average with 2 decimals
 	builder.Text2FloatField("fuel", "device.fuel", func(r DeviceTableRow) [2]float64 {
@@ -910,7 +910,7 @@ func TestExample18_Text2FloatField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	fuel := data[0]["fuel"].([2]string)
 	fmt.Printf("Current vs Average Fuel: [%s, %s]\n", fuel[0], fuel[1])
@@ -931,7 +931,7 @@ func TestExample19_Text2DateTimeField(t *testing.T) {
 		},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Text2DateTimeField - last seen vs created timestamps
 	builder.Text2DateTimeField("times", "device.times", func(r DeviceTableRow) [2]time.Time {
@@ -940,7 +940,7 @@ func TestExample19_Text2DateTimeField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	times := data[0]["times"].([2]string)
 	fmt.Printf("Last Seen vs Created: [%s, %s]\n", times[0], times[1])
@@ -958,7 +958,7 @@ func TestExample20_Text2DistanceField(t *testing.T) {
 		},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Need device_id field for unit conversion
 	builder.IntField("device_id", "device.id", func(r DeviceTableRow) int {
@@ -972,14 +972,14 @@ func TestExample20_Text2DistanceField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	distances := data[0]["distances"].([2]string)
 	fmt.Printf("Today vs Total Distance: [%s, %s]\n", distances[0], distances[1])
 	// Output: ["123,5 km", "9.876,5 km"] (German locale + km units)
 
 	// Test CSV output
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	distancesCSV := csvData[0]["distances"].(string)
 	fmt.Printf("CSV output: %s\n", distancesCSV)
 	// Output: "123.5 - 9876.5" (combined with separator)
@@ -996,7 +996,7 @@ func TestExample21_Text2SpeedField(t *testing.T) {
 		},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IntField("device_id", "device.id", func(r DeviceTableRow) int {
 		return int(r.DeviceID)
@@ -1009,7 +1009,7 @@ func TestExample21_Text2SpeedField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	speeds := data[0]["speeds"].([2]string)
 	fmt.Printf("Max vs Avg Speed: [%s, %s]\n", speeds[0], speeds[1])
@@ -1027,7 +1027,7 @@ func TestExample22_Text2BoolField(t *testing.T) {
 		},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Text2BoolField - active vs online status
 	builder.Text2BoolField("status", "device.status", func(r DeviceTableRow) [2]bool {
@@ -1036,13 +1036,13 @@ func TestExample22_Text2BoolField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	status := data[0]["status"].([2]string)
 	fmt.Printf("Active vs Online: [%s, %s]\n", status[0], status[1])
 	// Output: ["Yes", "No"]
 
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	fmt.Printf("CSV Status: %s\n", csvData[0]["status"])
 	// Output: "Yes - No"
 }
@@ -1060,7 +1060,7 @@ func TestExample23_TimeLengthField(t *testing.T) {
 		},
 	}
 
-	builder := table.NewBuilder[TripTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[TripTableRow]()
 
 	// TimeLengthField - formats seconds as HH:MM or "Xd HH:MM"
 	builder.TimeLengthField("short", "trip.short", func(r TripTableRow) int64 {
@@ -1077,14 +1077,14 @@ func TestExample23_TimeLengthField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	fmt.Printf("Short duration: %s\n", data[0]["short"])   // "00:45"
 	fmt.Printf("Medium duration: %s\n", data[0]["medium"]) // "05:30"
 	fmt.Printf("Long duration: %s\n", data[0]["long"])     // "2d 03:05"
 
 	// CSV exports as integer minutes
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	fmt.Printf("CSV short: %s minutes\n", csvData[0]["short"])   // "45"
 	fmt.Printf("CSV medium: %s minutes\n", csvData[0]["medium"]) // "330"
 	fmt.Printf("CSV long: %s minutes\n", csvData[0]["long"])     // "3065"
@@ -1102,7 +1102,7 @@ func TestExample24_Text2TimeLengthField(t *testing.T) {
 		},
 	}
 
-	builder := table.NewBuilder[TripTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[TripTableRow]()
 
 	// Text2TimeLengthField - duration vs idle time
 	builder.Text2TimeLengthField("times", "trip.times", func(r TripTableRow) [2]int64 {
@@ -1111,13 +1111,13 @@ func TestExample24_Text2TimeLengthField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	times := data[0]["times"].([2]string)
 	fmt.Printf("Duration vs Idle: [%s, %s]\n", times[0], times[1])
 	// Output: ["05:30", "02:00"]
 
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	fmt.Printf("CSV times: %s\n", csvData[0]["times"])
 	// Output: "330 - 120" (minutes)
 }
@@ -1127,10 +1127,9 @@ func TestExample24_Text2TimeLengthField(t *testing.T) {
 
 // TestAdvanced01_FieldAlignment demonstrates text alignment options
 func TestAdvanced01_FieldAlignment(t *testing.T) {
-	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Left-aligned field (default for text)
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
@@ -1156,7 +1155,7 @@ func TestAdvanced01_FieldAlignment(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	// Verify alignment settings
 	fmt.Printf("Name field alignment: %v\n", fields[0]["align"])     // left
@@ -1171,10 +1170,9 @@ func TestAdvanced01_FieldAlignment(t *testing.T) {
 
 // TestAdvanced02_FieldWidths demonstrates width and minimum width configuration
 func TestAdvanced02_FieldWidths(t *testing.T) {
-	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Fixed width field (ID column)
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
@@ -1193,7 +1191,7 @@ func TestAdvanced02_FieldWidths(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	// Verify width settings
 	if width, ok := fields[0]["width"].(string); ok {
@@ -1214,10 +1212,9 @@ func TestAdvanced02_FieldWidths(t *testing.T) {
 
 // TestAdvanced03_StickyColumns demonstrates sticky/frozen columns
 func TestAdvanced03_StickyColumns(t *testing.T) {
-	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Sticky ID column (always visible when scrolling horizontally)
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
@@ -1240,7 +1237,7 @@ func TestAdvanced03_StickyColumns(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	// Count sticky fields
 	var stickyCount int
@@ -1261,10 +1258,9 @@ func TestAdvanced03_StickyColumns(t *testing.T) {
 
 // TestAdvanced04_FieldHints demonstrates tooltips/hints
 func TestAdvanced04_FieldHints(t *testing.T) {
-	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
@@ -1280,7 +1276,7 @@ func TestAdvanced04_FieldHints(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	// Verify hints are set
 	for _, field := range fields {
@@ -1301,7 +1297,7 @@ func TestAdvanced05_TextPrefixSuffix(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Currency prefix
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
@@ -1320,7 +1316,7 @@ func TestAdvanced05_TextPrefixSuffix(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Prefix/suffix are applied to formatted output
 	fmt.Printf("ID field with prefix: %v\n", data[0]["id"])
@@ -1336,10 +1332,9 @@ func TestAdvanced05_TextPrefixSuffix(t *testing.T) {
 
 // TestAdvanced06_CustomHeaders demonstrates custom header text and spans
 func TestAdvanced06_CustomHeaders(t *testing.T) {
-	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Fields with custom header (overrides column name)
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
@@ -1361,7 +1356,7 @@ func TestAdvanced06_CustomHeaders(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	// Verify custom headers
 	for _, field := range fields {
@@ -1383,10 +1378,9 @@ func TestAdvanced06_CustomHeaders(t *testing.T) {
 
 // TestAdvanced07_ColumnOrdering demonstrates explicit column order
 func TestAdvanced07_ColumnOrdering(t *testing.T) {
-	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Explicitly set column order (default is insertion order)
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
@@ -1410,7 +1404,7 @@ func TestAdvanced07_ColumnOrdering(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	// Verify column order (fields are sorted by columnOrder)
 	fmt.Printf("Column order:\n")
@@ -1428,10 +1422,9 @@ func TestAdvanced07_ColumnOrdering(t *testing.T) {
 
 // TestAdvanced08_AccessControl demonstrates permission-based field visibility
 func TestAdvanced08_AccessControl(t *testing.T) {
-	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Public field (no access control)
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
@@ -1450,7 +1443,7 @@ func TestAdvanced08_AccessControl(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	// Access control is set in field definition
 	// Frontend checks user permissions and hides fields accordingly
@@ -1474,12 +1467,10 @@ func TestAdvanced08_AccessControl(t *testing.T) {
 
 // TestIntegration01_AJAXTable demonstrates AJAX table with URL endpoint
 func TestIntegration01_AJAXTable(t *testing.T) {
-	ctx := exampleContext()
-
 	// In controller: no data provided, URL is set for AJAX loading
 	url := xurl.NewUrl("/Portal/Device/TableData")
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
@@ -1497,7 +1488,7 @@ func TestIntegration01_AJAXTable(t *testing.T) {
 	tbl := builder.Build()
 	tbl.SetURL(url)
 
-	output := tbl.Print(exampleTranslator)
+	output := tbl.Print(exampleContext())
 	dataSection := output["data"].(map[string]any)
 
 	// Verify AJAX mode
@@ -1536,7 +1527,7 @@ func TestIntegration02_FormGroupFilters(t *testing.T) {
 	}
 
 	// Build table with filter form
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
@@ -1553,7 +1544,7 @@ func TestIntegration02_FormGroupFilters(t *testing.T) {
 	tbl := builder.SetFilter(fg).Build()
 	tbl.SetData(rows)
 
-	output := tbl.Print(exampleTranslator)
+	output := tbl.Print(exampleContext())
 	dataSection := output["data"].(map[string]any)
 
 	// Verify filter is attached
@@ -1571,10 +1562,9 @@ func TestIntegration02_FormGroupFilters(t *testing.T) {
 
 // TestIntegration03_FooterAggregations demonstrates sum and count footers
 func TestIntegration03_FooterAggregations(t *testing.T) {
-	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// No footer
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
@@ -1595,7 +1585,7 @@ func TestIntegration03_FooterAggregations(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	// Verify footer settings
 	for _, field := range fields {
@@ -1619,7 +1609,7 @@ func TestIntegration04_EmptyStateHandling(t *testing.T) {
 	// Empty data slice
 	var emptyRows []DeviceTableRow
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
@@ -1635,8 +1625,8 @@ func TestIntegration04_EmptyStateHandling(t *testing.T) {
 		Build()
 	tbl.SetData(emptyRows)
 
-	data := tbl.GetData(table.OutputWeb)
-	options := tbl.Print(exampleTranslator)["data"].(map[string]any)["options"].(map[string]any)
+	data := tbl.GetData(ctx, table.OutputWeb)
+	options := tbl.Print(exampleContext())["data"].(map[string]any)["options"].(map[string]any)
 
 	// Verify empty data handling
 	fmt.Printf("Table has %d rows\n", len(data))
@@ -1656,7 +1646,7 @@ func TestIntegration05_MultiFormatOutput(t *testing.T) {
 	ctx := exampleContext()
 	rows := generateDeviceData()
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
@@ -1684,8 +1674,8 @@ func TestIntegration05_MultiFormatOutput(t *testing.T) {
 	tbl.SetData(rows)
 
 	// Get data in different formats
-	webData := tbl.GetData(table.OutputWeb)
-	csvData := tbl.GetData(table.OutputCSV)
+	webData := tbl.GetData(ctx, table.OutputWeb)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 
 	// Web output: distance is array [display, value] for sorting
 	fmt.Printf("Web format distance: %v\n", webData[0]["distance"])
@@ -1730,7 +1720,7 @@ func TestIntegration06_DynamicFieldVisibility(t *testing.T) {
 		return false
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Public field (always visible)
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
@@ -1758,7 +1748,7 @@ func TestIntegration06_DynamicFieldVisibility(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Verify hidden field doesn't appear in output
 	if _, hasID := data[0]["id"]; !hasID {
@@ -1796,7 +1786,7 @@ func TestJSON_ComponentStructure(t *testing.T) {
 	fg, _ := group.NewFormGroupWithContext(filters, ctx)
 
 	// Build comprehensive table with various field types
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	// Basic fields
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
@@ -1858,7 +1848,7 @@ func TestJSON_ComponentStructure(t *testing.T) {
 		Build()
 	ajaxTable.SetURL(ajaxUrl)
 
-	ajaxOutput := ajaxTable.Print(exampleTranslator)
+	ajaxOutput := ajaxTable.Print(exampleContext())
 	ajaxJSON, _ := json.MarshalIndent(ajaxOutput, "", "  ")
 	fmt.Println(string(ajaxJSON))
 
@@ -1877,7 +1867,7 @@ func TestJSON_ComponentStructure(t *testing.T) {
 		Build()
 	staticTable.SetData(rows)
 
-	staticOutput := staticTable.Print(exampleTranslator)
+	staticOutput := staticTable.Print(exampleContext())
 	staticJSON, _ := json.MarshalIndent(staticOutput, "", "  ")
 	fmt.Println(string(staticJSON))
 
@@ -1903,7 +1893,7 @@ func TestJSON_TableDataStructure(t *testing.T) {
 	rows := generateDeviceData()
 
 	// Build table with various field types
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
@@ -1960,7 +1950,7 @@ func TestJSON_TableDataStructure(t *testing.T) {
 	fmt.Println("\n=== TABLE DATA: Array Structure (GetData output) ===")
 	fmt.Println("This is what AJAX endpoints return as JSON response")
 
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 	dataJSON, _ := json.MarshalIndent(data, "", "  ")
 	fmt.Println(string(dataJSON))
 
@@ -2007,7 +1997,7 @@ func TestExample_IconFieldFromSet(t *testing.T) {
 	iconOnline := statusIcons.Add("online", "check_circle", core.ColorAccent, "Device is online")
 	iconOffline := statusIcons.Add("offline", "cancel", core.ColorWarning, "Device is offline")
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
 		return r.Name
@@ -2027,7 +2017,7 @@ func TestExample_IconFieldFromSet(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	// Output values are identical to IconField + AddIcon
 	fmt.Printf("Device 1 (online): status=%v\n", data[0]["status"])
@@ -2047,7 +2037,7 @@ func TestExample_IconFieldFromSet_Resolve(t *testing.T) {
 	statusIcons.Add("online", "check_circle", core.ColorAccent, "Device is online")
 	statusIcons.Add("offline", "cancel", core.ColorWarning, "Device is offline")
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
 		return r.Name
@@ -2063,7 +2053,7 @@ func TestExample_IconFieldFromSet_Resolve(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	fmt.Printf("Device 1 (status=%s): %v\n", rows[0].Status, data[0]["status"])
 	fmt.Printf("Device 2 (status=%s): %v\n", rows[1].Status, data[1]["status"])
@@ -2081,7 +2071,7 @@ func TestExample_TextNField(t *testing.T) {
 		{ID: 1, Name: "Device 1", NameLine2: "Fleet A", GroupName: "Primary"},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.TextNField("info", "device.info", func(r DeviceTableRow) []string {
 		return []string{r.Name, r.NameLine2, r.GroupName}
@@ -2089,7 +2079,7 @@ func TestExample_TextNField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	info := data[0]["info"].([]string)
 	fmt.Printf("TextNField output: %v\n", info)
@@ -2102,7 +2092,7 @@ func TestExample_TextNField(t *testing.T) {
 		t.Errorf("expected 'Device 1', got %q", info[0])
 	}
 
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	csvInfo := csvData[0]["info"].([]string)
 	fmt.Printf("TextNField CSV: %v\n", csvInfo)
 	// Output: ["Device 1", "Fleet A", "Primary"]
@@ -2128,7 +2118,7 @@ func TestExample_IntNField(t *testing.T) {
 		{ID: 1, TripsToday: 5, TotalTrips: 1234},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.IntNField("stats", "device.stats", func(r DeviceTableRow) []int {
 		return []int{r.TripsToday, r.TotalTrips, 0}
@@ -2136,7 +2126,7 @@ func TestExample_IntNField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	stats := data[0]["stats"].([]string)
 	fmt.Printf("IntNField output: %v\n", stats)
@@ -2145,7 +2135,7 @@ func TestExample_IntNField(t *testing.T) {
 		t.Errorf("expected 3 lines, got %d", len(stats))
 	}
 
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	csvStats := csvData[0]["stats"].([]string)
 	fmt.Printf("IntNField CSV: %v\n", csvStats)
 	// Output: ["5", "1234", "0"]
@@ -2168,7 +2158,7 @@ func TestExample_FloatNField(t *testing.T) {
 		{ID: 1, FuelCurrent: 45.5, FuelAverage: 52.3},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.FloatNField("fuel", "device.fuel", func(r DeviceTableRow) []float64 {
 		return []float64{r.FuelCurrent, r.FuelAverage}
@@ -2176,7 +2166,7 @@ func TestExample_FloatNField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	fuel := data[0]["fuel"].([]string)
 	fmt.Printf("FloatNField output: %v\n", fuel)
@@ -2185,7 +2175,7 @@ func TestExample_FloatNField(t *testing.T) {
 		t.Errorf("expected 2 lines, got %d", len(fuel))
 	}
 
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	csvFuel := csvData[0]["fuel"].([]string)
 	fmt.Printf("FloatNField CSV: %v\n", csvFuel)
 	if len(csvFuel) != 2 {
@@ -2208,7 +2198,7 @@ func TestExample_DateTimeNField(t *testing.T) {
 		{ID: 1, LastSeen: lastSeen, CreatedDate: created},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.DateTimeNField("times", "device.times", func(r DeviceTableRow) []time.Time {
 		return []time.Time{r.LastSeen, r.CreatedDate, updated}
@@ -2216,7 +2206,7 @@ func TestExample_DateTimeNField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	times := data[0]["times"].([]string)
 	fmt.Printf("DateTimeNField output: %v\n", times)
@@ -2242,7 +2232,7 @@ func TestExample_DateNField(t *testing.T) {
 		{ID: 1, LastSeen: date1, CreatedDate: date2},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.DateNField("dates", "device.dates", func(r DeviceTableRow) []time.Time {
 		return []time.Time{r.LastSeen, r.CreatedDate}
@@ -2250,7 +2240,7 @@ func TestExample_DateNField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	dates := data[0]["dates"].([]string)
 	fmt.Printf("DateNField output: %v\n", dates)
@@ -2268,7 +2258,7 @@ func TestExample_DistanceNField(t *testing.T) {
 		{ID: 1, TodayKm: 123.45, TotalKm: 9876.54},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.DistanceNField("distances", "device.distances", func(r DeviceTableRow) []float64 {
 		return []float64{r.TodayKm, r.TotalKm, 42.0}
@@ -2276,7 +2266,7 @@ func TestExample_DistanceNField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	distances := data[0]["distances"].([]string)
 	fmt.Printf("DistanceNField output: %v\n", distances)
@@ -2285,7 +2275,7 @@ func TestExample_DistanceNField(t *testing.T) {
 		t.Errorf("expected 3 lines, got %d", len(distances))
 	}
 
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	csvDistances := csvData[0]["distances"].([]string)
 	fmt.Printf("DistanceNField CSV: %v\n", csvDistances)
 	if len(csvDistances) != 3 {
@@ -2301,7 +2291,7 @@ func TestExample_SpeedNField(t *testing.T) {
 		{ID: 1, MaxSpeed: 120.5, AvgSpeed: 85.3},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.SpeedNField("speeds", "device.speeds", func(r DeviceTableRow) []float64 {
 		return []float64{r.MaxSpeed, r.AvgSpeed}
@@ -2309,7 +2299,7 @@ func TestExample_SpeedNField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	speeds := data[0]["speeds"].([]string)
 	fmt.Printf("SpeedNField output: %v\n", speeds)
@@ -2318,7 +2308,7 @@ func TestExample_SpeedNField(t *testing.T) {
 		t.Errorf("expected 2 lines, got %d", len(speeds))
 	}
 
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	csvSpeeds := csvData[0]["speeds"].([]string)
 	fmt.Printf("SpeedNField CSV: %v\n", csvSpeeds)
 	if len(csvSpeeds) != 2 {
@@ -2334,7 +2324,7 @@ func TestExample_BoolNField(t *testing.T) {
 		{ID: 1, Active: true, Online: false},
 	}
 
-	builder := table.NewBuilder[DeviceTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[DeviceTableRow]()
 
 	builder.BoolNField("flags", "device.flags", func(r DeviceTableRow) []bool {
 		return []bool{r.Active, r.Online, true}
@@ -2342,7 +2332,7 @@ func TestExample_BoolNField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	flags := data[0]["flags"].([]string)
 	fmt.Printf("BoolNField output: %v\n", flags)
@@ -2357,7 +2347,7 @@ func TestExample_BoolNField(t *testing.T) {
 		t.Errorf("expected 'No', got %q", flags[1])
 	}
 
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	csvFlags := csvData[0]["flags"].([]string)
 	fmt.Printf("BoolNField CSV: %v\n", csvFlags)
 	if len(csvFlags) != 3 {
@@ -2387,7 +2377,7 @@ func TestExample_TimeLengthNField(t *testing.T) {
 		},
 	}
 
-	builder := table.NewBuilder[TripTableRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[TripTableRow]()
 
 	builder.TimeLengthNField("durations", "trip.durations", func(r TripTableRow) []int64 {
 		return []int64{r.DurationShort, r.DurationMedium, r.DurationLong}
@@ -2395,7 +2385,7 @@ func TestExample_TimeLengthNField(t *testing.T) {
 
 	tbl := builder.Build()
 	tbl.SetData(rows)
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	durations := data[0]["durations"].([]string)
 	fmt.Printf("TimeLengthNField output: %v\n", durations)
@@ -2413,7 +2403,7 @@ func TestExample_TimeLengthNField(t *testing.T) {
 		t.Errorf("expected '2d 03:05', got %q", durations[2])
 	}
 
-	csvData := tbl.GetData(table.OutputCSV)
+	csvData := tbl.GetData(ctx, table.OutputCSV)
 	csvDurations := csvData[0]["durations"].([]string)
 	fmt.Printf("TimeLengthNField CSV: %v\n", csvDurations)
 	// Output: ["45", "330", "3065"]

@@ -3,7 +3,7 @@ package field
 import (
 	"fmt"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // BoolField represents a boolean form field
@@ -74,7 +74,7 @@ func (f *BoolField) BindValue(raw interface{}) error {
 // ============================================================================
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *BoolField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *BoolField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	// Use value if provided, otherwise use default
 	if value == nil {
 		value = f.GetDefault()

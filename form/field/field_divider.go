@@ -1,7 +1,7 @@
 package field
 
 import (
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // DividerField represents a visual divider/separator in a form
@@ -19,7 +19,7 @@ func (f *DividerField) Parse(raw interface{}) (interface{}, error) {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *DividerField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *DividerField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	return f.BaseField.GetBaseExport(ctx, f.Content)
 }
 

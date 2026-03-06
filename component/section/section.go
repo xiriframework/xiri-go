@@ -71,14 +71,14 @@ func (s *Section) WithDisplay(display string) *Section {
 }
 
 // Print returns the JSON representation of the section component.
-func (s *Section) Print(translator core.TranslateFunc) map[string]any {
+func (s *Section) Print(ctx *core.UiContext) map[string]any {
 	data := make(map[string]any)
 
 	if s.title != nil {
-		data["title"] = core.Translate(translator, *s.title)
+		data["title"] = core.Translate(ctx, *s.title)
 	}
 	if s.subtitle != nil {
-		data["subtitle"] = core.Translate(translator, *s.subtitle)
+		data["subtitle"] = core.Translate(ctx, *s.subtitle)
 	}
 	if s.icon != nil {
 		data["icon"] = *s.icon
@@ -91,13 +91,13 @@ func (s *Section) Print(translator core.TranslateFunc) map[string]any {
 		data["collapsed"] = s.collapsed
 	}
 	if s.buttons != nil {
-		data["buttons"] = s.buttons.PrintData(translator)
+		data["buttons"] = s.buttons.PrintData(ctx)
 	}
 
 	if len(s.components) > 0 {
 		componentData := make([]map[string]any, len(s.components))
 		for i, comp := range s.components {
-			componentData[i] = comp.Print(translator)
+			componentData[i] = comp.Print(ctx)
 		}
 		data["components"] = componentData
 	}

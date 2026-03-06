@@ -1,7 +1,7 @@
 package field
 
 import (
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // InfoField represents informational text display (non-interactive)
@@ -40,7 +40,7 @@ func NewInfoField(id, content string) *InfoField {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *InfoField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *InfoField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	// Info fields always use their Content as the value
 	return f.BaseField.GetBaseExport(ctx, f.Content)
 }

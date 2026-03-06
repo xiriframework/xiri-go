@@ -125,7 +125,7 @@ func TestIconFieldFromSet_DirectRefs(t *testing.T) {
 	iconOnline := statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
 	iconOffline := statusIcons.Add("offline", "cancel", core.ColorWarning, "Offline")
 
-	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[iconTestRow]()
 	builder.IconFieldFromSet("status", "device.status",
 		func(r iconTestRow) *table.IconRef {
 			if r.IsOnline {
@@ -142,7 +142,7 @@ func TestIconFieldFromSet_DirectRefs(t *testing.T) {
 		{IsOnline: false},
 	})
 
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	if len(data) != 2 {
 		t.Fatalf("expected 2 rows, got %d", len(data))
@@ -166,7 +166,7 @@ func TestIconFieldFromSet_Resolve(t *testing.T) {
 	statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
 	statusIcons.Add("offline", "cancel", core.ColorWarning, "Offline")
 
-	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[iconTestRow]()
 	builder.IconFieldFromSet("status", "device.status",
 		func(r iconTestRow) *table.IconRef {
 			return statusIcons.Resolve(r.Status)
@@ -181,7 +181,7 @@ func TestIconFieldFromSet_Resolve(t *testing.T) {
 		{Status: "unknown"},
 	})
 
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	if data[0]["status"] != "online" {
 		t.Errorf("expected 'online', got %v", data[0]["status"])
@@ -201,7 +201,7 @@ func TestIconFieldFromSet_NilRef(t *testing.T) {
 	statusIcons := table.NewIconSet()
 	statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
 
-	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[iconTestRow]()
 	builder.IconFieldFromSet("status", "device.status",
 		func(r iconTestRow) *table.IconRef {
 			return nil // Always nil
@@ -212,7 +212,7 @@ func TestIconFieldFromSet_NilRef(t *testing.T) {
 	tbl := builder.Build()
 	tbl.SetData([]iconTestRow{{IsOnline: true}})
 
-	data := tbl.GetData(table.OutputWeb)
+	data := tbl.GetData(ctx, table.OutputWeb)
 
 	if data[0]["status"] != "" {
 		t.Errorf("expected empty string for nil IconRef, got %v", data[0]["status"])
@@ -220,12 +220,10 @@ func TestIconFieldFromSet_NilRef(t *testing.T) {
 }
 
 func TestIconFieldFromSet_IconDefinitionsCopied(t *testing.T) {
-	ctx := exampleContext()
-
 	statusIcons := table.NewIconSet()
 	iconOnline := statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
 
-	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[iconTestRow]()
 	builder.IconFieldFromSet("status", "device.status",
 		func(r iconTestRow) *table.IconRef {
 			return iconOnline
@@ -237,7 +235,7 @@ func TestIconFieldFromSet_IconDefinitionsCopied(t *testing.T) {
 	tbl.SetData([]iconTestRow{{IsOnline: true}})
 
 	// Verify icon definitions are present in field JSON output
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 
 	if len(fields) != 1 {
 		t.Fatalf("expected 1 field, got %d", len(fields))
@@ -254,12 +252,10 @@ func TestIconFieldFromSet_IconDefinitionsCopied(t *testing.T) {
 }
 
 func TestIconFieldFromSet_WithOptions(t *testing.T) {
-	ctx := exampleContext()
-
 	statusIcons := table.NewIconSet()
 	iconOnline := statusIcons.AddWithOptions("online", "check_circle", core.ColorAccent, "Online", map[string]any{"pulse": true})
 
-	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[iconTestRow]()
 	builder.IconFieldFromSet("status", "device.status",
 		func(r iconTestRow) *table.IconRef {
 			return iconOnline
@@ -271,7 +267,7 @@ func TestIconFieldFromSet_WithOptions(t *testing.T) {
 	tbl.SetData([]iconTestRow{{IsOnline: true}})
 
 	// Verify custom options are present in the exported icon definition
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 	icons := fields[0]["icons"].(map[string]any)
 	onlineIcon := icons["online"].(map[string]any)
 
@@ -281,12 +277,10 @@ func TestIconFieldFromSet_WithOptions(t *testing.T) {
 }
 
 func TestIconFieldFromSet_BuilderChaining(t *testing.T) {
-	ctx := exampleContext()
-
 	statusIcons := table.NewIconSet()
 	iconOnline := statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
 
-	builder := table.NewBuilder[iconTestRow](ctx, exampleTranslator)
+	builder := table.NewBuilder[iconTestRow]()
 
 	// Verify FieldBuilder methods can be chained
 	builder.IconFieldFromSet("status", "device.status",
@@ -299,7 +293,7 @@ func TestIconFieldFromSet_BuilderChaining(t *testing.T) {
 	tbl := builder.Build()
 	tbl.SetData([]iconTestRow{{IsOnline: true}})
 
-	fields := tbl.Print(exampleTranslator)["data"].(map[string]any)["fields"].([]map[string]any)
+	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
 	field := fields[0]
 
 	if field["align"] != "center" {

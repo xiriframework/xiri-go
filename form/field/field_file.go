@@ -1,7 +1,7 @@
 package field
 
 import (
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 import "fmt"
@@ -60,7 +60,7 @@ func NewFileField(id, name string, required bool, maxSize int64) *FileField {
 }
 
 // ExportForFrontend exports the field for frontend rendering
-func (f *FileField) ExportForFrontend(ctx *uicontext.UiContext, value interface{}) map[string]interface{} {
+func (f *FileField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
 		value = f.GetDefault()
 	}

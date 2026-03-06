@@ -9,14 +9,9 @@ import (
 /*
 Creates a table/list dialog with an Ok button.
 
-RawTableContent Structure:
-  - data (required): []map[string]any - Table row data
-  - dense (optional): bool/int - Dense table spacing (0=normal, 1=dense)
-  - forceMinWidth (optional): bool - Force minimum column widths
-
 Angular Frontend Flow:
   1. Dialog receives response with type="table"
-  2. Angular reads res.content (RawTableContent.Print() output)
+  2. Angular reads res.content (tableDialogContent.Print() output)
   3. Assigns content to rawTable property
   4. Renders: <xiri-raw-table [settings]="rawTable"></xiri-raw-table>
 
@@ -34,7 +29,7 @@ Example usage:
 	}
 
 	// Build table
-	builder := table.NewBuilder[InfoRow](ctx, t)
+	builder := table.NewBuilder[InfoRow]()
 	builder.TextField("label", "label", func(r InfoRow) string { return r.Label })
 	builder.TextField("value", "value", func(r InfoRow) string { return r.Value })
 
@@ -44,61 +39,36 @@ Example usage:
 	    {Label: t("GERAET"), Value: deviceName},
 	})
 
-	// Convert to dialog content
-	content := table.ToDialogContent(tbl, false)
-
 	// Create dialog
-	dialog := dialog.NewDialogTable(t("INFO"), content, nil, nil, nil, t)
+	dialog := dialog.NewDialogTable(t("INFO"), tbl)
 */
 
-// RawTableContent represents the content structure for table dialogs
-// Maps to Angular's XiriRawTableSettings interface
-type RawTableContent struct {
-	data          []map[string]any // Table row data (required)
-	fields        []map[string]any // Table field/column definitions (required)
-	dense         *int             // Dense spacing: 0=normal, 1=dense (optional)
-	forceMinWidth *bool            // Force minimum column widths (optional)
+// tableDialogContent wraps a Table[T] and implements DialogContent.
+// Data and fields are resolved lazily at Print time with the provided ctx.
+type tableDialogContent[T any] struct {
+	tbl *table.Table[T]
 }
 
-// Print converts RawTableContent to map[string]any for JSON serialization
-// This is called by Dialog.Print() when the content is a RawTableContent
-func (r *RawTableContent) Print(translator core.TranslateFunc) map[string]any {
-
-	result := map[string]any{
-		"data": r.data,
+// Print resolves table data and fields lazily using the provided ctx.
+func (c *tableDialogContent[T]) Print(ctx *core.UiContext) map[string]any {
+	data := c.tbl.GetData(ctx, table.OutputWeb)
+	fields := c.tbl.ExportFields(ctx)
+	return map[string]any{
+		"data":   data,
+		"fields": fields,
 	}
-	if r.fields != nil && len(r.fields) > 0 {
-		result["fields"] = r.fields
-	}
-	if r.dense != nil {
-		result["dense"] = *r.dense
-	}
-	if r.forceMinWidth != nil {
-		result["forceMinWidth"] = *r.forceMinWidth
-	}
-	return result
 }
 
-// NewDialogTable creates a table dialog
-//
-// The content parameter must be a *RawTableContent created via NewRawTableContent() or table.ToDialogContent().
-// Use the builder methods to configure optional fields (dense, forceMinWidth).
+// NewDialogTable creates a table dialog.
+// The table data and fields are resolved lazily at Print time,
+// so no ctx is needed at construction time.
 func NewDialogTable[T any](
 	header string,
 	tbl *table.Table[T],
 ) Dialog {
 
-	// Get formatted data from table (uses all formatters, locale, units, etc.)
-	data := tbl.GetData(table.OutputWeb)
+	content := &tableDialogContent[T]{tbl: tbl}
 
-	content := &RawTableContent{
-		data:   data,
-		fields: tbl.ExportFields(),
-		dense:  nil,
-	}
-
-	// Content should be a map containing XiriRawTableSettings structure
-	// Angular will assign this to rawTable property and render <xiri-raw-table>
 	return NewDialog(
 		core.DialogTypeTable,
 		header,

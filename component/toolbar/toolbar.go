@@ -56,11 +56,11 @@ func (t *Toolbar) WithDisplay(display string) *Toolbar {
 }
 
 // Print returns the JSON representation of the toolbar component.
-func (t *Toolbar) Print(translator core.TranslateFunc) map[string]any {
+func (t *Toolbar) Print(ctx *core.UiContext) map[string]any {
 	data := make(map[string]any)
 
 	if t.title != nil {
-		data["title"] = core.Translate(translator, *t.title)
+		data["title"] = core.Translate(ctx, *t.title)
 	}
 	if t.icon != nil {
 		data["icon"] = *t.icon
@@ -68,14 +68,14 @@ func (t *Toolbar) Print(translator core.TranslateFunc) map[string]any {
 	if t.search != nil {
 		if t.search.Placeholder != nil {
 			data["search"] = map[string]any{
-				"placeholder": core.Translate(translator, *t.search.Placeholder),
+				"placeholder": core.Translate(ctx, *t.search.Placeholder),
 			}
 		} else {
 			data["search"] = true
 		}
 	}
 	if t.buttons != nil {
-		data["buttons"] = t.buttons.PrintData(translator)
+		data["buttons"] = t.buttons.PrintData(ctx)
 	}
 
 	result := map[string]any{

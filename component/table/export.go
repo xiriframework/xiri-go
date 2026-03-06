@@ -16,16 +16,16 @@ import (
 //	// Query with pagination
 //	devices, totalCount := dbm.Device.FindWithPagination(filters, page, pageSize)
 //	tbl.SetData(devices)
-//	return wc.TableData(tbl.ToServerSideResponse(totalCount))
-func (t *Table[T]) ToServerSideResponse(totalCount int) *TableDataResponse {
-	resp := t.ToTableDataResponse()
+//	return wc.TableData(tbl.ToServerSideResponse(ctx, totalCount))
+func (t *Table[T]) ToServerSideResponse(ctx *core.UiContext, totalCount int) *TableDataResponse {
+	resp := t.ToTableDataResponse(ctx)
 	resp.WithTotalCount(totalCount)
 	return resp
 }
 
 // DataResponse returns a DataResult by delegating to ToTableDataResponse().DataResponse().
-func (t *Table[T]) DataResponse(translator core.TranslateFunc) response.DataResult {
-	return t.ToTableDataResponse().DataResponse(translator)
+func (t *Table[T]) DataResponse(ctx *core.UiContext) response.DataResult {
+	return t.ToTableDataResponse(ctx).DataResponse(ctx)
 }
 
 // ToTableDataResponse creates an AJAX data response with exact JSON structure.
@@ -40,31 +40,24 @@ func (t *Table[T]) DataResponse(translator core.TranslateFunc) response.DataResu
 //
 // This method is specifically for AJAX endpoint handlers that return table data
 // without the full component definition. Use Print() to get the full component JSON.
-func (t *Table[T]) ToTableDataResponse() *TableDataResponse {
+func (t *Table[T]) ToTableDataResponse(ctx *core.UiContext) *TableDataResponse {
 
 	// Get formatted data with all formatters applied using internal outputType
-	data := t.GetData(t.outputType)
+	data := t.GetData(ctx, t.outputType)
 
 	// Create response with outputType
 	resp := NewTableDataResponse(data, t.outputType)
 
-	// Add field definitions for CSV header generation (internal only, not in JSON output)
-	// Export fields with translator (use empty translator if not set)
-	trans := t.translator
-	if trans == nil {
-		trans = func(key string) string { return key }
-	}
-
 	// For CSV output, filter out fields with csv=false
 	// Uses non-generic exportFieldsForCSV from tableCore via promotion
 	if t.outputType == OutputCSV {
-		fields := t.exportFieldsForCSV(trans)
+		fields := t.exportFieldsForCSV(ctx)
 		resp.withFieldsForCSV(fields)
 	} else if t.outputType == OutputExcel {
-		fields := t.exportFieldsForCSV(trans)
+		fields := t.exportFieldsForCSV(ctx)
 		resp.withFieldsForCSV(fields)
 	} else if t.fieldsCanChange {
-		fields := t.exportFields(trans)
+		fields := t.exportFields(ctx)
 		resp.WithFields(fields)
 	}
 
@@ -72,7 +65,7 @@ func (t *Table[T]) ToTableDataResponse() *TableDataResponse {
 	// Components like MultiProgress, Charts, Info messages are rendered alongside the table
 	if t.outputType != OutputCSV {
 		// Calculate and add footer if any fields have aggregations
-		footer := t.CalculateFooter(t.outputType)
+		footer := t.CalculateFooter(ctx, t.outputType)
 		if len(footer) > 0 {
 			resp.WithFooter(footer)
 		}

@@ -3,13 +3,13 @@ package formatter
 import (
 	"fmt"
 
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // FormatTimeLengthHM converts seconds to "HH:MM" format.
 // Example: 3665 seconds → "01:01"
 // Uses the user's locale settings from UiContext.
-func FormatTimeLengthHM(seconds int64, ctx *uicontext.UiContext) string {
+func FormatTimeLengthHM(seconds int64, ctx *core.UiContext) string {
 	if seconds < 0 {
 		return "00:00"
 	}
@@ -23,7 +23,7 @@ func FormatTimeLengthHM(seconds int64, ctx *uicontext.UiContext) string {
 // FormatTimeLengthMin converts seconds to minutes with "min" suffix.
 // Example: 3665 seconds → "61 min"
 // Note: Translation of "min" should be done by caller if needed.
-func FormatTimeLengthMin(seconds int64, ctx *uicontext.UiContext) string {
+func FormatTimeLengthMin(seconds int64, ctx *core.UiContext) string {
 	if seconds < 0 {
 		return "0 min"
 	}
@@ -35,7 +35,7 @@ func FormatTimeLengthMin(seconds int64, ctx *uicontext.UiContext) string {
 // FormatTimeLengthH converts seconds to hours with decimals and "h" suffix.
 // Example: 3665 seconds → "1.0 h"
 // Note: Translation of "h" should be done by caller if needed.
-func FormatTimeLengthH(seconds int64, ctx *uicontext.UiContext) string {
+func FormatTimeLengthH(seconds int64, ctx *core.UiContext) string {
 	if seconds < 0 {
 		return "0.0 h"
 	}
@@ -47,7 +47,7 @@ func FormatTimeLengthH(seconds int64, ctx *uicontext.UiContext) string {
 // FormatTimeLengthHMS converts seconds to "HH:MM:SS" format.
 // Example: 3665 seconds → "01:01:05"
 // Uses the user's locale settings from UiContext.
-func FormatTimeLengthHMS(seconds int64, ctx *uicontext.UiContext) string {
+func FormatTimeLengthHMS(seconds int64, ctx *core.UiContext) string {
 	if seconds < 0 {
 		return "00:00:00"
 	}

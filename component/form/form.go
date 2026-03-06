@@ -15,25 +15,24 @@ type Form struct {
 	header     *string
 	display    *string
 	hookFields func([]map[string]any)
-	translator core.TranslateFunc
+	ctx        *core.UiContext
 }
 
 // NewForm creates a new form component with default Back and Save buttons
-// PHP equivalent: XiriForm::gen($xfields, $url, $obj, $header, $buttons, $data, $display)
 func NewForm(
 	fields []map[string]any,
 	u *url.Url,
 	header *string,
 	buttons []*button.Button,
 	display *string,
-	translator core.TranslateFunc,
+	ctx *core.UiContext,
 ) *Form {
 	// If no buttons provided, create default Back + Save buttons
 	if buttons == nil {
 		defaultTabIndex := -1
 		buttons = []*button.Button{
 			button.NewBackButton(
-				core.Translate(translator, "Back"),
+				core.Translate(ctx, "Back"),
 				core.ColorPrimary,
 				core.ButtonTypeStroked,
 				"",
@@ -43,7 +42,7 @@ func NewForm(
 				nil,
 			),
 			button.NewFormButton(
-				core.Translate(translator, "Save"),
+				core.Translate(ctx, "Save"),
 				u,
 				core.ColorPrimary,
 				core.ButtonTypeRaised,
@@ -63,44 +62,39 @@ func NewForm(
 		header:     header,
 		display:    display,
 		hookFields: nil,
-		translator: translator,
+		ctx:        ctx,
 	}
 }
 
 // HookFields sets a hook function to modify fields before printing
-// PHP equivalent: XiriForm->hookFields($hook)
 func (f *Form) HookFields(hook func([]map[string]any)) *Form {
 	f.hookFields = hook
 	return f
 }
 
 // WithHeader sets the form header (optional)
-// Returns the Form for method chaining
 func (f *Form) WithHeader(header string) *Form {
 	f.header = &header
 	return f
 }
 
 // WithDisplay sets the display/layout class (optional)
-// Returns the Form for method chaining
 func (f *Form) WithDisplay(display string) *Form {
 	f.display = &display
 	return f
 }
 
 // Print returns the JSON representation of the form
-// PHP equivalent: XiriForm->print()
-func (f *Form) Print(translator core.TranslateFunc) map[string]any {
-	// Use the form's translator if provided, otherwise use the parameter
-	trans := translator
-	if trans == nil && f.translator != nil {
-		trans = f.translator
+func (f *Form) Print(ctx *core.UiContext) map[string]any {
+	// Use parameter ctx, fall back to stored ctx
+	if ctx == nil {
+		ctx = f.ctx
 	}
 
 	// Prepare buttons
 	buttonData := make([]map[string]any, len(f.buttons))
 	for i, btn := range f.buttons {
-		buttonData[i] = btn.Print(trans)
+		buttonData[i] = btn.Print(ctx)
 	}
 
 	// Apply hook if set

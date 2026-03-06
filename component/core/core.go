@@ -8,11 +8,11 @@ package core
 // 1. Type safety - avoid interface{} where possible
 // 2. Builder pattern - provide Gen() and specialized constructors
 // 3. Fluent interface - return *Type for method chaining where appropriate
-// 4. Translation support - accept optional TranslateFunc for i18n
+// 4. Translation support - accept optional *UiContext for i18n
 type Component interface {
 	// Print returns the JSON representation of the component.
-	// The translator parameter is optional and can be nil.
-	Print(translator TranslateFunc) map[string]any
+	// The ctx parameter is optional and can be nil.
+	Print(ctx *UiContext) map[string]any
 }
 
 // TranslateFunc is a function type for translating text keys to localized strings.
@@ -25,10 +25,10 @@ func WithNewRow(result map[string]any) map[string]any {
 	return result
 }
 
-// Translate applies translation if translator is provided
-func Translate(translator TranslateFunc, key string) string {
-	if translator != nil {
-		return translator(key)
+// Translate applies translation if ctx and its Translate function are provided
+func Translate(ctx *UiContext, key string) string {
+	if ctx != nil && ctx.Translate != nil {
+		return ctx.Translate(key)
 	}
 	return key
 }

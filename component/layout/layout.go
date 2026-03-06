@@ -17,7 +17,7 @@ func NewSpacer(display *string) *Spacer {
 }
 
 // Print returns the JSON representation of the spacer
-func (s *Spacer) Print(translator core.TranslateFunc) map[string]any {
+func (s *Spacer) Print(ctx *core.UiContext) map[string]any {
 	return map[string]any{
 		"type":    "spacer",
 		"display": s.display,
@@ -47,11 +47,11 @@ func (c *Container) Add(component core.Component) *Container {
 }
 
 // Print returns the JSON representation of the container
-func (c *Container) Print(translator core.TranslateFunc) map[string]any {
+func (c *Container) Print(ctx *core.UiContext) map[string]any {
 	// Print all nested components
 	componentData := make([]map[string]any, 0, len(c.components))
 	for _, comp := range c.components {
-		componentData = append(componentData, comp.Print(translator))
+		componentData = append(componentData, comp.Print(ctx))
 	}
 
 	return map[string]any{
@@ -96,7 +96,7 @@ func (h *Header) WithDisplay(display string) *Header {
 }
 
 // Print returns the JSON representation of the header
-func (h *Header) Print(translator core.TranslateFunc) map[string]any {
+func (h *Header) Print(ctx *core.UiContext) map[string]any {
 	return map[string]any{
 		"type":    "header",
 		"display": h.display,
@@ -146,11 +146,11 @@ func (d *Divider) WithDisplay(display string) *Divider {
 }
 
 // Print returns the JSON representation of the divider component.
-func (d *Divider) Print(translator core.TranslateFunc) map[string]any {
+func (d *Divider) Print(ctx *core.UiContext) map[string]any {
 	data := make(map[string]any)
 
 	if d.text != nil {
-		data["text"] = core.Translate(translator, *d.text)
+		data["text"] = core.Translate(ctx, *d.text)
 	}
 	if d.icon != nil {
 		data["icon"] = *d.icon
@@ -192,7 +192,7 @@ func (h *Html) WithDisplay(display string) *Html {
 }
 
 // Print returns the JSON representation of the HTML component
-func (h *Html) Print(translator core.TranslateFunc) map[string]any {
+func (h *Html) Print(ctx *core.UiContext) map[string]any {
 	return map[string]any{
 		"type":    "html",
 		"display": h.display,

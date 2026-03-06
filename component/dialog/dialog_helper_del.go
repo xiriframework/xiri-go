@@ -20,7 +20,7 @@ func HandleDelRequest(
 	urlPath string,
 	deleteFunc func() error,
 	successResponse response.SuccessResponse,
-	translator core.TranslateFunc,
+	ctx *core.UiContext,
 ) error {
 	if c.Request().Method == http.MethodGet {
 		dlg := NewDialogDelete(
@@ -30,10 +30,9 @@ func HandleDelRequest(
 			nil,
 			nil,
 			nil,
-			translator,
 		)
 
-		return c.JSON(http.StatusOK, dlg.Print(translator))
+		return c.JSON(http.StatusOK, dlg.Print(ctx))
 	}
 
 	if err := deleteFunc(); err != nil {

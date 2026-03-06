@@ -9,12 +9,12 @@ import (
 	"github.com/xiriframework/xiri-go/types/locale"
 	"github.com/xiriframework/xiri-go/types/pressure"
 	"github.com/xiriframework/xiri-go/types/timezone"
-	"github.com/xiriframework/xiri-go/uicontext"
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 func TestTimeFieldMinMaxMidnightCalculation(t *testing.T) {
 	// Create a UiContext with Europe/Vienna timezone (UTC+1 in winter, UTC+2 in summer)
-	ctx := &uicontext.UiContext{
+	ctx := &core.UiContext{
 		Timezone: timezone.EuropeVienna,
 		Lang:     language.Deutsch,
 		Locale:   locale.De,
@@ -77,7 +77,7 @@ func TestTimeFieldMinMaxMidnightCalculation(t *testing.T) {
 
 func TestTimeFieldMinMaxAbsoluteTimestamp(t *testing.T) {
 	// Create a UiContext
-	ctx := &uicontext.UiContext{
+	ctx := &core.UiContext{
 		Timezone: timezone.EuropeVienna,
 		Lang:     language.Deutsch,
 		Locale:   locale.De,
@@ -122,7 +122,7 @@ func TestTimeFieldMinMaxDifferentTimezones(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Create a UiContext with specific timezone
-			ctx := &uicontext.UiContext{
+			ctx := &core.UiContext{
 				Timezone: tc.timezone,
 				Lang:     language.Deutsch,
 				Locale:   locale.De,

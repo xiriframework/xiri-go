@@ -1,9 +1,6 @@
 package table
 
-import (
-	"github.com/xiriframework/xiri-go/component/core"
-	"github.com/xiriframework/xiri-go/uicontext"
-)
+import "github.com/xiriframework/xiri-go/component/core"
 
 // fieldBase contains all type-independent field properties.
 // Extracted from field[T] to avoid generic monomorphization of methods
@@ -113,7 +110,7 @@ func (f *fieldBase) getFormatter(output OutputType) OutputFormatter {
 //
 // CRITICAL: For number-type fields on web output, this wraps the result in [display, value] array
 // to maintain exact JSON compatibility with xiri-ui frontend expectations.
-func (f *fieldBase) format(value any, row Row, output OutputType, ctx *uicontext.UiContext) any {
+func (f *fieldBase) format(value any, row Row, output OutputType, ctx *core.UiContext) any {
 	formatter := f.getFormatter(output)
 	formatted := formatter.Format(value, row, output, ctx)
 
