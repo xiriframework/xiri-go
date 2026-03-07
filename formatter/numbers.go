@@ -9,7 +9,7 @@ import (
 // Example (de): 123.456 → "123,46"
 // Uses the user's locale settings from UiContext.
 func FormatDouble2(value float64, ctx *core.UiContext) string {
-	return FormatNumberLocale(value, 2, ctx.Locale)
+	return FormatNumberLocale(value, 2, ctx.SafeLocale())
 }
 
 // FormatInteger formats an integer value with thousand separators based on locale.
@@ -17,12 +17,12 @@ func FormatDouble2(value float64, ctx *core.UiContext) string {
 // Example (de): 1234567 → "1.234.567"
 // Uses the user's locale settings from UiContext.
 func FormatInteger(value int64, ctx *core.UiContext) string {
-	return FormatNumberLocale(float64(value), 0, ctx.Locale)
+	return FormatNumberLocale(float64(value), 0, ctx.SafeLocale())
 }
 
 // FormatBigNumber formats a large number with thousand separators and no decimals.
 // Example (en): 1234567.89 → "1,234,568"
 // Example (de): 1234567.89 → "1.234.568"
 func FormatBigNumber(value float64, ctx *core.UiContext) string {
-	return FormatNumberLocale(value, 0, ctx.Locale)
+	return FormatNumberLocale(value, 0, ctx.SafeLocale())
 }

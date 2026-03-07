@@ -85,15 +85,6 @@ func (f *ModelListField) Parse(raw interface{}) (interface{}, error) {
 	return parseModelListValue(raw, f.GetDefault())
 }
 
-// Helper method to parse modellist value (wraps the package-level function)
-func (f *ModelListField) parseValue(raw interface{}) (ModelListValue, error) {
-	result, err := parseModelListValue(raw, f.GetDefault())
-	if err != nil {
-		return nil, err
-	}
-	return result, nil
-}
-
 // BindValue parses, validates, and stores the value in the field
 func (f *ModelListField) BindValue(raw interface{}) error {
 	parsed, err := f.Parse(raw)

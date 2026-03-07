@@ -29,3 +29,19 @@ func (uc *UiContext) SafeTranslate(key string) string {
 	}
 	return key
 }
+
+// SafeLocale returns the locale or a default (locale.De) if ctx is nil.
+func (uc *UiContext) SafeLocale() locale.Locale {
+	if uc == nil {
+		return locale.De
+	}
+	return uc.Locale
+}
+
+// SafeTimezone returns the timezone or a default (UTC) if ctx is nil.
+func (uc *UiContext) SafeTimezone() timezone.Timezone {
+	if uc == nil {
+		return timezone.EuropeVienna
+	}
+	return uc.Timezone
+}

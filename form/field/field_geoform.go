@@ -278,34 +278,6 @@ func NewGeoformField(id, name string, required bool) *GeoformField {
 	}
 }
 
-// parseFloatFromMap parses a float value from a map key
-func parseFloatFromMap(m map[string]interface{}, key string) (float64, error) {
-	raw, ok := m[key]
-	if !ok {
-		return 0, fmt.Errorf("missing key %s", key)
-	}
-	return parseFloat(raw)
-}
-
-// parseFloat parses a float value from interface{}
-func parseFloat(raw interface{}) (float64, error) {
-	switch v := raw.(type) {
-	case float64:
-		return v, nil
-	case int:
-		return float64(v), nil
-	case string:
-		var f float64
-		_, err := fmt.Sscanf(v, "%f", &f)
-		if err != nil {
-			return 0, fmt.Errorf("invalid float string: %s", v)
-		}
-		return f, nil
-	default:
-		return 0, fmt.Errorf("cannot convert %T to float", raw)
-	}
-}
-
 // ============================================================================
 // Chainable Setter Methods
 // ============================================================================

@@ -27,7 +27,7 @@ func createIntegerFormatter() OutputFormatter {
 		num := toInt64(value)
 		switch output {
 		case OutputWeb, OutputPDF:
-			return formatter.FormatNumberLocale(float64(num), 0, ctx.Locale)
+			return formatter.FormatNumberLocale(float64(num), 0, ctx.SafeLocale())
 		case OutputCSV, OutputExcel:
 			return fmt.Sprint(num)
 		}
@@ -40,7 +40,7 @@ func createFloatFormatter(decimals int) OutputFormatter {
 		num := toFloat64(value)
 		switch output {
 		case OutputWeb, OutputPDF:
-			return formatter.FormatNumberLocale(num, decimals, ctx.Locale)
+			return formatter.FormatNumberLocale(num, decimals, ctx.SafeLocale())
 		case OutputCSV, OutputExcel:
 			format := "%." + strconv.Itoa(decimals) + "f"
 			return fmt.Sprintf(format, num)
@@ -110,8 +110,8 @@ func createText2IntFormatter() OutputFormatter {
 		switch output {
 		case OutputWeb, OutputPDF:
 			return [2]string{
-				formatter.FormatNumberLocale(float64(arr[0]), 0, ctx.Locale),
-				formatter.FormatNumberLocale(float64(arr[1]), 0, ctx.Locale),
+				formatter.FormatNumberLocale(float64(arr[0]), 0, ctx.SafeLocale()),
+				formatter.FormatNumberLocale(float64(arr[1]), 0, ctx.SafeLocale()),
 			}
 		case OutputCSV, OutputExcel:
 			primary := fmt.Sprint(arr[0])
@@ -140,8 +140,8 @@ func createText2FloatFormatter(decimals int) OutputFormatter {
 		switch output {
 		case OutputWeb, OutputPDF:
 			return [2]string{
-				formatter.FormatNumberLocale(arr[0], decimals, ctx.Locale),
-				formatter.FormatNumberLocale(arr[1], decimals, ctx.Locale),
+				formatter.FormatNumberLocale(arr[0], decimals, ctx.SafeLocale()),
+				formatter.FormatNumberLocale(arr[1], decimals, ctx.SafeLocale()),
 			}
 		case OutputCSV, OutputExcel:
 			primary := fmt.Sprintf(format, arr[0])
@@ -170,7 +170,7 @@ func createText2DateTimeFormatter() OutputFormatter {
 			return [2]string{"", ""}
 		}
 
-		loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+		loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 		if err != nil {
 			loc = time.UTC
 		}
@@ -224,7 +224,7 @@ func createText2DateFormatter() OutputFormatter {
 			return [2]string{"", ""}
 		}
 
-		loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+		loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 		if err != nil {
 			loc = time.UTC
 		}
@@ -283,8 +283,8 @@ func createText2DistanceFormatter(decimals int) OutputFormatter {
 		switch output {
 		case OutputWeb, OutputPDF:
 			return [2]string{
-				formatter.FormatDistanceLocaleWithDecimals(arr[0], distanceUnit, ctx.Locale, decimals),
-				formatter.FormatDistanceLocaleWithDecimals(arr[1], distanceUnit, ctx.Locale, decimals),
+				formatter.FormatDistanceLocaleWithDecimals(arr[0], distanceUnit, ctx.SafeLocale(), decimals),
+				formatter.FormatDistanceLocaleWithDecimals(arr[1], distanceUnit, ctx.SafeLocale(), decimals),
 			}
 		case OutputCSV, OutputExcel:
 			format := "%." + strconv.Itoa(decimals) + "f"
@@ -328,8 +328,8 @@ func createText2SpeedFormatter(decimals int) OutputFormatter {
 
 		switch output {
 		case OutputWeb, OutputPDF:
-			primary := formatter.FormatNumberLocale(convertSpeedValue(arr[0], distanceUnit), decimals, ctx.Locale) + unit
-			secondary := formatter.FormatNumberLocale(convertSpeedValue(arr[1], distanceUnit), decimals, ctx.Locale) + unit
+			primary := formatter.FormatNumberLocale(convertSpeedValue(arr[0], distanceUnit), decimals, ctx.SafeLocale()) + unit
+			secondary := formatter.FormatNumberLocale(convertSpeedValue(arr[1], distanceUnit), decimals, ctx.SafeLocale()) + unit
 			return [2]string{primary, secondary}
 		case OutputCSV, OutputExcel:
 			format := "%." + strconv.Itoa(decimals) + "f"
@@ -471,7 +471,7 @@ func createIntegerNFormatter() OutputFormatter {
 		case OutputWeb, OutputPDF:
 			result := make([]string, len(arr))
 			for i, v := range arr {
-				result[i] = formatter.FormatNumberLocale(float64(v), 0, ctx.Locale)
+				result[i] = formatter.FormatNumberLocale(float64(v), 0, ctx.SafeLocale())
 			}
 			return result
 		case OutputCSV, OutputExcel:
@@ -505,7 +505,7 @@ func createFloatNFormatter(decimals int) OutputFormatter {
 		case OutputWeb, OutputPDF:
 			result := make([]string, len(arr))
 			for i, v := range arr {
-				result[i] = formatter.FormatNumberLocale(v, decimals, ctx.Locale)
+				result[i] = formatter.FormatNumberLocale(v, decimals, ctx.SafeLocale())
 			}
 			return result
 		case OutputCSV, OutputExcel:
@@ -535,7 +535,7 @@ func createDateTimeNFormatter() OutputFormatter {
 			return []string{}
 		}
 
-		loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+		loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 		if err != nil {
 			loc = time.UTC
 		}
@@ -580,7 +580,7 @@ func createDateNFormatter() OutputFormatter {
 			return []string{}
 		}
 
-		loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+		loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 		if err != nil {
 			loc = time.UTC
 		}
@@ -631,7 +631,7 @@ func createDistanceNFormatter(decimals int) OutputFormatter {
 		case OutputWeb, OutputPDF:
 			result := make([]string, len(arr))
 			for i, v := range arr {
-				result[i] = formatter.FormatDistanceLocaleWithDecimals(v, distanceUnit, ctx.Locale, decimals)
+				result[i] = formatter.FormatDistanceLocaleWithDecimals(v, distanceUnit, ctx.SafeLocale(), decimals)
 			}
 			return result
 		case OutputCSV, OutputExcel:
@@ -677,7 +677,7 @@ func createSpeedNFormatter(decimals int) OutputFormatter {
 		case OutputWeb, OutputPDF:
 			result := make([]string, len(arr))
 			for i, v := range arr {
-				result[i] = formatter.FormatNumberLocale(convertSpeedValue(v, distanceUnit), decimals, ctx.Locale) + unit
+				result[i] = formatter.FormatNumberLocale(convertSpeedValue(v, distanceUnit), decimals, ctx.SafeLocale()) + unit
 			}
 			return result
 		case OutputCSV, OutputExcel:
@@ -826,14 +826,14 @@ func createDateTimeFormatter() OutputFormatter {
 		case OutputWeb, OutputPDF:
 			return formatter.FormatTimestampDateTime(timestamp, ctx)
 		case OutputCSV, OutputExcel:
-			loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+			loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 			if err != nil {
 				loc = time.UTC
 			}
 			t := time.Unix(timestamp, 0).In(loc)
 			return t.Format("2006-01-02 15:04:05")
 		}
-		loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+		loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 		if err != nil {
 			loc = time.UTC
 		}
@@ -852,14 +852,14 @@ func createDateFormatter() OutputFormatter {
 		case OutputWeb, OutputPDF:
 			return formatter.FormatTimestampDate(timestamp, ctx)
 		case OutputCSV, OutputExcel:
-			loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+			loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 			if err != nil {
 				loc = time.UTC
 			}
 			t := time.Unix(timestamp, 0).In(loc)
 			return t.Format("2006-01-02")
 		}
-		loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+		loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 		if err != nil {
 			loc = time.UTC
 		}
@@ -875,7 +875,7 @@ func createDistanceFormatter(decimals int) OutputFormatter {
 
 		switch output {
 		case OutputWeb, OutputPDF:
-			return formatter.FormatDistanceLocaleWithDecimals(km, distanceUnit, ctx.Locale, decimals)
+			return formatter.FormatDistanceLocaleWithDecimals(km, distanceUnit, ctx.SafeLocale(), decimals)
 		case OutputCSV, OutputExcel:
 			converted := convertDistanceValue(km, distanceUnit)
 			format := "%." + strconv.Itoa(decimals) + "f"
@@ -899,7 +899,7 @@ func createPressureFormatter(decimals int) OutputFormatter {
 			if pressureUnit == pressure.Psi {
 				unit = " psi"
 			}
-			return formatter.FormatNumberLocale(converted, decimals, ctx.Locale) + unit
+			return formatter.FormatNumberLocale(converted, decimals, ctx.SafeLocale()) + unit
 		case OutputCSV, OutputExcel:
 			converted := convertPressureValue(bar, pressureUnit)
 			format := "%." + strconv.Itoa(decimals) + "f"
@@ -926,7 +926,7 @@ func createSpeedFormatter(decimals int) OutputFormatter {
 			case distance.Seemiles:
 				unit = " kn"
 			}
-			return formatter.FormatNumberLocale(converted, decimals, ctx.Locale) + unit
+			return formatter.FormatNumberLocale(converted, decimals, ctx.SafeLocale()) + unit
 		case OutputCSV, OutputExcel:
 			converted := convertSpeedValue(kmh, distanceUnit)
 			format := "%." + strconv.Itoa(decimals) + "f"

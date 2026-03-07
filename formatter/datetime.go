@@ -145,12 +145,12 @@ func FormatDate(t time.Time, ctx *core.UiContext) string {
 		return "-"
 	}
 
-	loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+	loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 	if err != nil {
 		loc = time.UTC
 	}
 
-	return t.In(loc).Format(dateLayout(ctx.Locale))
+	return t.In(loc).Format(dateLayout(ctx.SafeLocale()))
 }
 
 // FormatDateTime formats a time.Time to datetime
@@ -159,12 +159,12 @@ func FormatDateTime(t time.Time, ctx *core.UiContext) string {
 		return "-"
 	}
 
-	loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+	loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 	if err != nil {
 		loc = time.UTC
 	}
 
-	return t.In(loc).Format(dateTimeLayout(ctx.Locale))
+	return t.In(loc).Format(dateTimeLayout(ctx.SafeLocale()))
 }
 
 // FormatTime formats a time.Time to time only
@@ -173,12 +173,12 @@ func FormatTime(t time.Time, ctx *core.UiContext) string {
 		return "-"
 	}
 
-	loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+	loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 	if err != nil {
 		loc = time.UTC
 	}
 
-	return t.In(loc).Format(timeLayout(ctx.Locale))
+	return t.In(loc).Format(timeLayout(ctx.SafeLocale()))
 }
 
 // FormatTimestampFullDate formats a Unix timestamp to full date (Y-m-d H:i format)

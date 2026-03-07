@@ -173,7 +173,7 @@ func (f *TimeField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 		// If value is between -10000 and 10000, treat as days offset from midnight today
 		if minVal > -10000 && minVal < 10000 {
 			// Get user's timezone
-			loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+			loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 			if err != nil {
 				loc = time.UTC
 			}
@@ -192,7 +192,7 @@ func (f *TimeField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 		// If value is between -10000 and 10000, treat as days offset from midnight today
 		if maxVal > -10000 && maxVal < 10000 {
 			// Get user's timezone
-			loc, err := time.LoadLocation(ctx.Timezone.GetIANA())
+			loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
 			if err != nil {
 				loc = time.UTC
 			}
