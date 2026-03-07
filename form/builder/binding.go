@@ -30,7 +30,7 @@ import (
 //	    enabled := field.NewBoolField("enabled", "ENABLED", false, true)
 //
 //	    // Build form
-//	    builder := NewFormBuilder(ctx, t).
+//	    builder := NewFormBuilder(ctx).
 //	        AddField(name).
 //	        AddField(groupID).
 //	        AddField(enabled)

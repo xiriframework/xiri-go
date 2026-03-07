@@ -12,9 +12,8 @@ import (
 //
 // KEY FEATURE: After BindAndValidate(), access values via field.Value (type-safe, no assertions!)
 type FormBuilder struct {
-	fields    []field.FormField
-	ctx       *core.UiContext
-	translate func(string) string
+	fields []field.FormField
+	ctx    *core.UiContext
 
 	// Optional hook for edit edge cases (e.g., checking if current value is in options list)
 	OnEditValueCheck func(fg *group.FormGroup, values map[string]interface{}) error
@@ -24,14 +23,12 @@ type FormBuilder struct {
 //
 // Parameters:
 //   - ctx: User context containing locale, timezone, etc.
-//   - translate: Translation function for field labels
 //
 // Returns a FormBuilder that can be used to define form fields via method chaining.
-func NewFormBuilder(ctx *core.UiContext, translate func(string) string) *FormBuilder {
+func NewFormBuilder(ctx *core.UiContext) *FormBuilder {
 	return &FormBuilder{
-		fields:    make([]field.FormField, 0),
-		ctx:       ctx,
-		translate: translate,
+		fields: make([]field.FormField, 0),
+		ctx:    ctx,
 	}
 }
 

@@ -72,7 +72,7 @@ func TestNewFormBuilder_BuildAdd(t *testing.T) {
 	name := field.NewTextField("name", "NAME", true, "default-name")
 	active := field.NewBoolField("active", "ACTIVE", false, true)
 
-	builder := NewFormBuilder(nil, func(s string) string { return s })
+	builder := NewFormBuilder(nil)
 	builder.AddField(name).AddField(active)
 
 	fg, defaults, err := builder.BuildAdd()
@@ -95,7 +95,7 @@ func TestNewFormBuilder_BuildAdd(t *testing.T) {
 func TestNewFormBuilder_BuildEdit(t *testing.T) {
 	name := field.NewTextField("name", "NAME", true, "current-name")
 
-	builder := NewFormBuilder(nil, func(s string) string { return s })
+	builder := NewFormBuilder(nil)
 	builder.AddField(name)
 
 	fg, values, err := builder.BuildEdit()
@@ -115,7 +115,7 @@ func TestNewFormBuilder_BuildEdit(t *testing.T) {
 func TestNewFormBuilder_BuildAddForDisplay(t *testing.T) {
 	name := field.NewTextField("name", "NAME", true, "test")
 
-	builder := NewFormBuilder(nil, func(s string) string { return s })
+	builder := NewFormBuilder(nil)
 	builder.AddField(name)
 
 	exported, err := builder.BuildAddForDisplay()
@@ -204,7 +204,7 @@ func TestBindFromMap_DisabledModelField(t *testing.T) {
 func TestNewFormBuilder_OnEditValueCheck(t *testing.T) {
 	name := field.NewTextField("name", "NAME", true, "default")
 
-	builder := NewFormBuilder(nil, func(s string) string { return s })
+	builder := NewFormBuilder(nil)
 	builder.AddField(name)
 
 	hookCalled := false
