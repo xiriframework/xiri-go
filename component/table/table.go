@@ -69,6 +69,7 @@ type TableOptions struct {
 	Footer        *bool
 	ServerSide    *bool   // Enable server-side pagination (data fetched page-by-page)
 	ScrollHeight  *string // Custom scroll height for the table container (e.g., "400px", "80vh")
+	EditUrl       *string // URL for inline edit save requests (POST { id, field, value })
 }
 
 // ============================================================================
@@ -476,6 +477,9 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 	if opts.ScrollHeight != nil {
 		options["scrollHeight"] = *opts.ScrollHeight
 	}
+	if opts.EditUrl != nil {
+		options["editUrl"] = *opts.EditUrl
+	}
 
 	return options
 }
@@ -606,6 +610,54 @@ func (tc *tableCore) showFieldsByID(fieldIDs []string) {
 			f.hide = false
 		}
 	}
+}
+
+// HasEditableField checks if a field with the given ID exists and is marked as editable.
+// Use this to validate incoming inline-edit requests before processing them.
+func (tc *tableCore) HasEditableField(fieldID string) bool {
+	for _, f := range tc.fieldBases {
+		if f.id == fieldID {
+			return f.editable
+		}
+	}
+	return false
+}
+
+// InlineEditRequest represents the payload sent by the Angular frontend for inline cell edits.
+// The frontend sends POST { id, field, value } to the editUrl.
+type InlineEditRequest struct {
+	ID    int64  `json:"id"`
+	Field string `json:"field"`
+	Value any    `json:"value"`
+}
+
+// ParseInlineEdit parses the inline edit request from the Echo context and validates
+// that the field exists and is editable in this table.
+//
+// Returns an error if:
+//   - The request body cannot be parsed
+//   - The field does not exist in the table
+//   - The field is not marked as editable
+//
+// Example:
+//
+//	func (ctrl *Controller) InlineEditSave(c echo.Context) error {
+//	    tbl := buildTable(ctx)
+//	    req, err := tbl.ParseInlineEdit(c)
+//	    if err != nil {
+//	        return c.JSON(400, response.NewErrorResponse(err.Error()))
+//	    }
+//	    // Use req.ID, req.Field, req.Value for business logic
+//	}
+func (tc *tableCore) ParseInlineEdit(c echo.Context) (InlineEditRequest, error) {
+	var req InlineEditRequest
+	if err := c.Bind(&req); err != nil {
+		return req, err
+	}
+	if !tc.HasEditableField(req.Field) {
+		return req, echo.NewHTTPError(400, "field not editable: "+req.Field)
+	}
+	return req, nil
 }
 
 // GetFieldMetas returns metadata for all fields. This is the public API for

@@ -90,6 +90,14 @@ func (b *TableBuilder[T]) SetScrollHeight(scrollHeight string) *TableBuilder[T] 
 	return b
 }
 
+// SetEditUrl sets the URL for inline edit save requests.
+// When set, fields marked as editable will allow inline editing in the Angular frontend.
+// The frontend sends POST { id, field, value } to this URL when a cell is edited.
+func (b *TableBuilder[T]) SetEditUrl(editUrl string) *TableBuilder[T] {
+	b.table.options.EditUrl = &editUrl
+	return b
+}
+
 // SetServerSide enables/disables server-side pagination.
 // When enabled, pagination, sorting, and search are handled by the server.
 // The frontend will send _page, _pageSize, _sort, _sortDir, _search parameters.

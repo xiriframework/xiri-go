@@ -49,6 +49,11 @@ type fieldBase struct {
 	textPrefix *string // Text prefix (e.g., "$", "€")
 	textSuffix *string // Text suffix (e.g., " km", " €")
 
+	// Inline editing
+	editable           bool              // Field supports inline editing
+	editableOptions    []editableOption  // Predefined options for select-based inline editing
+	editableOptionsUrl string            // URL to load options dynamically per row
+
 	// Access control (potentially handled at higher level)
 	access []string // Required permissions
 
@@ -87,6 +92,13 @@ type iconDef struct {
 	color   core.Color
 	hint    string
 	options map[string]any // Additional custom options
+}
+
+// editableOption defines a selectable option for inline editing.
+type editableOption struct {
+	value string     // Option value (sent to backend)
+	label string     // Display label (shown to user)
+	color core.Color // Optional color for chips display
 }
 
 // menuItemDef defines a menu item in a menu-type button
@@ -187,6 +199,11 @@ func (f *fieldBase) toTableField() *tableFieldJSON {
 		// Unexported fields - text decoration
 		textPrefix: f.textPrefix,
 		textSuffix: f.textSuffix,
+
+		// Unexported fields - inline editing
+		editable:           f.editable,
+		editableOptions:    f.editableOptions,
+		editableOptionsUrl: f.editableOptionsUrl,
 
 		// Unexported fields - access control
 		access: f.access,

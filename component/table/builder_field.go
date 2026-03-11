@@ -261,6 +261,71 @@ func (fb *FieldBuilder) WithTextSuffix(suffix string) *FieldBuilder {
 	return fb
 }
 
+// WithEditable marks the field as inline-editable.
+// When true, the Angular frontend will allow clicking on the cell to edit the value.
+// Requires editUrl to be set on the table options.
+func (fb *FieldBuilder) WithEditable(editable bool) *FieldBuilder {
+	fb.base.editable = editable
+	return fb
+}
+
+// WithEditableOptionsUrl marks the field as inline-editable with options loaded from a URL.
+// The Angular frontend will fetch GET {url}?id={rowId}&field={fieldId} when editing starts.
+// Automatically sets editable=true.
+func (fb *FieldBuilder) WithEditableOptionsUrl(url string) *FieldBuilder {
+	fb.base.editable = true
+	fb.base.editableOptionsUrl = url
+	return fb
+}
+
+// WithEditableOptions marks the field as inline-editable with a select dropdown.
+// The options define the allowed values shown in the dropdown.
+// Automatically sets editable=true.
+//
+// Example:
+//
+//	builder.TextField("status", "Status", statusAccessor).
+//	    WithEditableOptions(map[string]string{
+//	        "Active":       "Active",
+//	        "Discontinued": "Discontinued",
+//	        "On Sale":      "On Sale",
+//	    })
+func (fb *FieldBuilder) WithEditableOptions(options map[string]string) *FieldBuilder {
+	fb.base.editable = true
+	fb.base.editableOptions = make([]editableOption, 0, len(options))
+	for value, label := range options {
+		fb.base.editableOptions = append(fb.base.editableOptions, editableOption{value: value, label: label})
+	}
+	return fb
+}
+
+// EditableChipOption defines a selectable chip option for inline editing with color.
+type EditableChipOption struct {
+	Value string
+	Label string
+	Color core.Color
+}
+
+// WithEditableChipOptions marks the field as inline-editable with a multi-select chip dropdown.
+// Each option defines a chip value, display label, and optional color.
+// Automatically sets editable=true.
+//
+// Example:
+//
+//	builder.ChipsField("tags", "Tags", tagsAccessor).
+//	    WithEditableChipOptions([]table.EditableChipOption{
+//	        {Value: "Frontend", Label: "Frontend", Color: core.ColorPrimary},
+//	        {Value: "Backend", Label: "Backend", Color: core.ColorAccent},
+//	    })
+func (fb *FieldBuilder) WithEditableChipOptions(options []EditableChipOption) *FieldBuilder {
+	fb.base.editable = true
+	fb.base.editableOptions = make([]editableOption, len(options))
+	for i, o := range options {
+		fb.base.editableOptions[i] = editableOption{value: o.Value, label: o.Label, color: o.Color}
+	}
+	return fb
+}
+
 // WithAccess sets required permissions
 func (fb *FieldBuilder) WithAccess(access []string) *FieldBuilder {
 	fb.base.access = access

@@ -118,6 +118,11 @@ type tableFieldJSON struct {
 	textPrefix *string
 	textSuffix *string
 
+	// inline editing
+	editable           bool
+	editableOptions    []editableOption
+	editableOptionsUrl string
+
 	// access control
 	access []string
 
@@ -182,6 +187,22 @@ func (tf *tableFieldJSON) print(ctx *core.UiContext) map[string]any {
 	}
 	if tf.footer != FieldFooterNo {
 		ret["footer"] = string(tf.footer)
+	}
+	if tf.editable {
+		ret["editable"] = true
+	}
+	if len(tf.editableOptions) > 0 {
+		opts := make([]map[string]any, len(tf.editableOptions))
+		for i, o := range tf.editableOptions {
+			opts[i] = map[string]any{"value": o.value, "label": core.Translate(ctx, o.label)}
+			if o.color != "" {
+				opts[i]["color"] = string(o.color)
+			}
+		}
+		ret["editableOptions"] = opts
+	}
+	if tf.editableOptionsUrl != "" {
+		ret["editableOptionsUrl"] = tf.editableOptionsUrl
 	}
 
 	// Text decoration

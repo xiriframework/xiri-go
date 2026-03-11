@@ -72,6 +72,70 @@ func (r ReturnRefreshTable) WithMessage(text string, msgType MessageType) Return
 	return r
 }
 
+// ReturnInlineEdit represents an inline edit save response.
+// The frontend patches row fields from Updates, then handles refresh/goto via callReturn.
+//
+// JSON output examples:
+//
+//	Updates only:    {"done": true, "updates": {"price": ["1.299,00", 1299], "lastModified": "11.03.2026"}}
+//	With message:    {"done": true, "updates": {"status": "Active"}, "message": "Saved", "messageType": "success"}
+//	Refresh table:   {"done": true, "refresh": "table"}
+//	Goto:            {"done": true, "goto": "/other/page"}
+//	Combined:        {"done": true, "updates": {"status": "Active"}, "refresh": "table", "message": "Saved", "messageType": "success"}
+//
+// Use case: Inline edit completed — patch row fields, optionally trigger navigation/reload
+type ReturnInlineEdit struct {
+	Done    bool           `json:"done"`              // Always true
+	Updates map[string]any `json:"updates,omitempty"`  // Fields to patch in the row
+	Refresh string         `json:"refresh,omitempty"`  // "table" or "page"
+	Goto    string         `json:"goto,omitempty"`     // Redirect URL
+	Message
+}
+
+func (r ReturnInlineEdit) isSuccessResponse() {}
+
+// WithUpdates sets the fields to patch in the row.
+func (r ReturnInlineEdit) WithUpdates(updates map[string]any) ReturnInlineEdit {
+	r.Updates = updates
+	return r
+}
+
+// WithRefreshTable triggers a table reload after the update.
+func (r ReturnInlineEdit) WithRefreshTable() ReturnInlineEdit {
+	r.Refresh = "table"
+	return r
+}
+
+// WithRefreshPage triggers a full page reload after the update.
+func (r ReturnInlineEdit) WithRefreshPage() ReturnInlineEdit {
+	r.Refresh = "page"
+	return r
+}
+
+// WithGoto triggers a navigation after the update.
+func (r ReturnInlineEdit) WithGoto(url string) ReturnInlineEdit {
+	r.Goto = url
+	return r
+}
+
+// WithMessage returns a copy with the given message and type.
+func (r ReturnInlineEdit) WithMessage(text string, msgType MessageType) ReturnInlineEdit {
+	r.MessageText = text
+	r.MessageType = msgType
+	return r
+}
+
+// NewReturnInlineEdit creates a new inline edit response.
+//
+// Example:
+//
+//	response.NewReturnInlineEdit().
+//	    WithUpdates(map[string]any{"price": []any{"1.299,00", 1299}, "lastModified": "11.03.2026"}).
+//	    WithMessage("Saved", response.MessageSuccess)
+func NewReturnInlineEdit() ReturnInlineEdit {
+	return ReturnInlineEdit{Done: true}
+}
+
 // ReturnGoto represents a redirect/goto response.
 //
 // JSON output: {"done": true, "goto": "/Portal/User/Page/7"}

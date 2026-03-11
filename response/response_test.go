@@ -68,6 +68,108 @@ func TestSuccessResponseInterface(t *testing.T) {
 	var _ SuccessResponse = NewReturnGoto("/test")
 	var _ SuccessResponse = NewReturnDone()
 	var _ SuccessResponse = NewReturnMessage("test", MessageSuccess)
+	var _ SuccessResponse = NewReturnInlineEdit()
+}
+
+func TestNewReturnInlineEdit(t *testing.T) {
+	r := NewReturnInlineEdit()
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnInlineEditWithUpdates(t *testing.T) {
+	r := NewReturnInlineEdit().WithUpdates(map[string]any{"status": "Active"})
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"updates":{"status":"Active"}}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnInlineEditWithRefreshTable(t *testing.T) {
+	r := NewReturnInlineEdit().WithRefreshTable()
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"refresh":"table"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnInlineEditWithRefreshPage(t *testing.T) {
+	r := NewReturnInlineEdit().WithRefreshPage()
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"refresh":"page"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnInlineEditWithGoto(t *testing.T) {
+	r := NewReturnInlineEdit().WithGoto("/Dashboard")
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"goto":"/Dashboard"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnInlineEditWithMessage(t *testing.T) {
+	r := NewReturnInlineEdit().WithMessage("Saved", MessageSuccess)
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"message":"Saved","messageType":"success"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnInlineEditCombined(t *testing.T) {
+	r := NewReturnInlineEdit().
+		WithUpdates(map[string]any{"status": "Active"}).
+		WithRefreshTable().
+		WithMessage("Updated", MessageSuccess)
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"updates":{"status":"Active"},"refresh":"table","message":"Updated","messageType":"success"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
 }
 
 func TestReturnRefreshPageWithMessage(t *testing.T) {
