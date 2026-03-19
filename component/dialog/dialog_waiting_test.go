@@ -215,6 +215,52 @@ func TestDialogWaiting_Print_States(t *testing.T) {
 		if _, hasHeader := doneResult["header"]; hasHeader {
 			t.Error("Done state should not have header (minimal response)")
 		}
+
+		// State 3: Error
+		errorDialog := NewDialogWaitingError("Operation failed")
+		errorResult := errorDialog.Print(nil)
+
+		if errorResult["done"] != true {
+			t.Errorf("Error state done = %v, want true", errorResult["done"])
+		}
+		if errorResult["error"] != "Operation failed" {
+			t.Errorf("Error state error = %v, want 'Operation failed'", errorResult["error"])
+		}
+		if _, hasHeader := errorResult["header"]; hasHeader {
+			t.Error("Error state should not have header (minimal response)")
+		}
+	})
+}
+
+func TestNewDialogWaitingError(t *testing.T) {
+	t.Run("With error message", func(t *testing.T) {
+		dialog := NewDialogWaitingError("Export fehlgeschlagen")
+
+		result := dialog.Print(nil)
+
+		if len(result) != 2 {
+			t.Errorf("result length = %d, want 2", len(result))
+		}
+
+		if result["done"] != true {
+			t.Errorf("done = %v, want true", result["done"])
+		}
+		if result["error"] != "Export fehlgeschlagen" {
+			t.Errorf("error = %v, want 'Export fehlgeschlagen'", result["error"])
+		}
+	})
+
+	t.Run("Should not have url or blocked", func(t *testing.T) {
+		dialog := NewDialogWaitingError("Something went wrong")
+
+		result := dialog.Print(nil)
+
+		if _, hasUrl := result["url"]; hasUrl {
+			t.Error("Error state should not have url field")
+		}
+		if _, hasBlocked := result["blocked"]; hasBlocked {
+			t.Error("Error state should not have blocked field")
+		}
 	})
 }
 
@@ -228,5 +274,8 @@ func TestWaitingStateConstants(t *testing.T) {
 	}
 	if WaitingStateDone != 2 {
 		t.Errorf("WaitingStateDone = %d, want 2", WaitingStateDone)
+	}
+	if WaitingStateError != 3 {
+		t.Errorf("WaitingStateError = %d, want 3", WaitingStateError)
 	}
 }

@@ -19,6 +19,10 @@ const (
 	// WaitingStateDone is returned when the operation completes
 	// Contains URL for redirect and optional blocked element identifier
 	WaitingStateDone = 2
+
+	// WaitingStateError is returned when the operation fails
+	// Contains error message, stops polling and allows user to close dialog
+	WaitingStateError = 3
 )
 
 // DialogWaiting represents a waiting dialog with polling capability
@@ -27,11 +31,13 @@ const (
 //  1. Initial state (WaitingStateInitial): Shows dialog with polling configuration
 //  2. Polling states (WaitingStateNotDone): Returns {"done": false} to continue polling
 //  3. Completion state (WaitingStateDone): Returns {"done": true, "url": ..., "blocked": ...}
+//  4. Error state (WaitingStateError): Returns {"done": true, "error": ...} to stop polling with error
 type DialogWaiting struct {
 	*dialogImpl
 	waitingType    int
 	waitingUrl     string
 	waitingBlocked string
+	waitingError   string
 }
 
 // NewDialogWaiting creates a waiting dialog with polling
@@ -103,6 +109,20 @@ func NewDialogWaitingDone(u string, blocked string) Dialog {
 	}
 }
 
+// NewDialogWaitingError creates an error polling response
+//
+// Parameters:
+//   - message: Error message to display to the user
+//
+// Frontend stops polling, shows the error, and allows the user to close the dialog.
+func NewDialogWaitingError(message string) Dialog {
+	return &DialogWaiting{
+		dialogImpl:   newDialog(core.DialogTypeWaiting, "Error", nil, []*button.Button{}, nil, nil),
+		waitingType:  WaitingStateError,
+		waitingError: message,
+	}
+}
+
 // Print returns the JSON representation based on waiting type
 //
 // Returns different JSON structures depending on the waiting state:
@@ -122,6 +142,11 @@ func (dw *DialogWaiting) Print(ctx *core.UiContext) map[string]any {
 			"done":    true,
 			"url":     dw.waitingUrl,
 			"blocked": dw.waitingBlocked,
+		}
+	case WaitingStateError:
+		return map[string]any{
+			"done":  true,
+			"error": dw.waitingError,
 		}
 	default:
 		return dw.dialogImpl.Print(ctx)
