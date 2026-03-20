@@ -23,6 +23,7 @@ type ModelListField struct {
 	Options    []ModelOption          // Loaded options (populated by LoadOptions)
 	AllowEmpty bool                   // If true, empty selection is allowed
 	SingleOnly bool                   // If true, only one item can be selected
+	Tree       bool                   // If true, export type as "treeselect" instead of "multiselect"
 	Value      ModelListValue         // Parsed and validated value (type-safe access)
 }
 
@@ -157,8 +158,16 @@ func (f *ModelListField) ExportForFrontend(ctx *core.UiContext, value interface{
 	}
 	result := f.BaseField.GetBaseExport(ctx, value)
 
-	// Set type to multiselect
-	result["type"] = "multiselect"
+	// Set type based on tree mode
+	if f.Tree {
+		result["type"] = "treeselect"
+	} else {
+		result["type"] = "multiselect"
+	}
+
+	if f.Tree && f.URL == "" {
+		fmt.Printf("WARNING: ModelListField %q has Tree=true but no URL set. Tree data requires a URL endpoint that returns nested children.\n", f.ID)
+	}
 
 	// Export options as list of {id, name} (loaded from LoadOptions or List field)
 	options := f.Options
@@ -248,5 +257,12 @@ func (f *ModelListField) SetScenario(scenario []string) *ModelListField {
 // SetForm sets whether to show in form
 func (f *ModelListField) SetForm(form bool) *ModelListField {
 	f.BaseField.SetForm(form)
+	return f
+}
+
+// SetTree sets whether this field renders as a tree select.
+// When true, a URL must be set that returns data with nested children arrays.
+func (f *ModelListField) SetTree(tree bool) *ModelListField {
+	f.Tree = tree
 	return f
 }
