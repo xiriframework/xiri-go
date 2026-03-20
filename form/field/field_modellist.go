@@ -112,23 +112,6 @@ func (f *ModelListField) BindValue(raw interface{}) error {
 // Builder Functions
 // ============================================================================
 
-// NewDeviceListField creates a device selection field (multi-select)
-// Note: LoaderFunc must be set separately via SetLoaderFunc for project-specific loading.
-func NewDeviceListField(id, name string, required, allowEmpty bool) *ModelListField {
-	return &ModelListField{
-		BaseField: &BaseField{
-			ID:       id,
-			Type:     FieldTypeDeviceList,
-			Name:     name,
-			Required: required,
-			Form:     true,
-		},
-		ModelType:  "device",
-		AllowEmpty: allowEmpty,
-		SingleOnly: false,
-	}
-}
-
 // NewModelListField creates a modellist (multi-selection) form field
 // Note: LoaderFunc must be set separately via SetLoaderFunc for project-specific loading.
 // currentValue can be nil (defaults to empty slice)
