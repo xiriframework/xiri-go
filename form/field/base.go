@@ -89,6 +89,7 @@ type BaseField struct {
 	Class    string // CSS class for frontend styling (e.g., "xcol-md-6")
 	Step     int    // Step indicator for multi-step forms (0 = no step)
 	Disabled bool   // Whether the field is disabled
+	Hide     bool   // Whether the field is rendered as hidden input (true = hidden in UI, value still submitted)
 
 	// Conditional visibility
 	ShowWhen []Condition // Conditions that must all be true for the field to be visible
@@ -128,6 +129,10 @@ func (f *BaseField) IsDisabled() bool {
 	return f.Disabled
 }
 
+func (f *BaseField) IsHidden() bool {
+	return f.Hide
+}
+
 // GetBaseExport returns common export fields for all field types
 func (f *BaseField) GetBaseExport(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	result := map[string]interface{}{
@@ -138,6 +143,7 @@ func (f *BaseField) GetBaseExport(ctx *core.UiContext, value interface{}) map[st
 		"class":    f.Class,
 		"value":    value,
 		"form":     f.Form,
+		"hide":     f.Hide,
 	}
 
 	// Translate name and hint (SafeTranslate returns key unchanged if ctx/Translate is nil)
@@ -185,6 +191,12 @@ func (f *BaseField) SetStep(step int) *BaseField {
 // SetDisabled sets whether the field is disabled
 func (f *BaseField) SetDisabled(disabled bool) *BaseField {
 	f.Disabled = disabled
+	return f
+}
+
+// SetHide sets whether the field is rendered as hidden input (true = hidden in UI, value still submitted)
+func (f *BaseField) SetHide(hide bool) *BaseField {
+	f.Hide = hide
 	return f
 }
 
