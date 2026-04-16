@@ -15,8 +15,9 @@ type Item struct {
 
 // Timeline represents a timeline component for displaying chronological events.
 type Timeline struct {
-	items   []Item
-	display string
+	items       []Item
+	display     string
+	orientation core.TimelineOrientation
 }
 
 // New creates a new Timeline component.
@@ -31,6 +32,13 @@ func (t *Timeline) Add(title string) *Item {
 	item := Item{title: title}
 	t.items = append(t.items, item)
 	return &t.items[len(t.items)-1]
+}
+
+// WithOrientation sets the layout orientation (horizontal or vertical).
+// Default is vertical when unset.
+func (t *Timeline) WithOrientation(o core.TimelineOrientation) *Timeline {
+	t.orientation = o
+	return t
 }
 
 // WithDisplay sets the display/layout class.
@@ -92,6 +100,10 @@ func (t *Timeline) Print(ctx *core.UiContext) map[string]any {
 
 	if t.display != "" {
 		result["display"] = t.display
+	}
+
+	if t.orientation != "" {
+		result["orientation"] = string(t.orientation)
 	}
 
 	return result

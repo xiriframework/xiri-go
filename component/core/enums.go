@@ -114,3 +114,12 @@ const (
 	ExpansionTogglePositionBefore ExpansionTogglePosition = "before"
 	ExpansionTogglePositionAfter  ExpansionTogglePosition = "after"
 )
+
+// TimelineOrientation represents the layout orientation of a timeline
+// Angular: XiriTimelineSettings.orientation
+type TimelineOrientation string
+
+const (
+	TimelineOrientationVertical   TimelineOrientation = "vertical"
+	TimelineOrientationHorizontal TimelineOrientation = "horizontal"
+)
