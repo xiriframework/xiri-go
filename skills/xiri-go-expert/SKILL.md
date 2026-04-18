@@ -16,7 +16,12 @@ FormGroup/Builder → *.Print(ctx *core.UiContext) → map[string]any → JSON �
 ```
 
 - **HTTP:** Echo v4 · **ORM:** GORM · **UiContext** per Request
-- **Projekt-Convention (GEM):** `wc := webcontext.GetWebContext(ctx)` liefert `wc.Page(p)`, `wc.Data(tbl)`, `wc.Goto(url)`, `wc.DeleteDialog(name)`, `wc.RefreshTable()`, `wc.UiContext()`, `wc.BadRequest(msg)`, `wc.Component(cmp)`.
+- **Projekt-Convention (GEM):** `wc := webcontext.GetWebContext(ctx)` liefert:
+  - Daten/Pages: `wc.Page(p)`, `wc.Data(comp)`, `wc.Dialog(dlg)` — `wc.Data(...)` handled CSV/Excel-Export automatisch (Content-Type + Disposition aus `response.DataResult.Type`).
+  - Navigation/Refresh: `wc.Goto(url)`, `wc.RefreshPage()`, `wc.RefreshTable()`, `wc.Done()`
+  - Dialoge: `wc.DeleteDialog(name)`
+  - Context: `wc.UiContext()`
+  - Errors: `wc.BadRequest`, `wc.Unauthorized`, `wc.Forbidden`, `wc.NotFound`, `wc.InternalServerError`, `wc.ServiceUnavailable` — alle nehmen `(msg)`, siehe `references/responses.md`.
 
 ## URL-Handling — die wichtigste Regel
 
@@ -83,7 +88,7 @@ tbl.SetURL(c.apiUrl("data"))
 
 // Data-Handler
 filters, _ := tbl.LoadFilterData(ctx)
-pg := tbl.LoadPaginationParams()
+pg := tbl.LoadPaginationParams()  // entfernen bei client-seitiger Pagination (default)
 tbl.SetData(rows)
 return wc.Data(tbl)
 ```
@@ -153,6 +158,6 @@ core.ButtonTypeRaised | Basic | Stroked | Flat | Fab | MiniFab | Icon | IconText
 - **Kein** `NewTextareaField` — `NewTextField` mit `.Subtype = "textarea"`.
 - **Kein** `NewMultiSelectField` — `NewSelectField(...).SetMultiple(true)`.
 - **Keine** URL-Strings konkatenieren — `*xurl.Url` via Controller-Helper.
-- **`LoadPaginationParams` NACH `LoadFilterData`** — sonst leer.
+- **`LoadPaginationParams` NACH `LoadFilterData`** (liest aus gespeicherten Filtern). Nur bei **Server-Side-Pagination** nötig — client-seitig (xiri-ng default) weglassen.
 - **`ButtonsField`-Keys sind Strings** (`"0"`, `"1"`), nicht Ints.
 - **Filter-Guards**: `if v, ok := filters[k].(string); ok && v != ""` — leere Werte erzeugen sonst falsche WHERE-Clauses.
