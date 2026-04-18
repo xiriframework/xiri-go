@@ -16,12 +16,13 @@ FormGroup/Builder → *.Print(ctx *core.UiContext) → map[string]any → JSON �
 ```
 
 - **HTTP:** Echo v4 · **ORM:** GORM · **UiContext** per Request
-- **Projekt-Convention (GEM):** `wc := webcontext.GetWebContext(ctx)` liefert:
-  - Daten/Pages: `wc.Page(p)`, `wc.Data(comp)`, `wc.Dialog(dlg)` — `wc.Data(...)` handled CSV/Excel-Export automatisch (Content-Type + Disposition aus `response.DataResult.Type`).
-  - Navigation/Refresh: `wc.Goto(url)`, `wc.RefreshPage()`, `wc.RefreshTable()`, `wc.Done()`
-  - Dialoge: `wc.DeleteDialog(name)`
-  - Context: `wc.UiContext()`
-  - Errors: `wc.BadRequest`, `wc.Unauthorized`, `wc.Forbidden`, `wc.NotFound`, `wc.InternalServerError`, `wc.ServiceUnavailable` — alle nehmen `(msg)`, siehe `references/responses.md`.
+- **Typische Projekt-Convention:** Die meisten Projekte wrappen `echo.Context` + `UiContext` in einen eigenen Web-Context-Helper (z. B. `wc := webcontext.GetWebContext(ctx)`), der die xiri-go-`response.*`-Funktionen und Error-Codes dünn kapselt. Erwartetes Interface:
+  - Daten/Pages: `Page(p)`, `Data(comp)`, `Dialog(dlg)` — `Data(...)` handled CSV/Excel-Export automatisch (Content-Type + Disposition aus `response.DataResult.Type`).
+  - Navigation/Refresh: `Goto(url)`, `RefreshPage()`, `RefreshTable()`, `Done()`
+  - Dialoge: `DeleteDialog(name)`
+  - Context: `UiContext()`
+  - Errors: `BadRequest`, `Unauthorized`, `Forbidden`, `NotFound`, `InternalServerError`, `ServiceUnavailable` — alle `(msg)`.
+- **Ohne Wrapper** direkt über xiri-go: `response.NewReturnDone()`, `response.NewReturnGoto(url)`, `response.NewReturnRefreshPage()`, `response.NewReturnRefreshTable()`, `response.NewDataResponse(data)`, `response.NewErrorResponse(msg)`. Siehe `references/responses.md`.
 
 ## URL-Handling — die wichtigste Regel
 
