@@ -1,0 +1,134 @@
+{
+  "skill_name": "xiri-go-expert",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Erstelle einen Echo-Handler der eine Tabelle mit Geräten (ID, Name, Status, LastSeen) anzeigt, mit Server-Side-Pagination und einem Textfilter für den Namen.",
+      "expected_output": "Go Echo handler using table.NewBuilder[Device]() with IdField, TextField, IntField/IconField for Status, DateTimeField for LastSeen, SetServerSide, SetFilter with a text field, LoadFilterData, LoadPaginationParams, ToServerSideResponse pattern.",
+      "assertions": [
+        {"name": "uses_table_builder_generic", "type": "contains_pattern", "description": "Uses table.NewBuilder[Device]() or similar generic builder"},
+        {"name": "has_server_side_pagination", "type": "code_check", "description": "Calls LoadFilterData, LoadPaginationParams, and ToServerSideResponse"},
+        {"name": "has_text_filter", "type": "code_check", "description": "Creates a filter FormGroup with a TextField for name search"},
+        {"name": "correct_field_types", "type": "code_check", "description": "Uses appropriate typed field methods (IdField, TextField, DateTimeField)"},
+        {"name": "valid_go_patterns", "type": "code_check", "description": "Uses correct import paths and method signatures from xiri-go"},
+        {"name": "no_invented_api", "type": "code_check", "description": "Does not use methods or types that don't exist in xiri-go"}
+      ],
+      "files": []
+    },
+    {
+      "id": 1,
+      "prompt": "Erstelle einen Add- und Edit-Handler für ein Fahrzeug-Formular mit Feldern: Name (text, required), Gruppe (model), Kennzeichen (text), Aktiv (bool). Inkl. Save-Handler.",
+      "expected_output": "Three Echo handlers: Add (FormBuilder with BuildAdd), Edit (FormBuilder with BuildEdit and existing vehicle data), Save (BindAndValidate + field value extraction). Uses correct field constructors and response types.",
+      "assertions": [
+        {"name": "uses_form_builder", "type": "code_check", "description": "Uses builder.NewFormBuilder(ctx) with AddField calls"},
+        {"name": "correct_field_constructors", "type": "code_check", "description": "Uses NewTextField, NewModelField, NewBoolField with correct signatures"},
+        {"name": "has_build_add_and_edit", "type": "code_check", "description": "Calls BuildAdd() for add handler and BuildEdit() for edit handler"},
+        {"name": "has_bind_and_validate", "type": "code_check", "description": "Save handler uses builder.BindAndValidate(c, fg)"},
+        {"name": "correct_value_extraction", "type": "code_check", "description": "Extracts values via field type assertions (e.g., *field.TextField).Value)"},
+        {"name": "uses_response_types", "type": "code_check", "description": "Returns proper response types (NewReturnRefreshPage, NewReturnGoto, etc.)"}
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Baue eine Dashboard-Page mit Breadcrumbs, einer StatGrid (3 Stats), und einer Card die eine Tabelle enthält.",
+      "expected_output": "Echo handler using page.NewPage() with Bread() calls, statgrid.New() with 3 stat.New() items, and card.NewCard with CardTypeTable wrapping a table component.",
+      "assertions": [
+        {"name": "uses_page_builder", "type": "code_check", "description": "Uses page.NewPage() with Bread() for breadcrumbs"},
+        {"name": "uses_statgrid", "type": "code_check", "description": "Uses statgrid.New() with Add() for stat items"},
+        {"name": "has_three_stats", "type": "code_check", "description": "Creates exactly 3 stat.New() instances"},
+        {"name": "uses_card_with_table", "type": "code_check", "description": "Uses card.NewCard with core.CardTypeTable containing a table"},
+        {"name": "correct_component_composition", "type": "code_check", "description": "Components are properly composed via p.Add()"},
+        {"name": "no_invented_api", "type": "code_check", "description": "All method calls and types exist in xiri-go"}
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Erstelle einen CRUD-Controller für 'Wartungstypen' (ID int64, Bezeichnung string, Aktiv bool) mit Table (IconSet für Aktiv-Status), Edit/Add-Formularen, und Delete-Dialog. Verwende das gleiche Pattern wie in rest/verwaltung-lkw/controllers/ausscheidungsgrund/table.go. Die Table soll ButtonsField mit Edit-Link und Delete-Dialog haben. Add und Edit sollen BuildAddForDisplay/BuildEditForDisplay für die Anzeige und BuildAdd/BuildEdit für Submit verwenden. Delete soll GET für Dialog und POST für tatsächliches Löschen handhaben.",
+      "expected_output": "Complete CRUD controller with: buildTable using IconFieldFromSet for Aktiv, ButtonsField with string keys '0'/'1', Table/TableData/Add/AddSubmit/Edit/EditSubmit/Delete handlers. Forms use BuildAddForDisplay/BuildEditForDisplay + BuildAdd/BuildEdit. Delete uses GET/POST dual pattern with wc.DeleteDialog and wc.RefreshTable.",
+      "expectations": [
+        "Uses table.NewIconSet() with aktivIcons.Add() to create icon references for boolean Aktiv field",
+        "Uses builder.IconFieldFromSet() to render the Aktiv column with icon refs",
+        "ButtonsField accessor returns map[string]string with string keys '0' and '1' (not integer keys)",
+        "ButtonsField uses AddButton with table.FieldButtonActionLink for edit and table.FieldButtonActionDialog for delete",
+        "Add handler uses formbuilder.NewFormBuilder with BuildAddForDisplay() for rendering",
+        "AddSubmit handler uses BuildAdd() then formbuilder.BindAndValidate()",
+        "Edit handler uses formbuilder.NewFormBuilder with BuildEditForDisplay() for rendering",
+        "EditSubmit handler uses BuildEdit() then formbuilder.BindAndValidate()",
+        "Delete handler checks ctx.Request().Method == 'GET' for dialog vs POST for actual deletion",
+        "Delete GET returns wc.DeleteDialog(), Delete POST returns wc.RefreshTable()",
+        "Uses pageheader.New() with button.NewButtonLine and button.NewLinkButton for Add button in table view"
+      ],
+      "files": ["rest/verwaltung-lkw/controllers/ausscheidungsgrund/table.go"]
+    },
+    {
+      "id": 4,
+      "prompt": "Erstelle Add/Edit/Save Handler für ein Kontakt-Formular mit: Name (text, required), Email (text, optional), Telefon (text, optional), Notizen (textarea, optional). Die optionalen Felder sind *string in der DB-Entity. Verwende das Pattern aus rest/verwaltung-lkw/controllers/kontakte/table.go mit shared buildFormFields() Helper-Funktion und setOptionalString() für nullable Felder.",
+      "expected_output": "Form handlers with shared buildFormFields() helper that returns individual field pointers. Uses derefString() for *string to string conversion. Add uses BuildAddForDisplay/BuildAdd, Edit uses BuildEditForDisplay/BuildEdit with entity values. Save extracts values via field.Value pointer and uses setOptionalString helper for nullable DB fields.",
+      "expectations": [
+        "Has a shared buildFormFields() function that accepts entity pointer (nil for add) and returns individual field variables",
+        "buildFormFields uses derefString() or equivalent helper to safely convert *string to string for default values",
+        "Optional fields use field.NewTextField with required=false",
+        "Add and AddSubmit both call buildFormFields(nil) to get fields without default values",
+        "Edit and EditSubmit call buildFormFields(entity) to get fields pre-filled with entity values",
+        "Has setOptionalString() or equivalent helper that sets *string pointer from field value, nil if empty",
+        "AddSubmit uses formbuilder.BindAndValidate() after BuildAdd()",
+        "EditSubmit uses formbuilder.BindAndValidate() after BuildEdit()",
+        "Add handler uses BuildAddForDisplay() and Edit handler uses BuildEditForDisplay()",
+        "Value extraction uses nameField.Value (pointer) pattern, not fg.GetField() type assertion"
+      ],
+      "files": ["rest/verwaltung-lkw/controllers/kontakte/table.go"]
+    },
+    {
+      "id": 6,
+      "prompt": "Schreibe einen Data-Handler für eine Geräte-Tabelle mit Filtern: Name (text, wie ILIKE), Status (single-select aus Optionen aktiv/inaktiv/defekt), Priorität (multi-select aus Optionen low/medium/high/critical), DatumVon (Zeitpunkt ≥). Die Filter-Werte müssen aus tbl.LoadFilterData() extrahiert und in GORM-WHERE-Clauses umgewandelt werden, mit korrekten Type-Assertions. Pagination über LoadPaginationParams mit SortDir/Search Support.",
+      "expected_output": "Data-Handler with filter FormGroup containing single- and multi-select fields, correct type-assertions for each field (string, int32, ModelListValue, int64), GORM query building with conditional WHERE clauses, pagination offset/limit/sort handling.",
+      "expectations": [
+        "Uses tbl.SetFilter(fg) to attach the filter FormGroup to the table",
+        "Calls tbl.LoadFilterData(ctx) FIRST, then tbl.LoadPaginationParams()",
+        "Uses NewSelectField(...).SetMultiple(true) for the Priorität field (not a fictional NewMultiSelectField)",
+        "Type-assertions use `string` for TextField, `int32` for IntField, `int64` for TimeField, `field.ModelListValue` or `[]int32` for multi-select",
+        "Guards against empty values with `ok && v != \"\"` or `ok && len(v) > 0` before adding WHERE clause",
+        "Uses IN for multi-value filters and = for single-value filters",
+        "Checks pg.Sort != \"\" before calling q.Order(pg.Sort + \" \" + pg.SortDir)",
+        "Applies Offset(pg.Page * pg.PageSize).Limit(pg.PageSize)",
+        "Uses pg.Search with ILIKE or LIKE pattern for global search",
+        "No invented API — uses real field constructors and table methods"
+      ],
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "Baue einen Controller mit zwei Helper-Methoden pageUrl(segments...) und apiUrl(segments...), die einen Projekt-Prefix korrekt für Frontend-Links und API-Calls auftrennen. Zeige dann einen Handler, der Breadcrumbs, einen Add-Button (Link) und eine Tabelle (SetURL API-POST) so baut, dass Link-URLs Print() und API-URLs PrintPrefix() liefern würden.",
+      "expected_output": "Controller with pageUrl (no prefix) and apiUrl (with prefix) helpers returning *xurl.Url. Handler uses c.pageUrl(...) in link buttons and breadcrumbs, and c.apiUrl(...) in tbl.SetURL and form.NewForm submit URLs.",
+      "expectations": [
+        "Imports xurl \"github.com/xiriframework/xiri-go/component/url\" (or equivalent alias for component/url)",
+        "pageUrl helper uses xurl.NewUrl(prefix+\"/entity\") and chains .Add(segment) per argument",
+        "apiUrl helper uses xurl.NewUrlPrefix(pagePath, apiPrefix) — returns *xurl.Url with API-prefix",
+        "Link buttons (NewLinkButton) use c.pageUrl(...) — these become the frontend route",
+        "tbl.SetURL(c.apiUrl(\"data\")) — the table POSTs to the prefixed URL",
+        "form.NewForm uses c.apiUrl(\"save\") as submit target",
+        "No manual string concatenation like fmt.Sprintf with the prefix — the url.Url type handles it",
+        "Breadcrumbs p.Bread() use c.pageUrl(...) (no prefix)"
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Erstelle einen Table-Handler für 'Zuordnungen' (ID int64, BenutzerID int64, RolleID int64, ZugewiesenAm time.Time) mit FK-Lookup: BenutzerID und RolleID werden über separate DB-Queries in Lookup-Maps aufgelöst und als TextField (Name) in der Table angezeigt. Verwende das Pattern aus rest/verwaltung/controllers/benutzerrollen/table.go.",
+      "expected_output": "Table handler with Row struct containing resolved string fields (BenutzerName, RolleName). TableData builds lookup maps via separate DB queries (benutzerMap, rollenMap), then uses map lookups in row construction. Table uses TextField for resolved FK names, DateTimeField for ZugewiesenAm.",
+      "expectations": [
+        "Row struct has string fields for resolved FK names (e.g. BenutzerName string, RolleName string), not the raw FK IDs",
+        "TableData handler queries the FK target tables separately (e.g. DB.Benutzer.List(), DB.Rollen.List())",
+        "Builds lookup maps: map[int64]string for each FK relationship",
+        "Uses map lookup in row construction (e.g. benutzerMap[item.BenutzerID])",
+        "Table builder uses TextField for the resolved FK name columns (not IntField or IdField for FK columns)",
+        "Uses DateTimeField for the ZugewiesenAm/timestamp column",
+        "Uses table.NewBuilder with generic Row type parameter",
+        "Uses builder.IdField for the ID column"
+      ],
+      "files": ["rest/verwaltung/controllers/benutzerrollen/table.go"]
+    }
+  ]
+}

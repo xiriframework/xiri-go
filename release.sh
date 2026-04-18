@@ -32,6 +32,12 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
+# Check that the bundled Claude skill is present
+if [[ ! -f skills/xiri-go-expert/SKILL.md ]]; then
+  echo "Error: skills/xiri-go-expert/SKILL.md missing — refuse to release."
+  exit 1
+fi
+
 # Check tag doesn't already exist
 if git rev-parse "$VERSION" >/dev/null 2>&1; then
   echo "Error: Tag $VERSION already exists."
