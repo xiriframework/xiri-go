@@ -82,6 +82,10 @@ func (f *TimeField) Parse(raw interface{}) (interface{}, error) {
 		if t, err := time.Parse(time.RFC3339, v); err == nil {
 			return t.Unix(), nil
 		}
+		// Try year-month format (for "yearmonth" subtype)
+		if t, err := time.Parse("2006-01", v); err == nil {
+			return t.Unix(), nil
+		}
 		// Try custom format if specified
 		if f.Format != "" {
 			if t, err := time.Parse(f.Format, v); err == nil {
@@ -149,6 +153,14 @@ func NewTimeField(id, name string, required bool, defaultValue int64) *TimeField
 	}
 }
 
+// NewYearMonthField creates a year+month form field (subtype "yearmonth").
+// The selected value is the first day of the chosen month at 00:00 in the user's timezone.
+func NewYearMonthField(id, name string, required bool, defaultValue int64) *TimeField {
+	f := NewTimeField(id, name, required, defaultValue)
+	f.Subtype = "yearmonth"
+	return f
+}
+
 // ExportForFrontend exports the field for frontend rendering
 func (f *TimeField) ExportForFrontend(ctx *core.UiContext, value interface{}) map[string]interface{} {
 	if value == nil {
@@ -161,6 +173,8 @@ func (f *TimeField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 		result["type"] = "date"
 	} else if f.Subtype == "time" {
 		result["type"] = "time"
+	} else if f.Subtype == "yearmonth" {
+		result["type"] = "yearmonth"
 	} else {
 		result["type"] = "datetime"
 	}

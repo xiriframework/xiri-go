@@ -107,6 +107,164 @@ func TestTimeFieldMinMaxAbsoluteTimestamp(t *testing.T) {
 	t.Logf("Max timestamp (absolute): %d", result["max"].(int64))
 }
 
+func TestTimeFieldParseYearMonth(t *testing.T) {
+	field := NewYearMonthField("month", "test.month", false, 0)
+
+	parsed, err := field.Parse("2026-04")
+	if err != nil {
+		t.Fatalf("Parse(\"2026-04\") returned error: %v", err)
+	}
+
+	ts, ok := parsed.(int64)
+	if !ok {
+		t.Fatalf("Parse returned %T, expected int64", parsed)
+	}
+
+	expected := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC).Unix()
+	if ts != expected {
+		t.Errorf("Parse(\"2026-04\") = %d, expected %d (%s)", ts, expected, time.Unix(expected, 0).UTC().Format(time.RFC3339))
+	}
+}
+
+func TestYearMonthFieldExportType(t *testing.T) {
+	ctx := &core.UiContext{
+		Timezone: timezone.EuropeVienna,
+		Lang:     language.Deutsch,
+		Locale:   locale.De,
+		Distance: distance.Kilometer,
+		Pressure: pressure.Bar,
+	}
+
+	field := NewYearMonthField("month", "test.month", false, 0)
+	result := field.ExportForFrontend(ctx, nil)
+
+	if result["type"] != "yearmonth" {
+		t.Errorf("Expected type \"yearmonth\", got %v", result["type"])
+	}
+	if result["subtype"] != "yearmonth" {
+		t.Errorf("Expected subtype \"yearmonth\", got %v", result["subtype"])
+	}
+}
+
+func TestTimeFieldParseYearMonthInvalidStrings(t *testing.T) {
+	field := NewYearMonthField("month", "test.month", false, 0)
+
+	cases := []string{
+		"not-a-date",
+		"2026/04",
+		"2026-13",       // invalid month
+		"2026-00",       // invalid month
+		"26-04",         // 2-digit year not supported
+		"April 2026",
+		"",
+	}
+
+	for _, raw := range cases {
+		_, err := field.Parse(raw)
+		if err == nil {
+			t.Errorf("Parse(%q) expected error, got nil", raw)
+		}
+	}
+}
+
+func TestTimeFieldParseYearMonthAcceptsOtherFormats(t *testing.T) {
+	field := NewYearMonthField("month", "test.month", false, 0)
+
+	// "2006-01-02" still works (full ISO date) — picks up the day component
+	parsed, err := field.Parse("2026-04-15")
+	if err != nil {
+		t.Fatalf("Parse(\"2026-04-15\") returned unexpected error: %v", err)
+	}
+	ts, _ := parsed.(int64)
+	expected := time.Date(2026, 4, 15, 0, 0, 0, 0, time.UTC).Unix()
+	if ts != expected {
+		t.Errorf("Parse(\"2026-04-15\") = %d, expected %d", ts, expected)
+	}
+}
+
+func TestYearMonthFieldValidateRequired(t *testing.T) {
+	required := NewYearMonthField("month", "test.month", true, 0)
+
+	// nil with required → error
+	if err := required.Validate(nil); err == nil {
+		t.Error("Validate(nil) on required field expected error, got nil")
+	}
+
+	// valid timestamp → ok
+	ts := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC).Unix()
+	required.AllowFuture = true
+	required.AllowPast = true
+	if err := required.Validate(ts); err != nil {
+		t.Errorf("Validate(valid timestamp) returned unexpected error: %v", err)
+	}
+}
+
+func TestYearMonthFieldValidateInvalidType(t *testing.T) {
+	field := NewYearMonthField("month", "test.month", false, 0)
+
+	if err := field.Validate("string-not-allowed-here"); err == nil {
+		t.Error("Validate(string) expected error, got nil")
+	}
+	if err := field.Validate(struct{}{}); err == nil {
+		t.Error("Validate(struct) expected error, got nil")
+	}
+}
+
+// Verifies that a "YYYY-MM" string parses to the same Unix timestamp regardless of
+// the host machine's local timezone — Go's time.Parse uses UTC for the year-month layout.
+func TestYearMonthFieldParseTimezoneStable(t *testing.T) {
+	field := NewYearMonthField("month", "test.month", false, 0)
+
+	// Switch goroutine-local time settings via TZ env / time.Local
+	originalLocal := time.Local
+	defer func() { time.Local = originalLocal }()
+
+	timezones := []string{"Europe/Vienna", "America/New_York", "Asia/Tokyo", "UTC"}
+	expected := time.Date(2026, 4, 1, 0, 0, 0, 0, time.UTC).Unix()
+
+	for _, tz := range timezones {
+		loc, err := time.LoadLocation(tz)
+		if err != nil {
+			t.Fatalf("LoadLocation(%q) failed: %v", tz, err)
+		}
+		time.Local = loc
+
+		parsed, err := field.Parse("2026-04")
+		if err != nil {
+			t.Fatalf("Parse(\"2026-04\") in %s returned error: %v", tz, err)
+		}
+		ts, _ := parsed.(int64)
+		if ts != expected {
+			t.Errorf("Parse(\"2026-04\") in %s = %d, expected %d (UTC-stable)", tz, ts, expected)
+		}
+	}
+}
+
+// Verifies ExportForFrontend produces the same type/subtype regardless of the user's locale/timezone.
+func TestYearMonthFieldExportLocaleStable(t *testing.T) {
+	cases := []struct {
+		name string
+		ctx  *core.UiContext
+	}{
+		{"Vienna/De", &core.UiContext{Timezone: timezone.EuropeVienna, Lang: language.Deutsch, Locale: locale.De, Distance: distance.Kilometer, Pressure: pressure.Bar}},
+		{"London/EnGB", &core.UiContext{Timezone: timezone.EuropeLondon, Lang: language.Englisch, Locale: locale.EnGB, Distance: distance.Kilometer, Pressure: pressure.Bar}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			field := NewYearMonthField("month", "test.month", false, 0)
+			result := field.ExportForFrontend(tc.ctx, nil)
+
+			if result["type"] != "yearmonth" {
+				t.Errorf("Expected type \"yearmonth\" in %s, got %v", tc.name, result["type"])
+			}
+			if result["subtype"] != "yearmonth" {
+				t.Errorf("Expected subtype \"yearmonth\" in %s, got %v", tc.name, result["subtype"])
+			}
+		})
+	}
+}
+
 func TestTimeFieldMinMaxDifferentTimezones(t *testing.T) {
 	testCases := []struct {
 		name     string
