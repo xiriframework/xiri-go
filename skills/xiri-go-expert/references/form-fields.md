@@ -183,6 +183,33 @@ f.MaxDate = &time.Time{...}
 timestamp := *f.Value  // int64 (Unix seconds)
 ```
 
+## YearMonthField (TimeField-Subtype "yearmonth")
+
+Monats-Auswahl (Jahr+Monat). Value: `*int64` (Unix-Timestamp = 1. des Monats 00:00 in User-Timezone)
+
+```go
+f := field.NewYearMonthField("month", "report.month", true, defaultUnix)
+// Parameter: id, translationKey, required, defaultValue (int64 Unix-Sekunden)
+// Intern: liefert ein *TimeField mit Subtype="yearmonth" → frontend type="yearmonth"
+
+// Erbt alle TimeField-Optionen:
+f.Min = int64Ptr(-365)  // 365 Tage zurück (Day-Offset, |val| < 10000 = Tage ab heute)
+f.Max = int64Ptr(0)     // bis heute
+// Oder absolute Grenzen:
+f.MinDate = &time.Time{...}
+f.MaxDate = &time.Time{...}
+f.AllowPast   = true
+f.AllowFuture = false
+
+// Nach BindAndValidate:
+ts := *f.Value             // int64 Unix-Sekunden, 1. des gewählten Monats 00:00 (User-TZ)
+t  := time.Unix(ts, 0)     // → time.Time
+```
+
+Hinweis: Subtype `"yearmonth"` wird vom Frontend (xiri-ng) als `XiriYearMonthComponent`
+mit Multi-Year-Datepicker gerendert. Der Eingabewert wird automatisch auf den 1. des
+Monats normalisiert. Parsing akzeptiert ISO-Format `"2006-01"` zusätzlich zu Date/RFC3339.
+
 ## TimeRangeField
 
 Zeitbereich-Auswahl. Value: `*TimeRangeValue`
