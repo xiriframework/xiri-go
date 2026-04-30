@@ -12,6 +12,7 @@ type Dialog interface {
 	WithExtra(extra map[string]any) Dialog
 	WithOptions(options map[string]any) Dialog
 	WithOption(key string, value any) Dialog
+	WithData(payload map[string]any) Dialog
 	SetButtons(buttons []*button.Button) Dialog
 }
 
@@ -23,6 +24,7 @@ type dialogImpl struct {
 	buttons     []*button.Button
 	extra       map[string]any
 	options     map[string]any
+	data        map[string]any
 	hookContent func(any)
 }
 
@@ -88,8 +90,19 @@ func (d *dialogImpl) WithOptions(options map[string]any) Dialog {
 // WithOption sets a single option key-value pair
 //
 // Convenience method to set individual options without replacing the entire map.
+// Used for structural top-level fields (e.g. url, checkTime, size). For custom
+// payload consumed by the Angular frontend, prefer WithData.
 func (d *dialogImpl) WithOption(key string, value any) Dialog {
 	d.options[key] = value
+	return d
+}
+
+// WithData sets the custom payload rendered under the explicit top-level
+// "data" key of the dialog JSON. Calling with a nil or empty map omits the
+// "data" key entirely. If both WithData and WithOption("data", …) are set,
+// WithData wins.
+func (d *dialogImpl) WithData(payload map[string]any) Dialog {
+	d.data = payload
 	return d
 }
 
@@ -136,6 +149,12 @@ func (d *dialogImpl) Print(ctx *core.UiContext) map[string]any {
 
 	for key, value := range d.options {
 		data[key] = value
+	}
+
+	// Add custom payload under the explicit "data" key (only if non-empty);
+	// overrides any options["data"] set via legacy WithOption("data", …).
+	if len(d.data) > 0 {
+		data["data"] = d.data
 	}
 
 	return data

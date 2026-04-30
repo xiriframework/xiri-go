@@ -21,6 +21,7 @@ type Button struct {
 	isDefault  bool
 	target     string
 	options    map[string]any
+	data       map[string]any
 }
 
 // TableButton represents a type-safe button specifically for table actions.
@@ -38,6 +39,12 @@ func (tb *TableButton) Print(ctx *core.UiContext) map[string]any {
 // This is primarily for compatibility with legacy code that works with *Button.
 func (tb *TableButton) GetButton() *Button {
 	return tb.button
+}
+
+// WithData sets the custom payload on the underlying Button. See Button.WithData.
+func (tb *TableButton) WithData(payload map[string]any) *TableButton {
+	tb.button.WithData(payload)
+	return tb
 }
 
 // NewButton creates a new button with full configuration
@@ -410,8 +417,12 @@ func (b *Button) WithTarget(target string) *Button {
 	return b
 }
 
-// WithOptions sets additional custom options (optional)
-// Returns the Button for method chaining
+// WithOptions sets additional custom options merged at the top level of the
+// rendered JSON. For custom payload consumed by the Angular frontend (read
+// under XiriButton.data), prefer WithData.
+//
+// Deprecated: For custom payload, use WithData. WithOptions remains for
+// advanced use cases that need to inject structural top-level fields.
 func (b *Button) WithOptions(options map[string]any) *Button {
 	if options != nil {
 		b.options = options
@@ -419,10 +430,26 @@ func (b *Button) WithOptions(options map[string]any) *Button {
 	return b
 }
 
-// WithOption sets a single custom option (optional)
-// Returns the Button for method chaining
+// WithOption sets a single custom option merged at the top level of the
+// rendered JSON. For custom payload consumed by the Angular frontend (read
+// under XiriButton.data), prefer WithData.
+//
+// Deprecated: For custom payload, use WithData. WithOption remains for
+// advanced use cases that need to inject structural top-level fields.
 func (b *Button) WithOption(key string, value any) *Button {
 	b.options[key] = value
+	return b
+}
+
+// WithData sets the custom payload that the frontend reads under
+// XiriButton.data (e.g. {"_csv": true} for CSV downloads).
+//
+// The payload is rendered as an explicit top-level "data" key in the JSON
+// output. Calling WithData with a nil or empty map clears the payload and
+// omits the "data" key entirely. If both WithData and WithOption("data", …)
+// are set, WithData wins.
+func (b *Button) WithData(payload map[string]any) *Button {
+	b.data = payload
 	return b
 }
 
@@ -462,9 +489,15 @@ func (b *Button) Print(ctx *core.UiContext) map[string]any {
 		data["filename"] = *b.filename
 	}
 
-	// Merge options into data
+	// Merge options into data (legacy / structural top-level fields)
 	for key, value := range b.options {
 		data[key] = value
+	}
+
+	// Add custom payload under the explicit "data" key (only if non-empty);
+	// overrides any options["data"] set via legacy WithOption("data", …).
+	if len(b.data) > 0 {
+		data["data"] = b.data
 	}
 
 	return data

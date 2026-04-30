@@ -392,8 +392,8 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 			"CSV",
 			core.ColorAccent,
 			false,
-			map[string]any{"data": map[string]bool{"_csv": true}},
-		)
+			nil,
+		).WithData(map[string]any{"_csv": true})
 		topButtons = append(topButtons, csvBtn)
 	}
 
@@ -406,8 +406,8 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 			"Excel",
 			core.ColorAccent,
 			false,
-			map[string]any{"data": map[string]bool{"_excel": true}},
-		)
+			nil,
+		).WithData(map[string]any{"_excel": true})
 		topButtons = append(topButtons, excelBtn)
 	}
 

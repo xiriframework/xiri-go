@@ -10,10 +10,13 @@ type Dialog interface {
     WithExtra(extra map[string]any) Dialog
     WithOptions(options map[string]any) Dialog
     WithOption(key string, value any) Dialog
+    WithData(payload map[string]any) Dialog
     SetButtons(buttons []*button.Button) Dialog
     Print(ctx *core.UiContext) map[string]any
 }
 ```
+
+`WithOption` / `WithOptions` sind für **strukturelle Top-Level-Felder** (`size`, `url`, `filter`, …) gedacht und werden von der Frontend-Logik direkt am Dialog-Root gelesen. Für **Custom-Payload**, das später ans Backend zurückgesendet wird, nutze `WithData(map[string]any)` — das Ergebnis landet unter einem expliziten `data`-Key im JSON (analog Button/Icon).
 
 ## `NewDialog` — generischer Konstruktor
 

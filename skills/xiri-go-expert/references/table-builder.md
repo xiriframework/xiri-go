@@ -366,6 +366,8 @@ Die Tabelle unterstützt automatisch Web, CSV und Excel Export. Der OutputType w
 // PDF: Benutzerdefiniert (OutputPDF)
 ```
 
+Wenn `Csv: &true` / `Excel: &true` in den Tabellen-Optionen gesetzt ist und die Tabelle eine `URL` hat, generiert der Builder automatisch passende Download-Buttons im `ButtonsTop`-Bereich. Diese Auto-Buttons setzen das Flag intern via `button.WithData(map[string]any{"_csv": true})` — beim Klick merged das Frontend (`actionDownload`) `button.data` mit der Filter-Data und postet sie an die Tabellen-URL. Wer eigene Download-Buttons baut, sollte denselben Weg nutzen (siehe `components.md` → "Custom-Payload via WithData").
+
 ## Response-Methoden
 
 ```go

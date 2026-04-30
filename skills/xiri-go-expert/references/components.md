@@ -402,8 +402,31 @@ button.NewLinkButton(
 ```go
 btn.WithHint("Details anzeigen")
 btn.WithDisabled(true)
+btn.WithData(map[string]any{"_csv": true})  // Custom-Payload an Frontend (siehe unten)
 // … siehe button.go für weitere Optionen (WithIcon, WithTarget, etc.)
 ```
+
+### Custom-Payload via `WithData`
+
+Wenn ein Button (typisch `ButtonActionApi`, `ButtonActionDownload`) zusätzliche Daten ans Backend mitsenden soll, die **nicht** im Filter stehen, nutze `WithData(map[string]any)`. Das Frontend liest die Payload unter `XiriButton.data` und merged sie beim Klick mit der Filter-Data in den POST-Body:
+
+```go
+// CSV-Download-Trigger (das Backend liest _csv im Filter-Body und schaltet auf CSV-Output)
+csvBtn := button.NewTableButton(
+    core.ButtonActionDownload, "csv", url, "CSV", core.ColorAccent, false, nil,
+).WithData(map[string]any{"_csv": true})
+
+// API-Call mit Kontext
+btn := button.NewSimpleApiButton("Aktivieren", url, core.ColorSuccess).
+    WithData(map[string]any{"reason": "manual", "auditTrail": true})
+```
+
+Verhalten:
+- Leere/`nil`-Payload ⇒ kein `data`-Key im JSON.
+- `WithData` schlägt ein eventuell vorhandenes `WithOption("data", …)` (gewinnt im Print).
+- `TableButton` hat dieselbe Pass-Through-Methode (`*TableButton.WithData`).
+
+> **Nicht** `WithOption("csv", true)` o. ä. verwenden — landet als Top-Level-Feld am Button-JSON, das Frontend liest dort nicht. `WithOption`/`WithOptions` sind für Custom-Payload deprecated.
 
 ### ButtonLine (Container)
 
@@ -435,7 +458,10 @@ it.Print(ctx)
 
 ```go
 i := icon.NewIcon("check_circle", "Aktiv", core.ColorSuccess, nil)
+i.WithData(map[string]any{"badge": 3})  // Custom-Payload unter Top-Level "data" (analog Button)
 ```
+
+Custom-Payload-Konvention identisch zum Button: `WithData` für Frontend-Daten, `WithOption`/`WithOptions` für Custom-Payload deprecated.
 
 ## InfoText / InfoPoint (`component/info`)
 

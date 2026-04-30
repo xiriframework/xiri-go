@@ -206,6 +206,50 @@ func TestDialogQuestionContent_Print(t *testing.T) {
 	}
 }
 
+func TestDialog_WithData_AddsTopLevelDataKey(t *testing.T) {
+	d := NewDialog(core.DialogTypeQuestion, "h", "c", nil, nil, nil)
+	d.WithData(map[string]any{"_csv": true})
+
+	result := d.Print(nil)
+
+	dm, ok := result["data"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected result[\"data\"] to be map[string]any, got %T (%v)", result["data"], result["data"])
+	}
+	if dm["_csv"] != true {
+		t.Errorf("data[_csv] = %v, want true", dm["_csv"])
+	}
+}
+
+func TestDialog_NoData_OmitsDataKey(t *testing.T) {
+	d := NewDialog(core.DialogTypeQuestion, "h", "c", nil, nil, nil)
+
+	result := d.Print(nil)
+
+	if _, has := result["data"]; has {
+		t.Errorf("expected no \"data\" key, got %v", result["data"])
+	}
+}
+
+func TestDialog_WithData_OverridesWithOptionData(t *testing.T) {
+	d := NewDialog(core.DialogTypeQuestion, "h", "c", nil, nil, nil)
+	d.WithOption("data", map[string]any{"old": true})
+	d.WithData(map[string]any{"new": true})
+
+	result := d.Print(nil)
+
+	dm, ok := result["data"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected result[\"data\"] to be map[string]any, got %T", result["data"])
+	}
+	if dm["new"] != true {
+		t.Errorf("expected new=true, got %v", dm["new"])
+	}
+	if _, has := dm["old"]; has {
+		t.Errorf("expected WithData to win, but got old=%v", dm["old"])
+	}
+}
+
 // Test DialogWaitingContent.Print()
 func TestDialogWaitingContent_Print(t *testing.T) {
 	content := DialogWaitingContent{

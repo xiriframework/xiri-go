@@ -9,6 +9,7 @@ type Icon struct {
 	hint    string
 	color   core.Color
 	options map[string]any
+	data    map[string]any
 }
 
 // NewIcon creates a new icon component with required parameters
@@ -32,8 +33,11 @@ func (i *Icon) WithHint(hint string) *Icon {
 	return i
 }
 
-// WithOptions sets additional custom options (optional)
-// Returns the Icon for method chaining
+// WithOptions sets additional custom options merged at the top level of the
+// rendered JSON. For custom payload consumed by the Angular frontend, prefer
+// WithData.
+//
+// Deprecated: For custom payload, use WithData.
 func (i *Icon) WithOptions(options map[string]any) *Icon {
 	if options != nil {
 		i.options = options
@@ -41,10 +45,21 @@ func (i *Icon) WithOptions(options map[string]any) *Icon {
 	return i
 }
 
-// WithOption sets a single custom option (optional)
-// Returns the Icon for method chaining
+// WithOption sets a single custom option merged at the top level of the
+// rendered JSON. For custom payload consumed by the Angular frontend, prefer
+// WithData.
+//
+// Deprecated: For custom payload, use WithData.
 func (i *Icon) WithOption(key string, value any) *Icon {
 	i.options[key] = value
+	return i
+}
+
+// WithData sets the custom payload rendered under the explicit top-level
+// "data" key. Calling with a nil or empty map omits the "data" key entirely.
+// If both WithData and WithOption("data", …) are set, WithData wins.
+func (i *Icon) WithData(payload map[string]any) *Icon {
+	i.data = payload
 	return i
 }
 
@@ -56,9 +71,15 @@ func (i *Icon) Print(ctx *core.UiContext) map[string]any {
 		"hint":  core.Translate(ctx, i.hint),
 	}
 
-	// Merge options into data
+	// Merge options into data (legacy / structural top-level fields)
 	for key, value := range i.options {
 		data[key] = value
+	}
+
+	// Add custom payload under the explicit "data" key (only if non-empty);
+	// overrides any options["data"] set via legacy WithOption("data", …).
+	if len(i.data) > 0 {
+		data["data"] = i.data
 	}
 
 	return data
