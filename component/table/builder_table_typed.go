@@ -577,6 +577,26 @@ func (b *TableBuilder[T]) HtmlField(id, name string, accessor func(T) string) *F
 	})
 }
 
+// ChipsField adds a chips field that renders a list of colored chips per row.
+// Accessor returns []Chip — each chip becomes a coloured pill in the cell.
+//
+// The Angular xiri-table renderer expects per-cell shape [{label, color}, ...]
+// and applies the color string as a CSS class on .xiri-chip-display.
+//
+// Example:
+//
+//	builder.ChipsField("warningLights", "vehicle.warningLights", func(r FleetRow) []table.Chip {
+//	    out := []table.Chip{}
+//	    if r.ChargingIssue { out = append(out, table.Chip{Label: "Charging issue", Color: core.ColorRed}) }
+//	    if r.BrakeSystem   { out = append(out, table.Chip{Label: "Brake system",   Color: core.ColorRed}) }
+//	    return out
+//	})
+func (b *TableBuilder[T]) ChipsField(id, name string, accessor func(T) []Chip) *FieldBuilder {
+	return b.fieldInternal(id, name, chipsHint, func(row T) any {
+		return accessor(row)
+	})
+}
+
 // InputField adds an inline editable input field.
 // Accepts any type since input fields can be text, number, select, etc.
 //

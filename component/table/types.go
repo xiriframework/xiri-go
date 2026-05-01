@@ -112,6 +112,9 @@ const (
 
 	// idHint creates an id-type field with special export format.
 	idHint fieldTypeHint = "id"
+
+	// chipsHint creates a chips-type field rendering a list of colored chips per row.
+	chipsHint fieldTypeHint = "chips"
 )
 
 // ============================================================================
@@ -152,6 +155,7 @@ const (
 	fieldTypeHeader  fieldType = "header"
 	fieldTypeNumber  fieldType = "number"
 	fieldTypeID      fieldType = "id"
+	fieldTypeChips   fieldType = "chips"
 )
 
 // FieldButtonAction represents button action types

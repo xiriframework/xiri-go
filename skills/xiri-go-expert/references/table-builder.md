@@ -74,6 +74,23 @@ b.InputField("value", "device.value", func(d Device) string { return d.Value })
 
 // Header (Abschnitts-Trenner)
 b.HeaderField("section", "Abschnitt")
+
+// Chips (Status-Tags pro Zelle, kein Inline-Edit)
+// Accessor liefert []table.Chip{Label, Color}. Pro Zelle werden alle Chips
+// als farbige Pillen gerendert. Für Single-Wert-Zellen einfach ein 1-elementiges Slice.
+b.ChipsField("warnings", "Warning lights", func(d Device) []table.Chip {
+    out := []table.Chip{}
+    for _, w := range d.Warnings {
+        out = append(out, table.Chip{Label: w.Label, Color: w.Severity})
+    }
+    return out
+})
+b.ChipsField("battery", "Battery", func(d Device) []table.Chip {
+    if d.Battery == nil { return []table.Chip{{Label: "N/A", Color: core.ColorGray}} }
+    color := core.ColorLightGray
+    if *d.Battery < 50 { color = core.ColorRed }
+    return []table.Chip{{Label: fmt.Sprintf("%d%%", *d.Battery), Color: color}}
+})
 ```
 
 ## FieldBuilder Methoden (Method Chaining)
@@ -142,7 +159,9 @@ b.TextField("status", "Status", accessor).
 b.TextField("category", "Kategorie", accessor).
     WithEditableOptionsUrl("/api/categories")
 
-// Chips (Multi-Select mit Farben)
+// Chips (Multi-Select mit Farben — INLINE-EDIT)
+// Der Accessor liefert hier den aktuellen String-Slice der ausgewählten Werte.
+// Für reine Anzeige-Chips ohne Edit: siehe ChipsField oben.
 b.TextField("tags", "Tags", chipsAccessor).
     WithEditableChipOptions([]table.EditableChipOption{
         {Value: "Frontend", Label: "Frontend", Color: core.ColorPrimary},

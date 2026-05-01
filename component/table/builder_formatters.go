@@ -59,6 +59,43 @@ func createTextFormatter() OutputFormatter {
 	})
 }
 
+// createChipsFormatter returns a formatter for chips-type fields.
+// Expects []Chip. For web output emits []map[string]any{{"label", "color"}, ...}
+// (matching the Angular xiri-table chips renderer). For CSV/Excel/PDF joins labels with ", ".
+func createChipsFormatter() OutputFormatter {
+	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
+		chips, ok := value.([]Chip)
+		if !ok || chips == nil {
+			if output == OutputCSV || output == OutputExcel || output == OutputPDF {
+				return ""
+			}
+			return []map[string]any{}
+		}
+		if output == OutputCSV || output == OutputExcel || output == OutputPDF {
+			labels := make([]string, len(chips))
+			for i, c := range chips {
+				labels[i] = c.Label
+			}
+			out := ""
+			for i, l := range labels {
+				if i > 0 {
+					out += ", "
+				}
+				out += l
+			}
+			return out
+		}
+		out := make([]map[string]any, len(chips))
+		for i, c := range chips {
+			out[i] = map[string]any{
+				"label": c.Label,
+				"color": string(c.Color),
+			}
+		}
+		return out
+	})
+}
+
 // createPassthroughFormatter returns a formatter that preserves complex data structures (maps, arrays)
 // for JSON serialization. For CSV output, converts to string representation.
 func createPassthroughFormatter() OutputFormatter {

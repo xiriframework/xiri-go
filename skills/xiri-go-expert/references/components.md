@@ -243,6 +243,81 @@ tl.WithDisplay("xcol-md-12")
 // .Description(string) .Datetime(string) .Icon(string) .IconColor(string)
 ```
 
+## BarChart (`component/barchart`)
+
+Bar-Chart mit drei Modi (`ModeSimple`, `ModeStacked`, `ModeHeatmap`). Frontend rendert via **echarts v6** (in `xiri-ng` als optionale peerDependency — nur installieren, wenn Bar-Charts verwendet werden).
+
+```go
+import "github.com/xiriframework/xiri-go/component/barchart"
+
+// Simple — ein Wert pro Kategorie
+bc := barchart.New("weekly").
+    Mode(barchart.ModeSimple).
+    Title("Weekly activities").
+    YAxis(0, 12).
+    Color(core.ColorPurple).
+    Bar("M", 3).Bar("T", 9).Bar("W", 5)
+
+// Stacked — pro Kategorie mehrere farbige Segmente
+bc := barchart.New("strain").
+    Mode(barchart.ModeStacked).
+    Title("Vehicle strain").
+    YAxis(0, 4).
+    StackedBar("M",
+        barchart.Seg(2, core.ColorGreen),
+        barchart.Seg(1, core.ColorYellow),
+        barchart.Seg(1, core.ColorRed))
+
+// Heatmap — viele dünne Bars über Zeit (timeMs = unix milliseconds)
+bc := barchart.New("engine").
+    Mode(barchart.ModeHeatmap).
+    Title("Engine system").
+    Color(core.ColorPurple)
+for _, s := range samples {
+    bc.Point(s.TimestampMs, s.Value)
+}
+```
+
+### Tooltip-Vollnamen (axis-Label kurz, Tooltip ausgeschrieben)
+
+Pro Mode gibt es eine *Named*-Variante, die einen separaten Tooltip-Text annimmt.
+Die kurze `label` bleibt auf der X-Achse, `name` erscheint im Tooltip.
+
+```go
+// Simple
+bc.BarNamed("M", "Monday", 3).BarNamed("T", "Tuesday", 9)
+
+// Stacked — Bar-Name + optional Segment-Namen
+bc.StackedBarNamed("M", "Monday",
+    barchart.SegNamed(2, "Low strain", core.ColorGreen),
+    barchart.SegNamed(1, "Medium strain", core.ColorYellow),
+    barchart.SegNamed(1, "High strain", core.ColorRed))
+
+// Heatmap
+bc.PointNamed(timestampMs, "Repeat #3", 1.0)
+```
+
+`Bar/StackedBar/Point` (ohne Suffix) bleiben gültig — `name` wird nur in der JSON-Ausgabe gesetzt, wenn explizit gegeben.
+
+### Optionen / AJAX
+
+```go
+bc.WithDisplay("xcol-md-6")          // Grid-Layout-Klasse
+bc.SetURL(xurl.NewUrlPrefix("/api/strain", "/api"))  // Daten kommen lazy via URL
+bc.WithReload(true)                  // periodisches Reload im AJAX-Modus
+bc.PrintData(ctx)                    // nur das data-Objekt (für AJAX-Endpoints)
+bc.DataResponse(ctx)                 // {"data": ...} envelope für DataResult
+```
+
+### Konstanten
+
+```go
+barchart.ModeSimple | ModeStacked | ModeHeatmap
+barchart.Segment{Value, Color, Name}
+barchart.Seg(value, color)                       // ohne Tooltip-Name
+barchart.SegNamed(value, name, color)            // mit Tooltip-Name
+```
+
 ## EmptyState (`component/emptystate`)
 
 Leerzustand-Anzeige.

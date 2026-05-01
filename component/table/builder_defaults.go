@@ -51,6 +51,7 @@ var fieldDefaults = map[fieldTypeHint]fieldDefault{
 	boolN:           {fieldTypeTextN, alignPtr(FieldAlignLeft), 0, true, true, true},
 	timeLengthN:     {fieldTypeTextN, alignPtr(FieldAlignRight), 0, true, true, true},
 	header:          {fieldTypeHeader, alignPtr(FieldAlignLeft), 0, false, false, false},
+	chipsHint:       {fieldTypeChips, alignPtr(FieldAlignLeft), 0, false, false, true},
 }
 
 // applyFieldTypeDefaults configures a fieldBase with appropriate defaults
@@ -144,6 +145,8 @@ func applyFieldTypeDefaults(base *fieldBase, ft fieldTypeHint) {
 		base.defaultFormatter = createBoolNFormatter()
 	case timeLengthN:
 		base.defaultFormatter = createTimeLengthNFormatter()
+	case chipsHint:
+		base.defaultFormatter = createChipsFormatter()
 	default:
 		base.defaultFormatter = createTextFormatter()
 	}

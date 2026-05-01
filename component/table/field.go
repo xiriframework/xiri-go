@@ -101,6 +101,20 @@ type editableOption struct {
 	color core.Color // Optional color for chips display
 }
 
+// Chip is a single colored chip rendered inside a chips-type table cell.
+// The frontend renders a chip as <span class="xiri-chip-display <color>">label</span>.
+//
+// Example:
+//
+//	[]Chip{
+//	    {Label: "Attention", Color: core.ColorWarning},
+//	    {Label: "45%",       Color: core.ColorRed},
+//	}
+type Chip struct {
+	Label string
+	Color core.Color
+}
+
 // menuItemDef defines a menu item in a menu-type button
 type menuItemDef struct {
 	action FieldButtonAction // "link", "href", or "dialog"

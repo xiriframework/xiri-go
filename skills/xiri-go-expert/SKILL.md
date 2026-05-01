@@ -51,7 +51,7 @@ u.PrintPrefix()  // mit Prefix   — API-Calls, form/table Submit-URLs
 | **Response-Typen** (Refresh, Goto, DataResult, DataResponse) | `references/responses.md`                   |
 | **Locale-Formatter** (Datum, Zahlen, Distanz, Pressure)  | `references/formatter.md`                   |
 | **UiContext / Translator / Locale-Setup**                | `references/uicontext.md`                   |
-| Eine nicht-tabellen Komponente (Tabs, Timeline, …)       | `references/components.md`                  |
+| Eine nicht-tabellen Komponente (Tabs, Timeline, BarChart …) | `references/components.md`                  |
 | TachoTime (Fahrtenschreiber)                             | `references/tachotime.md`                   |
 | Enum-Werte                                               | `references/enums.md`                       |
 | Field-Methoden-Details (Table-Builder-Chain)             | `references/table-builder.md`               |
@@ -69,6 +69,7 @@ import (
     "github.com/xiriframework/xiri-go/component/pageheader"
     "github.com/xiriframework/xiri-go/component/button"
     "github.com/xiriframework/xiri-go/component/table"
+    "github.com/xiriframework/xiri-go/component/barchart"
     "github.com/xiriframework/xiri-go/component/form"
     "github.com/xiriframework/xiri-go/component/dialog"
     "github.com/xiriframework/xiri-go/form/field"
@@ -161,4 +162,5 @@ core.ButtonTypeRaised | Basic | Stroked | Flat | Fab | MiniFab | Icon | IconText
 - **Keine** URL-Strings konkatenieren — `*xurl.Url` via Controller-Helper.
 - **`LoadPaginationParams` NACH `LoadFilterData`** (liest aus gespeicherten Filtern). Nur bei **Server-Side-Pagination** nötig — client-seitig (xiri-ng default) weglassen.
 - **`ButtonsField`-Keys sind Strings** (`"0"`, `"1"`), nicht Ints.
+- **Chips in Tabellen-Zellen**: `b.ChipsField(id, name, accessor)` (pure Display, accessor → `[]table.Chip`). Für editierbare Multi-Select-Chips siehe `WithEditableChipOptions(...)` (anderer Mechanismus).
 - **Filter-Guards**: `if v, ok := filters[k].(string); ok && v != ""` — leere Werte erzeugen sonst falsche WHERE-Clauses.
