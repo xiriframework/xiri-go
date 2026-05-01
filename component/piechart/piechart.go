@@ -16,12 +16,15 @@ type Slice struct {
 	Color core.Color
 }
 
-// PieChart is a pie or donut chart.
+// PieChart is a pie or donut chart. Set Nightingale() for a rose-style
+// rendering where each slice's radius scales with its value.
 type PieChart struct {
 	base *chart.BaseChart
 
-	slices []Slice
-	donut  bool
+	slices          []Slice
+	donut           bool
+	nightingale     bool
+	nightingaleType string // "radius" (default) or "area"
 }
 
 // New creates a new PieChart bound to the given id.
@@ -40,6 +43,19 @@ func (pc *PieChart) Slice(name string, value float64, color core.Color) *PieChar
 
 // Donut renders the chart as a donut (ring) instead of a full pie.
 func (pc *PieChart) Donut() *PieChart { pc.donut = true; return pc }
+
+// Nightingale renders the chart in rose-style: each slice keeps the same
+// angular share but its radius scales with the value. Default 'radius' mode;
+// pass NightingaleArea() for area-scaling instead.
+func (pc *PieChart) Nightingale() *PieChart { pc.nightingale = true; return pc }
+
+// NightingaleArea is like Nightingale but uses 'area' scaling (slice areas
+// are proportional to values).
+func (pc *PieChart) NightingaleArea() *PieChart {
+	pc.nightingale = true
+	pc.nightingaleType = "area"
+	return pc
+}
 
 // Compact switches the chart into compact mode.
 func (pc *PieChart) Compact() *PieChart { pc.base.SetCompact(); return pc }
@@ -76,6 +92,12 @@ func (pc *PieChart) printData(ctx *core.UiContext) map[string]any {
 
 	if pc.donut {
 		data["donut"] = true
+	}
+	if pc.nightingale {
+		data["nightingale"] = true
+		if pc.nightingaleType != "" {
+			data["nightingaleType"] = pc.nightingaleType
+		}
 	}
 
 	slices := make([]map[string]any, len(pc.slices))

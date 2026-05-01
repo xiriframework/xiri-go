@@ -405,6 +405,16 @@ donut := piechart.New("storage").
     Slice("Used", 78, core.ColorWarning).
     Slice("Free", 22, core.ColorLightGray).
     Compact()
+
+// Nightingale (Rose-Style — Slice-Radien skalieren mit dem Wert)
+rose := piechart.New("severity").
+    Title("Bug severity").
+    Nightingale().             // 'radius'-Skalierung (Default)
+    // .NightingaleArea()      // alternativ 'area'-Skalierung
+    Slice("Critical", 8,  core.ColorRed).
+    Slice("High",     22, core.ColorWarning).
+    Slice("Medium",   41, core.ColorYellow).
+    Slice("Low",      73, core.ColorGreen)
 ```
 
 ## GaugeChart (`component/gaugechart`)
@@ -421,6 +431,110 @@ g := gaugechart.New("cpu").
     Color(core.ColorWarning).
     Label("%").                // Einheits-Label unter dem Wert
     Compact()                  // ohne Achsen-Beschriftung + ohne eigene Card
+```
+
+## Heatmap (`component/heatmap`)
+
+2D-Matrix-Heatmap mit X/Y-Kategorien.
+
+```go
+import "github.com/xiriframework/xiri-go/component/heatmap"
+
+h := heatmap.New("activity").
+    Title("Activity by hour and weekday").
+    XLabels("00", "06", "12", "18").
+    YLabels("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun").
+    Range(0, 30).                                 // visualMap min/max (optional, sonst auto)
+    ColorRange("#ede9fe", "#7c3aed").             // CSS low → high (optional)
+    ShowValues()                                  // Werte in Zellen anzeigen (optional)
+
+for _, m := range measurements {
+    h.Cell(m.HourIdx, m.DayIdx, m.Value)
+}
+```
+
+## Calendar (`component/calendar`)
+
+GitHub-Style Calendar-Heatmap.
+
+```go
+import "github.com/xiriframework/xiri-go/component/calendar"
+
+c := calendar.New("contributions").
+    Title("2025 contributions").
+    Year("2025").                                 // oder Range("2025-01-01", "2025-06-30")
+    MinMax(0, 8).
+    ColorRange("#e6f4ea", "#2e7d32")
+
+for _, day := range days {
+    c.Cell(day.Date /* "YYYY-MM-DD" */, day.Count)
+}
+```
+
+## Tree (`component/tree`)
+
+Hierarchischer Baum.
+
+```go
+import "github.com/xiriframework/xiri-go/component/tree"
+
+root := tree.NewNode("Company").WithValue(200).AppendChild(
+    tree.NewNode("Engineering").WithValue(80).AppendChild(
+        tree.NewNode("Frontend").WithValue(30),
+        tree.NewNode("Backend").WithValue(30),
+        tree.NewNode("DevOps").WithValue(20),
+    ),
+    tree.NewNode("Sales").WithValue(60),
+    tree.NewNode("Operations").WithValue(40).Collapse(),  // initial eingeklappt
+)
+
+t := tree.New("org").
+    Title("Org chart").
+    Root(root).
+    Orient("LR").                                 // 'LR' (default), 'RL', 'TB', 'BT'
+    Layout("orthogonal")                          // oder "radial"
+```
+
+## Sankey (`component/sankey`)
+
+Flussdiagramm mit gerichteten Verbindungen.
+
+```go
+import "github.com/xiriframework/xiri-go/component/sankey"
+
+s := sankey.New("energy").Title("Energy flow").
+    Node("Coal",  core.ColorGray).
+    Node("Gas",   core.ColorBlue).
+    Node("Solar", core.ColorYellow).
+    Node("Grid",  core.ColorPurple).
+    Node("Industry", "")                         // "" = kein expliziter Node-Color
+
+s.Link("Coal",  "Grid", 30).
+  Link("Gas",   "Grid", 25).
+  Link("Solar", "Grid", 15).
+  Link("Grid", "Industry", 38)
+
+s.Vertical()                                      // optional vertikale Ausrichtung
+```
+
+## Gantt (`component/gantt`)
+
+Gantt-Chart über echarts custom-series. Zeiten als unix milliseconds.
+
+```go
+import "github.com/xiriframework/xiri-go/component/gantt"
+
+t0 := time.Date(2025, 3, 1, 0, 0, 0, 0, time.UTC).UnixMilli()
+day := int64(86400000)
+
+g := gantt.New("project").Title("Project plan").
+    Rows("Design", "Build", "Test", "Release").
+    Task(0, "Wireframes", t0,         t0+7*day,  core.ColorBlue).
+    Task(0, "Mockups",    t0+5*day,   t0+12*day, core.ColorPurple).
+    Task(1, "API",        t0+7*day,   t0+24*day, core.ColorGreen).
+    Task(2, "QA",         t0+24*day,  t0+32*day, core.ColorWarning).
+    Task(3, "Go-live",    t0+35*day,  t0+36*day, core.ColorRed).
+    XRange(t0, t0+40*day)                         // optional: sichtbarer X-Bereich
 ```
 
 ## Eigenes Chart-Component bauen
