@@ -12,6 +12,7 @@ import (
 type Card struct {
 	cardType        core.CardType
 	content         any // Can be map[string]any or struct (e.g., *CardListContent)
+	components      []core.Component // Optional sub-components rendered in xcol-grid (multi-component card)
 	header          string
 	headerSub       *string
 	headerIcon      *string
@@ -26,6 +27,7 @@ type Card struct {
 	collapsible     *bool
 	collapsed       *bool
 	maxHeight       *string
+	padding         *string
 }
 
 // NewCard creates a new card component with full control over all parameters.
@@ -49,6 +51,7 @@ func NewCard(
 	return &Card{
 		cardType:        cardType,
 		content:         content,
+		components:      make([]core.Component, 0),
 		header:          header,
 		headerSub:       headerSub,
 		headerIcon:      headerIcon,
@@ -59,6 +62,23 @@ func NewCard(
 		buttonsTop:      make([]*button.Button, 0),
 		buttonsBottom:   make([]*button.Button, 0),
 	}
+}
+
+// Add appends a sub-component to the card. When at least one component is added,
+// the frontend renders the card as a multi-component card (header + xcol-grid of
+// the sub-components) and ignores the `content` / table fields.
+//
+// Layout per sub-component is controlled via the component's WithDisplay("xcol-…").
+//
+// Example:
+//
+//	c := card.NewCard(core.CardTypeTable, nil, "Activity", nil, nil, nil, false, false, nil)
+//	c.Add(barchart.New("activity").Mode(barchart.ModeSimple)./* … */ .WithDisplay("xcol-12")).
+//	  Add(stat.New("18h", "Today").Compact().WithDisplay("xcol-6")).
+//	  Add(stat.New("32h", "Last 7 days").Compact().WithDisplay("xcol-6"))
+func (c *Card) Add(component core.Component) *Card {
+	c.components = append(c.components, component)
+	return c
 }
 
 // ButtonTop adds a button to the top of the card
@@ -141,6 +161,22 @@ func (c *Card) WithMaxHeight(maxHeight string) *Card {
 	return c
 }
 
+// WithPadding sets the inner padding of the card content area in multi-component
+// mode (i.e. when sub-components were added via Add(...)). Tabellen-Cards bleiben
+// unverändert (padding:0 für Tabellen-Fluss).
+//
+// Accepted values:
+//   - Token: "xs" | "sm" | "md" | "lg" | "xl" — vom Frontend auf --xiri-spacing-*
+//     gemappt.
+//   - Freier CSS-Wert: "16px", "1rem", "var(--xiri-spacing-md)".
+//
+// Default ist "md". **Auf xs-Viewport (<576px) wird immer 8px verwendet**, der
+// hier konfigurierte Wert greift erst ab sm.
+func (c *Card) WithPadding(value string) *Card {
+	c.padding = &value
+	return c
+}
+
 // Print returns the JSON representation of the card
 func (c *Card) Print(ctx *core.UiContext) map[string]any {
 	var data map[string]any
@@ -217,6 +253,9 @@ func (c *Card) printHeader(ctx *core.UiContext) map[string]any {
 	if c.maxHeight != nil {
 		data["maxHeight"] = *c.maxHeight
 	}
+	if c.padding != nil {
+		data["padding"] = *c.padding
+	}
 
 	return data
 }
@@ -224,6 +263,17 @@ func (c *Card) printHeader(ctx *core.UiContext) map[string]any {
 // printData builds the full data map (header + content) used by both Print and PrintData.
 func (c *Card) printData(ctx *core.UiContext) map[string]any {
 	data := c.printHeader(ctx)
+
+	// Multi-component mode: if Add(...) was used, serialize sub-components and
+	// skip table-/content-rendering. Frontend renders these via xiri-dyncomponent.
+	if len(c.components) > 0 {
+		componentData := make([]map[string]any, len(c.components))
+		for i, comp := range c.components {
+			componentData[i] = comp.Print(ctx)
+		}
+		data["components"] = componentData
+		return data
+	}
 
 	// Add content based on card type
 	if c.cardType == core.CardTypeTable {

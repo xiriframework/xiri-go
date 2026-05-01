@@ -29,6 +29,7 @@ type MultiProgress struct {
 	sum     int
 	url     *url.Url
 	reload  *bool
+	compact bool
 }
 
 // NewMultiProgress creates a new multi-progress component
@@ -113,6 +114,13 @@ func (mp *MultiProgress) WithReload(reload bool) *MultiProgress {
 	return mp
 }
 
+// Compact switches the MultiProgress into compact mode — no own mat-card surface.
+// Use when nesting inside another card.
+func (mp *MultiProgress) Compact() *MultiProgress {
+	mp.compact = true
+	return mp
+}
+
 // Print returns the JSON representation of the multi-progress
 func (mp *MultiProgress) Print(ctx *core.UiContext) map[string]any {
 	if mp.url != nil {
@@ -192,9 +200,13 @@ func (mp *MultiProgress) printData(ctx *core.UiContext) map[string]any {
 		})
 	}
 
-	return map[string]any{
+	out := map[string]any{
 		"header": mp.header,
 		"show":   mp.show,
 		"data":   list,
 	}
+	if mp.compact {
+		out["compact"] = true
+	}
+	return out
 }

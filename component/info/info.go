@@ -46,6 +46,7 @@ type InfoPoint struct {
 	iconSet   *string
 	dense     *bool
 	display   *string
+	compact   bool
 }
 
 // NewInfoPoint creates a new info point component with required parameters
@@ -116,20 +117,31 @@ func (ip *InfoPoint) WithDisplay(display string) *InfoPoint {
 	return ip
 }
 
+// Compact switches the InfoPoint into compact mode — no own mat-card surface.
+// Use when nesting inside another card.
+func (ip *InfoPoint) Compact() *InfoPoint {
+	ip.compact = true
+	return ip
+}
+
 // Print returns the JSON representation of the info point
 func (ip *InfoPoint) Print(ctx *core.UiContext) map[string]any {
+	data := map[string]any{
+		"info":      ip.text,
+		"text":      ip.subtext,
+		"icon":      ip.icon,
+		"iconColor": ip.iconColor,
+		"iconSet":   ip.iconSet,
+		"url":       ip.url,
+		"urlParams": ip.urlParams,
+		"dense":     ip.dense,
+	}
+	if ip.compact {
+		data["compact"] = true
+	}
 	return map[string]any{
 		"type":    "infopoint",
 		"display": ip.display,
-		"data": map[string]any{
-			"info":      ip.text,
-			"text":      ip.subtext,
-			"icon":      ip.icon,
-			"iconColor": ip.iconColor,
-			"iconSet":   ip.iconSet,
-			"url":       ip.url,
-			"urlParams": ip.urlParams,
-			"dense":     ip.dense,
-		},
+		"data":    data,
 	}
 }

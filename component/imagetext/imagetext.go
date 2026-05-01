@@ -12,6 +12,7 @@ type ImageText struct {
 	headerIcon      *string
 	headerIconColor *core.Color
 	display         *string
+	compact         bool
 }
 
 // New creates a new ImageText component with the image URL and info text.
@@ -47,6 +48,13 @@ func (i *ImageText) WithDisplay(d string) *ImageText {
 	return i
 }
 
+// Compact switches the component into compact mode — no own mat-card surface.
+// Use when nesting inside another card to avoid card-in-card visuals.
+func (i *ImageText) Compact() *ImageText {
+	i.compact = true
+	return i
+}
+
 // Print returns the JSON representation of the imagetext component.
 func (i *ImageText) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
@@ -65,6 +73,9 @@ func (i *ImageText) Print(ctx *core.UiContext) map[string]any {
 	}
 	if i.headerIconColor != nil {
 		data["headerIconColor"] = string(*i.headerIconColor)
+	}
+	if i.compact {
+		data["compact"] = true
 	}
 
 	result := map[string]any{

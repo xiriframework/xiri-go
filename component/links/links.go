@@ -14,6 +14,7 @@ type Links struct {
 	headerIcon      *string
 	headerIconColor *core.Color
 	display         *string
+	compact         bool
 }
 
 // New creates a new Links component.
@@ -54,6 +55,13 @@ func (l *Links) WithDisplay(d string) *Links {
 	return l
 }
 
+// Compact switches the Links into compact mode — no own mat-card surface.
+// Use when nesting inside another card.
+func (l *Links) Compact() *Links {
+	l.compact = true
+	return l
+}
+
 // Print returns the JSON representation of the links component.
 func (l *Links) Print(ctx *core.UiContext) map[string]any {
 	buttonData := make([]map[string]any, len(l.buttons))
@@ -76,6 +84,9 @@ func (l *Links) Print(ctx *core.UiContext) map[string]any {
 	}
 	if l.headerIconColor != nil {
 		data["headerIconColor"] = string(*l.headerIconColor)
+	}
+	if l.compact {
+		data["compact"] = true
 	}
 
 	result := map[string]any{

@@ -87,6 +87,7 @@ type BarChart struct {
 	display *string
 	url     *url.Url
 	reload  *bool
+	compact bool
 }
 
 // New creates a new BarChart with the given id. Default mode is ModeSimple.
@@ -176,6 +177,13 @@ func (b *BarChart) WithReload(reload bool) *BarChart {
 	return b
 }
 
+// Compact switches the BarChart into compact mode — no own mat-card surface.
+// Use when nesting a barchart inside another card to avoid card-in-card visuals.
+func (b *BarChart) Compact() *BarChart {
+	b.compact = true
+	return b
+}
+
 // Print returns the JSON representation of the bar chart.
 func (b *BarChart) Print(ctx *core.UiContext) map[string]any {
 	var data map[string]any
@@ -224,6 +232,9 @@ func (b *BarChart) printData(ctx *core.UiContext) map[string]any {
 	}
 	if b.color != nil {
 		data["color"] = string(*b.color)
+	}
+	if b.compact {
+		data["compact"] = true
 	}
 
 	switch b.mode {

@@ -35,6 +35,7 @@ type Stat struct {
 	display   *string
 	url       *url.Url
 	reload    *bool
+	compact   bool
 }
 
 // New creates a new Stat component with value and label.
@@ -99,6 +100,14 @@ func (s *Stat) WithReload(reload bool) *Stat {
 	return s
 }
 
+// Compact switches the stat into compact mode — no own mat-card surface and
+// smaller value font. Use when nesting a stat inside another card to avoid
+// card-in-card visuals.
+func (s *Stat) Compact() *Stat {
+	s.compact = true
+	return s
+}
+
 // Print returns the JSON representation of the stat component.
 func (s *Stat) Print(ctx *core.UiContext) map[string]any {
 	var data map[string]any
@@ -143,6 +152,9 @@ func (s *Stat) printData(ctx *core.UiContext) map[string]any {
 		"label": core.Translate(ctx, s.label),
 	}
 
+	if s.compact {
+		data["compact"] = true
+	}
 	if s.icon != nil {
 		data["icon"] = *s.icon
 	}

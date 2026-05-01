@@ -73,6 +73,45 @@ content := card.NewCardListContentFields(
 )
 ```
 
+### Multi-Component Card (Card.Add)
+
+Eine Card kann mehrere beliebige Sub-Components in einem xcol-Grid hosten — Card-Header bleibt darüber. Sobald `Add(...)` mindestens einmal aufgerufen wurde, ignoriert das Frontend `content`/`fields` und rendert stattdessen die Sub-Components via `xiri-dyncomponent`. Layout pro Component via `WithDisplay("xcol-…")`.
+
+```go
+c := card.NewCard(core.CardTypeTable, nil, "Activity", nil, ptr("show_chart"), ptr("primary"), false, false, nil)
+c.WithPadding("md").                                           // Innen-Padding (Token oder CSS-Wert)
+  Add(barchart.New("activity").Mode(barchart.ModeSimple).
+        BarNamed("M", "Monday", 3).BarNamed("T", "Tuesday", 9). /* ... */
+        Compact().                                              // ohne eigene mat-card-Hülle
+        WithDisplay("xcol-12")).
+  Add(stat.New("18h", "Today").Compact().WithDisplay("xcol-6")).
+  Add(stat.New("32h", "Last 7 days").Compact().WithDisplay("xcol-6"))
+```
+
+`Add(component)` akzeptiert jeden `core.Component` (Stat, BarChart, DescriptionList, Timeline, …). Der `cardType`-Parameter ist im Multi-Component-Modus irrelevant — `core.CardTypeTable` als Platzhalter ist OK.
+
+#### `Card.WithPadding(value string)`
+
+Innen-Padding der Sub-Components-Fläche im Multi-Component-Modus.
+
+- **Tokens:** `"xs" | "sm" | "md" | "lg" | "xl"` — gemappt auf `--xiri-spacing-*` (xs=4, sm=8, md=16, lg=24, xl=32 px).
+- **Freier CSS-Wert:** `"16px"`, `"1rem"`, `"var(--xiri-spacing-md)"`.
+- **Default:** `"md"` (16 px).
+- **xs-Viewport (<576 px) IMMER 8 px** — der konfigurierte Wert greift erst ab `sm`. Wirkt nicht im Tabellen-Modus (CardListContent / fields), dort bleibt das Padding wie zuvor.
+
+#### `Compact()` auf Sub-Components
+
+Folgende Components zeichnen *standardmäßig* eine eigene mat-card. Im Multi-Component-Modus erzeugt das einen Card-in-Card-Look. `Compact()` lässt die innere mat-card weg und zeigt den Inhalt flach:
+
+| Komponente | Compact-Methode |
+| --- | --- |
+| `stat.Stat` | `s.Compact()` |
+| `barchart.BarChart` | `bc.Compact()` |
+| `imagetext.ImageText` | `it.Compact()` |
+| `info.InfoPoint` | `ip.Compact()` |
+| `links.Links` | `l.Compact()` |
+| `progress.MultiProgress` | `mp.Compact()` |
+
 ## Stat (`component/stat`)
 
 Einzelne Statistik-Kachel.
@@ -89,6 +128,11 @@ s.Print(ctx)
 s := stat.New("", "devices.total")
 s.SetURL("/api/stats/devices")
 s.WithReload(true)
+
+// Compact-Stat (für Multi-Component-Cards)
+// Skipt die eigene mat-card-Hülle und nutzt kleinere Schrift, damit Stats
+// flach in einer äußeren Card sitzen (kein Card-in-Card-Look).
+s := stat.New("18h", "Today").Compact().WithDisplay("xcol-6")
 ```
 
 ## StatGrid (`component/statgrid`)
