@@ -362,6 +362,75 @@ barchart.Seg(value, color)                       // ohne Tooltip-Name
 barchart.SegNamed(value, name, color)            // mit Tooltip-Name
 ```
 
+## LineChart (`component/linechart`)
+
+Multi-Linien-Chart mit gemeinsamer Kategorie-X-Achse. Tooltip zeigt alle Linien-Werte am gehoverten Punkt. Verwendet die geteilte echarts-Basis (`xiri-echarts-host`).
+
+```go
+import "github.com/xiriframework/xiri-go/component/linechart"
+
+lc := linechart.New("revenue").
+    Title("Monthly revenue").
+    XLabels("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug").
+    Line("Product A", []float64{100, 120, 150, 180, 170, 195, 205, 210}).Color(core.ColorBlue).Done().
+    Line("Product B", []float64{80, 95, 110, 130, 125, 145, 150, 160}).Color(core.ColorGreen).Done().
+    Line("Forecast",  []float64{90, 108, 130, 155, 148, 170, 178, 185}).Color(core.ColorPurple).Dashed().Done().
+    Smooth().                  // alle Linien als geglättete Kurve
+    YAxis(0, 220).
+    Compact()                  // ohne eigene mat-card-Hülle (für Multi-Component-Cards)
+```
+
+Pro-Linien-Optionen via `LineBuilder`-Chain: `.Color(c)`, `.Dashed()`, `.Area()` (Fill unter der Linie). `.Done()` gibt den `LineChart` zurück für weitere Kette.
+
+AJAX-Mode: `lc.SetURL(u).WithReload(true)`, `lc.PrintData(ctx)`, `lc.DataResponse(ctx)`.
+
+## PieChart (`component/piechart`)
+
+Pie- oder Donut-Chart. Tooltip zeigt Name + Wert + Prozent.
+
+```go
+import "github.com/xiriframework/xiri-go/component/piechart"
+
+pc := piechart.New("traffic").
+    Title("Traffic sources").
+    Slice("Direct", 1234, core.ColorBlue).
+    Slice("Search", 856,  core.ColorGreen).
+    Slice("Social", 423,  core.ColorPurple).
+    Slice("Email",  187,  core.ColorOrange).
+    Slice("Other",  92,   core.ColorGray)
+
+donut := piechart.New("storage").
+    Title("Storage usage").
+    Donut().                   // Ring statt Pie
+    Slice("Used", 78, core.ColorWarning).
+    Slice("Free", 22, core.ColorLightGray).
+    Compact()
+```
+
+## GaugeChart (`component/gaugechart`)
+
+Einzelwert auf einem Bogen.
+
+```go
+import "github.com/xiriframework/xiri-go/component/gaugechart"
+
+g := gaugechart.New("cpu").
+    Title("CPU").
+    Value(72).
+    Range(0, 100).             // Default 0..100
+    Color(core.ColorWarning).
+    Label("%").                // Einheits-Label unter dem Wert
+    Compact()                  // ohne Achsen-Beschriftung + ohne eigene Card
+```
+
+## Eigenes Chart-Component bauen
+
+Alle vier Charts teilen sich `chart.BaseChart` (`component/chart/`). Für einen neuen Chart-Typ:
+
+1. Neues Package `component/<type>chart/`. Struct embedded `*chart.BaseChart`. Builder mit `.Title(t)`, `.Color(c)`, `.Compact()`, `.WithDisplay(d)`, `.SetURL(u)`, `.WithReload(r)` als Forward-Methoden.
+2. `Print(ctx)` ruft `base.Envelope("<type>chart", data, nil)`. `data` enthält `base.PrintBaseData(ctx)` plus die typ-spezifischen Felder.
+3. Angular-Seite: neuer Component `xiri-<type>chart` mit `[option]` an `xiri-echarts-host` (siehe linechart/piechart als Vorlage).
+
 ## EmptyState (`component/emptystate`)
 
 Leerzustand-Anzeige.
