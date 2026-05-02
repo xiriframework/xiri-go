@@ -13,19 +13,21 @@ type Dialog interface {
 	WithOptions(options map[string]any) Dialog
 	WithOption(key string, value any) Dialog
 	WithData(payload map[string]any) Dialog
+	WithTableHeader() Dialog
 	SetButtons(buttons []*button.Button) Dialog
 }
 
 // dialogImpl represents a dialog/modal component
 type dialogImpl struct {
-	dialogType  core.DialogType
-	header      string
-	content     any
-	buttons     []*button.Button
-	extra       map[string]any
-	options     map[string]any
-	data        map[string]any
-	hookContent func(any)
+	dialogType      core.DialogType
+	header          string
+	content         any
+	buttons         []*button.Button
+	extra           map[string]any
+	options         map[string]any
+	data            map[string]any
+	showTableHeader bool
+	hookContent     func(any)
 }
 
 // newDialog creates a new dialog component (package-private base constructor)
@@ -106,6 +108,14 @@ func (d *dialogImpl) WithData(payload map[string]any) Dialog {
 	return d
 }
 
+// WithTableHeader enables rendering of the column header row when this dialog
+// displays a table (DialogTypeTable). Defaults to off (header hidden) so existing
+// callers are unaffected. Has no effect for non-table dialog types.
+func (d *dialogImpl) WithTableHeader() Dialog {
+	d.showTableHeader = true
+	return d
+}
+
 // SetButtons replaces the dialog's buttons
 func (d *dialogImpl) SetButtons(buttons []*button.Button) Dialog {
 	d.buttons = buttons
@@ -137,6 +147,12 @@ func (d *dialogImpl) Print(ctx *core.UiContext) map[string]any {
 		processedContent = contentPrinter.Print(ctx)
 	} else {
 		processedContent = content
+	}
+
+	if d.showTableHeader && d.dialogType == core.DialogTypeTable {
+		if contentMap, ok := processedContent.(map[string]any); ok {
+			contentMap["showHeader"] = true
+		}
 	}
 
 	data := map[string]any{

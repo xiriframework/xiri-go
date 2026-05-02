@@ -19,6 +19,7 @@ type Card struct {
 	headerIconColor *string
 	translate       bool
 	forceMinWidth   bool
+	showTableHeader bool
 	display         *string
 	buttonsTop      []*button.Button
 	buttonsBottom   []*button.Button
@@ -120,6 +121,14 @@ func (c *Card) WithTranslate(translateHeader bool) *Card {
 // WithForceMinWidth sets whether to force minimum width (optional)
 func (c *Card) WithForceMinWidth(force bool) *Card {
 	c.forceMinWidth = force
+	return c
+}
+
+// WithTableHeader enables rendering of the column header row when this card
+// displays a table (CardTypeTable). Defaults to off (header hidden) so existing
+// callers are unaffected. Has no effect for non-table card types.
+func (c *Card) WithTableHeader() *Card {
+	c.showTableHeader = true
 	return c
 }
 
@@ -298,6 +307,9 @@ func (c *Card) printData(ctx *core.UiContext) map[string]any {
 			}
 		}
 		data["forceMinWidth"] = c.forceMinWidth
+		if c.showTableHeader {
+			data["showHeader"] = true
+		}
 	} else {
 		data["content"] = c.content
 	}

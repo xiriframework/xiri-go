@@ -11,10 +11,13 @@ type Dialog interface {
     WithOptions(options map[string]any) Dialog
     WithOption(key string, value any) Dialog
     WithData(payload map[string]any) Dialog
+    WithTableHeader() Dialog
     SetButtons(buttons []*button.Button) Dialog
     Print(ctx *core.UiContext) map[string]any
 }
 ```
+
+`WithTableHeader()` aktiviert die Spalten-Header-Zeile (`<thead>`) bei `DialogTypeTable`. Default = aus (Header verborgen), kompatibel mit allen bestehenden Aufrufern. Wirkt nur bei Table-Dialogen, bei anderen Typen no-op.
 
 `WithOption` / `WithOptions` sind für **strukturelle Top-Level-Felder** (`size`, `url`, `filter`, …) gedacht und werden von der Frontend-Logik direkt am Dialog-Root gelesen. Für **Custom-Payload**, das später ans Backend zurückgesendet wird, nutze `WithData(map[string]any)` — das Ergebnis landet unter einem expliziten `data`-Key im JSON (analog Button/Icon).
 
@@ -174,6 +177,12 @@ func dialog.NewDialogTable[T any](header string, tbl *table.Table[T]) Dialog
 ```
 
 Rendert ein `DialogTypeTable` mit einer `xiri-raw-table` darin. Daten + Fields werden **lazy** beim `Print(ctx)` aus der Table gezogen.
+
+**Spalten-Header standardmäßig aus.** Mit `.WithTableHeader()` opt-in:
+
+```go
+dlg := dialog.NewDialogTable("Geräte", tbl).WithTableHeader()
+```
 
 ### Beispiel: Info-Dialog mit Details
 

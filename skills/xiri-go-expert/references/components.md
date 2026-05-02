@@ -54,6 +54,12 @@ c.WithReload(true)
 c.Print(ctx)
 ```
 
+**Spalten-Header bei Tabellen-Cards** (`CardTypeTable`) standardmäßig aus. Opt-in via `.WithTableHeader()` — gleicher Name wie auf `Dialog`, no-op für Nicht-Tabellen-Cards:
+
+```go
+c := card.NewCardList("Übersicht", content).WithTableHeader()
+```
+
 ### CardListContent
 
 ```go
