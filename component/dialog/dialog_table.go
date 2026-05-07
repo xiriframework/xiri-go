@@ -17,7 +17,7 @@ Angular Frontend Flow:
 
 Additional dialog options via WithOption():
   - url (string): URL for data loading or form submission
-  - size (string): Dialog size ("sm", "md", "lg", "xl", "full")
+  - size (string): Dialog size ("sm", "md", "lg", "xl", "full") — prefer WithSize(dialog.SizeLg)
   - filter (any): Filter data for the table
 
 Example usage:

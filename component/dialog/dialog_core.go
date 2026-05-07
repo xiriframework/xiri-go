@@ -12,6 +12,7 @@ type Dialog interface {
 	WithExtra(extra map[string]any) Dialog
 	WithOptions(options map[string]any) Dialog
 	WithOption(key string, value any) Dialog
+	WithSize(size Size) Dialog
 	WithData(payload map[string]any) Dialog
 	WithTableHeader() Dialog
 	SetButtons(buttons []*button.Button) Dialog
@@ -96,6 +97,13 @@ func (d *dialogImpl) WithOptions(options map[string]any) Dialog {
 // payload consumed by the Angular frontend, prefer WithData.
 func (d *dialogImpl) WithOption(key string, value any) Dialog {
 	d.options[key] = value
+	return d
+}
+
+// WithSize sets the dialog size token. Frontend maps the token to a CSS width.
+// Convenience wrapper around WithOption("size", string(size)).
+func (d *dialogImpl) WithSize(size Size) Dialog {
+	d.options["size"] = string(size)
 	return d
 }
 

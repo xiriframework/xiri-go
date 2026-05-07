@@ -119,6 +119,22 @@ func TestDialogImpl_WithOption(t *testing.T) {
 	}
 }
 
+func TestDialogImpl_WithSize(t *testing.T) {
+	dialog := newDialog(core.DialogTypeForm, "Test", nil, nil, nil, nil)
+
+	dialog.WithSize(SizeLg)
+	result := dialog.Print(nil)
+	if result["size"] != "lg" {
+		t.Errorf("size = %v, want lg", result["size"])
+	}
+
+	dialog.WithSize(SizeFull)
+	result = dialog.Print(nil)
+	if result["size"] != "full" {
+		t.Errorf("size after WithSize(SizeFull) = %v, want full", result["size"])
+	}
+}
+
 func TestDialogImpl_Print_WithDialogContent(t *testing.T) {
 	// Test that DialogContent interface is properly called
 	content := DialogQuestionContent{

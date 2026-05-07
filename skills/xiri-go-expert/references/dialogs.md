@@ -40,13 +40,33 @@ Gehört zur seltenen Kategorie "maximum flexibility" — für die typischen Fäl
 
 | Key      | Typ      | Zweck                                          |
 | -------- | -------- | ---------------------------------------------- |
-| `size`   | `string` | Dialog-Größe: `"sm"`, `"md"`, `"lg"`, `"xl"`, `"full"` |
+| `size`   | `string` | Dialog-Größe: `"sm"`, `"md"`, `"lg"`, `"xl"`, `"full"` — bevorzugt typsicher via `WithSize(...)` |
 | `url`    | `string` | Data-/Submit-URL (bei Form/Table)              |
 | `filter` | `any`    | Filter-Data, die ans Ziel weitergereicht wird  |
 
+### Dialog-Größe — `WithSize(dialog.Size)`
+
+Bevorzugter, typsicherer Weg. Frontend mappt das Token auf eine konkrete Breite:
+
+| Token             | Frontend-Breite (Desktop) |
+| ----------------- | ------------------------- |
+| `dialog.SizeSm`   | `400px`                   |
+| `dialog.SizeMd`   | `600px` (Default)         |
+| `dialog.SizeLg`   | `900px`                   |
+| `dialog.SizeXl`   | `1200px`                  |
+| `dialog.SizeFull` | `95vw` (fast Vollbild)    |
+
+Auf XSmall/Small Breakpoints (Mobile) ignoriert das Frontend die Größe und nutzt `90vw`.
+
 ```go
 dlg := dialog.NewDialog(core.DialogTypeForm, "Bearbeiten", fields, buttons, nil, nil).
-    WithOption("size", "lg")
+    WithSize(dialog.SizeLg)
+
+// Equivalent (alte API, weiterhin unterstützt):
+dlg.WithOption("size", "lg")
+
+// Auch raw CSS-Werte sind möglich (Backward-Compat):
+dlg.WithOption("size", "750px")
 ```
 
 ## Question-Dialog — Delete & Warning
@@ -412,4 +432,4 @@ Custom-Content (z.B. eine Komponente): einfach eine Komponente als `content` an 
 - **Waiting-Dialog: URL muss den API-Prefix tragen**, weil Polling-GETs darauf gehen. `xurl.NewUrlPrefix(...)` oder `c.apiUrl(...)`.
 - **MultiDelete ohne `ExtractMultiSelectRequest`**: die IDs im Request kommen in verschiedenen Feldern (`ids`, `data`, `selectedIds`, je nach Button-Action). Der Extractor glättet das.
 - **`NewDialogFormMultiDelete` POST-URL = selbe GET-URL**: Der Delete-Dialog POSTed beim OK wieder an die URL, die im Button als `action: dialog` definiert wurde. Deshalb dieselbe URL — Controller unterscheidet via `ctx.Request().Method`.
-- **`size: "full"`** ist legitim, aber vom Frontend abhängig — prüfe ob dein xiri-ng-Theme das unterstützt (Default kennt `sm`/`md`/`lg`/`xl`).
+- **Größen:** Nutze `WithSize(dialog.SizeLg)` statt `WithOption("size", "lg")` — typsicher und compile-time-geprüft. Raw CSS-Werte (`"750px"`) funktionieren weiterhin als Escape-Hatch.
