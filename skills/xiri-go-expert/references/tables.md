@@ -476,6 +476,10 @@ tbl := b.Build()
 tbl.SetData(regions)
 ```
 
+- **„+ Sub"-Button pro Zeile steuern:** Standardmäßig erscheint der „+" (bei gesetztem `AddSubURL`)
+  auf jeder Zeile. Mit `b.TreeAddSubWhen(func(r Row) bool {...})` nur dort, wo der Accessor `true`
+  liefert. Intern wird das Flag pro Zeile als `_addSub` emittiert (`Tree.AddSubField`); `.Tree(...)`
+  muss vorher aufgerufen sein.
 - Multi-Root wird unterstützt; Knoten mit fehlendem Parent werden als Root behandelt, Zyklen
   abgefangen (Knoten wird Root, Warn-Log).
 - Sortierung anderer Spalten ist im Tree-Modus deaktiviert; Geschwister werden alphabetisch

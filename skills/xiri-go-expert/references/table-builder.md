@@ -256,6 +256,7 @@ b.Tree(table.TreeConfig{
     PersistStateKey: "devices-tree",  // optional: Expand-State in localStorage
     AddSubURL:       xurl.NewUrl("/api/devices/add?parent={id}"), // optional: "+ Sub"-Button
 })  // Details: references/tables.md → "Tree-Modus"
+b.TreeAddSubWhen(func(r Device) bool { return r.AllowsChildren }) // optional: "+" nur bei passenden Zeilen
 
 // Select-Buttons (Multi-Select Actions)
 b.SetSelect(true)
