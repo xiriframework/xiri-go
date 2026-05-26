@@ -228,19 +228,30 @@ end := f.Value.End      // time.Time
 
 ## ChipsField
 
-Tag/Chip-Eingabe. Value: `[]string`
+Tag/Chip-Eingabe im **gemischten Modus**. Value: `[]interface{}` — jedes Element ist entweder
+ein numerisches Options-`int64` (Chip aus der `List` gewählt → ID) oder ein `string` (frei
+eingegebener Text). Die JSON-/Go-Typunterscheidung trägt die Semantik: `number/int64` = Options-ID,
+`string` = Freitext.
+
+Die `List`-Optionen brauchen **numerische `Value`** (int64), damit sie als IDs funktionieren — die
+exportierte `id` wird im Frontend (`XiriFormFieldSelectOption.id: number`) erkannt und beim Auswählen
+als ID zurückgesendet. String-Option-Values würden als Freitext interpretiert.
 
 ```go
 f := field.NewChipsField("tags", "device.tags", false)
 f.SetList([]field.SelectOption{
-    {Value: "indoor", Label: "Indoor"},
-    {Value: "outdoor", Label: "Outdoor"},
+    {Value: int64(1), Label: "Indoor"},
+    {Value: int64(2), Label: "Outdoor"},
 })
-f.SetFreeText(true)  // Erlaubt freie Eingabe
+f.SetFreeText(true)  // erlaubt zusätzlich freie Texteingabe (ohne ID)
 
-// Nach BindAndValidate:
-tags := f.Value  // []string
+// Nach BindAndValidate — bequemer getrennter Zugriff über Helper:
+ids := f.IDs()      // []int64  — aus der Liste gewählte Chips (Options-IDs)
+texts := f.Texts()  // []string — frei eingegebene Chips
+all := f.Value      // []interface{} — int64 + string in Eingabereihenfolge
 ```
+
+Ein ChipsField **ohne `List`** enthält schlicht nur Freitext-Strings (`IDs()` ist leer).
 
 ## FileField
 

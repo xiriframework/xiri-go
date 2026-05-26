@@ -131,7 +131,7 @@ formbuilder.BindAndValidate(ctx, fg)
 | SelectField                     | Option-Value-Typ              |
 | SelectField + `.SetMultiple(true)` | `field.ModelListValue` (`[]int32`) |
 | ModelListField                  | `field.ModelListValue`        |
-| ChipsField                      | `[]string`                    |
+| ChipsField                      | `[]interface{}` (int64 IDs + string Freitext) |
 
 GORM-Integration (mit `, ok` Guards, leere Werte raus) → `references/table-filtering.md`.
 

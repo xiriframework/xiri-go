@@ -92,7 +92,7 @@ Ablauf intern:
 | `NewSelectField(...).SetMultiple(true)`            | `field.ModelListValue` (`[]int32`) |
 | `NewModelField`                                    | `int32`                        |
 | `NewModelListField`                                | `field.ModelListValue`         |
-| `NewChipsField`                                    | `[]string`                     |
+| `NewChipsField`                                    | `[]interface{}` (int64 Options-IDs + string Freitext) |
 | `NewArrayField`                                    | `[]interface{}` (pro-Item-Typ wie Inner-Field) |
 | `NewTimeRangeField`                                | `map[string]int64` (`from`, `to`) |
 | `NewFileField`                                     | `string` (Path/Base64/Key)     |
@@ -132,9 +132,25 @@ if v, ok := filters["tags"].(field.ModelListValue); ok && len(v) > 0 {
         []int32(v))
 }
 
-// ChipsField → []string
-if v, ok := filters["labels"].([]string); ok && len(v) > 0 {
-    q = q.Where("label IN ?", v)
+// ChipsField → []interface{} (gemischt int64 Options-IDs + string Freitext)
+// Bei Bedarf über die Element-Typen trennen:
+if v, ok := filters["labels"].([]interface{}); ok && len(v) > 0 {
+    var ids []int64
+    var texts []string
+    for _, item := range v {
+        switch x := item.(type) {
+        case int64:
+            ids = append(ids, x)
+        case string:
+            texts = append(texts, x)
+        }
+    }
+    if len(ids) > 0 {
+        q = q.Where("label_id IN ?", ids)
+    }
+    if len(texts) > 0 {
+        q = q.Where("label IN ?", texts)
+    }
 }
 ```
 
