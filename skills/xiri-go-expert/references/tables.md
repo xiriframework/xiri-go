@@ -464,13 +464,13 @@ b.IdField("parentId", "Parent", func(r Region) int64 { return r.ParentID }) // s
 b.TextField("name", "Region", func(r Region) string { return r.Name })
 
 b.Tree(table.TreeConfig{
-    IdField:          "id",          // Pflicht: Zeilen-Feld mit Knoten-ID
-    ParentIdField:    "parentId",    // Pflicht: Parent-ID; null/0 → Root
-    TreeColumn:       "name",        // optional, Default: erste Spalte (rendert die Einrückung)
-    ExpandAllDefault: false,         // optional, Default: false
-    HideCounts:       false,         // optional, Default: false → Kind-Count "(5)" bei collapsed
-    PersistStateKey:  "regions",     // optional: Expand-State im localStorage persistieren
-    AddSubURL:        xurl.NewUrl("/Portal/Region/Add?parent={id}"), // optional: "+ Sub"-Button; {id} wird ersetzt
+    IdField:            "id",        // Pflicht: Zeilen-Feld mit Knoten-ID
+    ParentIdField:      "parentId",  // Pflicht: Parent-ID; null/0 → Root
+    TreeColumn:         "name",      // optional, Default: erste Spalte (rendert die Einrückung)
+    CollapseAllDefault: false,       // optional, Default: false → Tree startet voll ausgeklappt
+    HideCounts:         false,       // optional, Default: false → Kind-Count "(5)" bei collapsed
+    PersistStateKey:    "regions",   // optional: Expand-State im localStorage persistieren
+    AddSubURL:          xurl.NewUrl("/Portal/Region/Add?parent={id}"), // optional: "+ Sub"-Button; {id} wird ersetzt
 })
 tbl := b.Build()
 tbl.SetData(regions)
