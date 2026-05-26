@@ -35,8 +35,9 @@ type tableCore struct {
 // while producing output compatible with the existing component.Table JSON format.
 type Table[T any] struct {
 	tableCore
-	fields []*field[T]
-	data   []T
+	fields             []*field[T]
+	data               []T
+	treeAddSubAccessor func(T) bool // tree mode: per-row "+ sub" visibility (nil = button on all rows)
 }
 
 // TableOptions contains all table configuration options.
@@ -85,6 +86,7 @@ type TreeConfig struct {
 	HideCounts         bool      // Hide the child-count "(5)" badge when collapsed (default: counts shown)
 	PersistStateKey    string    // localStorage key for expand-state persistence; empty = no persistence
 	AddSubURL          *xurl.Url // When set, renders a "+ sub" button per row; frontend navigates here ({id} placeholder)
+	AddSubField        string    // Per-row field whose truthy value gates the "+ sub" button; set internally by TreeAddSubWhen
 }
 
 // ============================================================================
@@ -514,6 +516,9 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 		if opts.Tree.AddSubURL != nil {
 			tree["addSubUrl"] = opts.Tree.AddSubURL.Print()
 		}
+		if opts.Tree.AddSubField != "" {
+			tree["addSubField"] = opts.Tree.AddSubField
+		}
 		options["tree"] = tree
 	}
 
@@ -802,11 +807,19 @@ func (t *Table[T]) GetData(ctx *core.UiContext, output OutputType) []map[string]
 			}
 		}
 
+		// Tree mode: per-row "+ sub" visibility flag (read by the frontend via tree.addSubField).
+		if output == OutputWeb && t.treeAddSubAccessor != nil {
+			rowMap[treeAddSubKey] = t.treeAddSubAccessor(rowData)
+		}
+
 		rows[i] = rowMap
 	}
 
 	return rows
 }
+
+// treeAddSubKey is the reserved row-data key carrying the per-row "+ sub" visibility flag.
+const treeAddSubKey = "_addSub"
 
 // buildFieldMap creates accessor map for Row interface.
 // This allows formatters to access any field value in the row for cross-field dependencies.

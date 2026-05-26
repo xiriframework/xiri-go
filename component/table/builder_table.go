@@ -120,6 +120,9 @@ func (b *TableBuilder[T]) validateFields() {
 // dropped from the row data and break the hierarchy).
 func (b *TableBuilder[T]) validateTree() {
 	if b.table.options.Tree == nil {
+		if b.table.treeAddSubAccessor != nil {
+			slog.Warn("table.Build: TreeAddSubWhen set without Tree(...); the per-row +sub flag has no effect")
+		}
 		return
 	}
 	tree := b.table.options.Tree

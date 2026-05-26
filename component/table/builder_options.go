@@ -130,6 +130,23 @@ func (b *TableBuilder[T]) Tree(opts TreeConfig) *TableBuilder[T] {
 	return b
 }
 
+// TreeAddSubWhen controls per-row visibility of the "+ sub" button: the button is only rendered
+// for rows where fn returns true. Without this call the button shows on every row (when AddSubURL
+// or an Angular addSubHandler is set). Call after Tree(...).
+//
+// Example:
+//
+//	builder.
+//	    Tree(table.TreeConfig{ IdField: "id", ParentIdField: "parentId", AddSubURL: xurl.NewUrl("/Add?parent={id}") }).
+//	    TreeAddSubWhen(func(r Region) bool { return r.AllowsChildren })
+func (b *TableBuilder[T]) TreeAddSubWhen(fn func(T) bool) *TableBuilder[T] {
+	b.table.treeAddSubAccessor = fn
+	if b.table.options.Tree != nil {
+		b.table.options.Tree.AddSubField = treeAddSubKey
+	}
+	return b
+}
+
 // ============================================================================
 // Table Option Setters - String Options
 // ============================================================================

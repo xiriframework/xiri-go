@@ -301,6 +301,41 @@ func TestPrintTreeShowCountsDisabled(t *testing.T) {
 	}
 }
 
+// TestPrintTreeAddSubWhen verifies the per-row "+ sub" flag is emitted in row data and that
+// options.tree.addSubField points at the reserved key.
+func TestPrintTreeAddSubWhen(t *testing.T) {
+	ctx := testContext()
+
+	builder := NewBuilder[testTreeRow]()
+	builder.IdField("id", "device.id", func(r testTreeRow) int64 { return r.ID })
+	builder.IdField("parentId", "", func(r testTreeRow) int64 { return r.ParentID })
+	builder.TextField("name", "device.name", func(r testTreeRow) string { return r.Name })
+	tbl := builder.
+		Tree(TreeConfig{IdField: "id", ParentIdField: "parentId"}).
+		TreeAddSubWhen(func(r testTreeRow) bool { return r.ID == 1 }). // only row 1 may add sub
+		Build()
+	tbl.SetData([]testTreeRow{
+		{ID: 1, ParentID: 0, Name: "Wien"},
+		{ID: 2, ParentID: 1, Name: "Favoriten"},
+	})
+
+	output := tbl.Print(ctx)
+	data := output["data"].(map[string]any)
+	tree := data["options"].(map[string]any)["tree"].(map[string]any)
+
+	if tree["addSubField"] != "_addSub" {
+		t.Errorf("Expected addSubField='_addSub', got %v", tree["addSubField"])
+	}
+
+	rows := data["data"].([]map[string]any)
+	if rows[0]["_addSub"] != true {
+		t.Errorf("Expected row 0 _addSub=true, got %v", rows[0]["_addSub"])
+	}
+	if rows[1]["_addSub"] != false {
+		t.Errorf("Expected row 1 _addSub=false, got %v", rows[1]["_addSub"])
+	}
+}
+
 // TestPrintNilCtx verifies that Print(nil) does not panic
 func TestPrintNilCtx(t *testing.T) {
 	builder := NewBuilder[testDeviceRow]()
