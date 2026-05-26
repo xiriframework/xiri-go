@@ -449,6 +449,41 @@ tbl := table.NewBuilder[Device]().
     Build()
 ```
 
+## Tree-Modus (Hierarchie mit Einrückung + Expand/Collapse)
+
+Opt-in über `b.Tree(table.TreeConfig{...})`. Die Zeilen bleiben **flach** — das Frontend
+baut den Baum aus `IdField`/`ParentIdField` jeder Zeile und rendert Einrückung,
+Expand/Collapse-Pfeile, Expand-All/Collapse-All, hierarchie-bewusste Suche (Treffer + deren
+Subtree, Vorfahren als gedimmter Kontext) und optional einen „+ Sub"-Button pro Zeile.
+Ohne `Tree(...)` verhält sich die Tabelle unverändert (identisches JSON).
+
+```go
+b := table.NewBuilder[Region]()
+b.IdField("id", "ID", func(r Region) int64 { return r.ID })
+b.IdField("parentId", "Parent", func(r Region) int64 { return r.ParentID }) // s. Falle unten
+b.TextField("name", "Region", func(r Region) string { return r.Name })
+
+b.Tree(table.TreeConfig{
+    IdField:          "id",          // Pflicht: Zeilen-Feld mit Knoten-ID
+    ParentIdField:    "parentId",    // Pflicht: Parent-ID; null/0 → Root
+    TreeColumn:       "name",        // optional, Default: erste Spalte (rendert die Einrückung)
+    ExpandAllDefault: false,         // optional, Default: false
+    HideCounts:       false,         // optional, Default: false → Kind-Count "(5)" bei collapsed
+    PersistStateKey:  "regions",     // optional: Expand-State im localStorage persistieren
+    AddSubURL:        xurl.NewUrl("/Portal/Region/Add?parent={id}"), // optional: "+ Sub"-Button; {id} wird ersetzt
+})
+tbl := b.Build()
+tbl.SetData(regions)
+```
+
+- Multi-Root wird unterstützt; Knoten mit fehlendem Parent werden als Root behandelt, Zyklen
+  abgefangen (Knoten wird Root, Warn-Log).
+- Sortierung anderer Spalten ist im Tree-Modus deaktiviert; Geschwister werden alphabetisch
+  nach der Tree-Spalte sortiert.
+- **Falle:** `ParentIdField` darf **nicht** über `.Hide()` versteckt werden — versteckte
+  Felder fallen aus den Row-Daten (`GetData` überspringt sie), und der Baum bricht. Stattdessen
+  als `IdField`/Format `id` ausgeben: aus der Anzeige gefiltert, aber in den Daten vorhanden.
+
 ## Handler-Flow (Complete)
 
 ### Page-Route (GET /devices)

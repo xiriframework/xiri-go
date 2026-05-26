@@ -248,6 +248,15 @@ b.SetScrollHeight("400px")
 b.SetTextNoData("Keine Geräte gefunden")
 b.SetEmptyState("/api/devices/empty")  // URL für EmptyState-Komponente
 
+// Tree-Modus (Einrückung + Expand/Collapse; Zeilen bleiben flach, Baum aus id/parentId)
+b.Tree(table.TreeConfig{
+    IdField:         "id",
+    ParentIdField:   "parentId",      // NICHT via .Hide() verstecken → als IdField/Format 'id' ausgeben
+    TreeColumn:      "name",          // optional, Default: erste Spalte
+    PersistStateKey: "devices-tree",  // optional: Expand-State in localStorage
+    AddSubURL:       xurl.NewUrl("/api/devices/add?parent={id}"), // optional: "+ Sub"-Button
+})  // Details: references/tables.md → "Tree-Modus"
+
 // Select-Buttons (Multi-Select Actions)
 b.SetSelect(true)
 b.AddMultiEditButton("edit", "Bearbeiten", "/api/devices/multi-edit")
