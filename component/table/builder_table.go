@@ -112,4 +112,34 @@ func (b *TableBuilder[T]) validateFields() {
 			}
 		}
 	}
+	b.validateTree()
+}
+
+// validateTree warns about common tree-mode configuration mistakes:
+// referencing fields that don't exist, or a parentId field that is hidden (which would be
+// dropped from the row data and break the hierarchy).
+func (b *TableBuilder[T]) validateTree() {
+	if b.table.options.Tree == nil {
+		return
+	}
+	tree := b.table.options.Tree
+
+	var idField, parentField *fieldBase
+	for _, f := range b.table.fieldBases {
+		if f.id == tree.IdField {
+			idField = f
+		}
+		if f.id == tree.ParentIdField {
+			parentField = f
+		}
+	}
+
+	if tree.IdField == "" || idField == nil {
+		slog.Warn("table.Build: tree mode IdField not found among table fields", "idField", tree.IdField)
+	}
+	if tree.ParentIdField == "" || parentField == nil {
+		slog.Warn("table.Build: tree mode ParentIdField not found among table fields", "parentIdField", tree.ParentIdField)
+	} else if parentField.hide {
+		slog.Warn("table.Build: tree mode ParentIdField is hidden and will be dropped from row data; use an id-format field instead", "parentIdField", tree.ParentIdField)
+	}
 }

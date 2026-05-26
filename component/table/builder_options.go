@@ -107,6 +107,29 @@ func (b *TableBuilder[T]) SetServerSide(serverSide bool) *TableBuilder[T] {
 	return b
 }
 
+// Tree enables the opt-in tree mode for the table.
+// Rows stay flat; the frontend constructs the hierarchy from the IdField/ParentIdField
+// values and renders indentation + expand/collapse per node. Without this call the table
+// renders as a flat list and produces identical JSON.
+//
+// Note: the field referenced by ParentIdField must be emitted in the row data, so it must
+// NOT be hidden via .Hide() (hidden fields are dropped from row data). Add it as an id-format
+// field instead — it is excluded from the visible columns but kept in the row data.
+//
+// Example:
+//
+//	builder.Tree(table.TreeConfig{
+//	    IdField:         "id",
+//	    ParentIdField:   "parentId",
+//	    TreeColumn:      "name",
+//	    PersistStateKey: "portal-groups",
+//	    AddSubURL:       xurl.NewUrl("/Portal/Group/Add?parent={id}"),
+//	})
+func (b *TableBuilder[T]) Tree(opts TreeConfig) *TableBuilder[T] {
+	b.table.options.Tree = &opts
+	return b
+}
+
 // ============================================================================
 // Table Option Setters - String Options
 // ============================================================================

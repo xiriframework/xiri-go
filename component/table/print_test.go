@@ -181,6 +181,126 @@ func TestPrintWithTranslator(t *testing.T) {
 	}
 }
 
+// Tree test row struct (adds ParentID to the device row)
+type testTreeRow struct {
+	ID       int64
+	ParentID int64
+	Name     string
+}
+
+// TestPrintTreeMode verifies that .Tree(...) serializes the nested tree settings object.
+func TestPrintTreeMode(t *testing.T) {
+	ctx := testContext()
+
+	builder := NewBuilder[testTreeRow]()
+	builder.IdField("id", "device.id", func(r testTreeRow) int64 { return r.ID })
+	builder.IdField("parentId", "", func(r testTreeRow) int64 { return r.ParentID })
+	builder.TextField("name", "device.name", func(r testTreeRow) string { return r.Name })
+	tbl := builder.Tree(TreeConfig{
+		IdField:         "id",
+		ParentIdField:   "parentId",
+		TreeColumn:      "name",
+		PersistStateKey: "portal-groups",
+		AddSubURL:       xurl.NewUrl("/Portal/Group/Add?parent={id}"),
+	}).Build()
+	tbl.SetData([]testTreeRow{
+		{ID: 1, ParentID: 0, Name: "Wien"},
+		{ID: 2, ParentID: 1, Name: "Favoriten"},
+	})
+
+	output := tbl.Print(ctx)
+	data := output["data"].(map[string]any)
+	options := data["options"].(map[string]any)
+
+	tree, ok := options["tree"].(map[string]any)
+	if !ok {
+		t.Fatalf("Expected options[tree] to be map[string]any, got %T", options["tree"])
+	}
+
+	if tree["idField"] != "id" {
+		t.Errorf("Expected idField='id', got %v", tree["idField"])
+	}
+	if tree["parentIdField"] != "parentId" {
+		t.Errorf("Expected parentIdField='parentId', got %v", tree["parentIdField"])
+	}
+	if tree["treeColumn"] != "name" {
+		t.Errorf("Expected treeColumn='name', got %v", tree["treeColumn"])
+	}
+	if tree["persistStateKey"] != "portal-groups" {
+		t.Errorf("Expected persistStateKey='portal-groups', got %v", tree["persistStateKey"])
+	}
+	if tree["addSubUrl"] != "/Portal/Group/Add?parent={id}" {
+		t.Errorf("Expected addSubUrl placeholder URL, got %v", tree["addSubUrl"])
+	}
+	// HideCounts defaults to false → showCounts should be true.
+	if tree["showCounts"] != true {
+		t.Errorf("Expected showCounts=true (default), got %v", tree["showCounts"])
+	}
+	if tree["expandAllByDefault"] != false {
+		t.Errorf("Expected expandAllByDefault=false (default), got %v", tree["expandAllByDefault"])
+	}
+
+	// parentId must be present in the row data (id-format field, not hidden).
+	rowData := data["data"].([]map[string]any)
+	if rowData[1]["parentId"] == nil {
+		t.Error("Expected parentId to be present in row data")
+	}
+}
+
+// TestPrintNoTreeByDefault verifies backwards-compatibility: tables without .Tree(...)
+// must NOT emit a tree key in options.
+func TestPrintNoTreeByDefault(t *testing.T) {
+	ctx := testContext()
+
+	builder := NewBuilder[testDeviceRow]()
+	builder.IdField("id", "device.id", func(r testDeviceRow) int64 { return r.ID })
+	builder.TextField("name", "device.name", func(r testDeviceRow) string { return r.Name })
+	tbl := builder.Build()
+	tbl.SetData([]testDeviceRow{{ID: 1, Name: "Device 1"}})
+
+	output := tbl.Print(ctx)
+	data := output["data"].(map[string]any)
+	options := data["options"].(map[string]any)
+
+	if _, exists := options["tree"]; exists {
+		t.Error("Expected no 'tree' key in options for a flat table")
+	}
+}
+
+// TestPrintTreeShowCountsDisabled verifies HideCounts=true yields showCounts=false.
+func TestPrintTreeShowCountsDisabled(t *testing.T) {
+	ctx := testContext()
+
+	builder := NewBuilder[testTreeRow]()
+	builder.IdField("id", "device.id", func(r testTreeRow) int64 { return r.ID })
+	builder.IdField("parentId", "", func(r testTreeRow) int64 { return r.ParentID })
+	builder.TextField("name", "device.name", func(r testTreeRow) string { return r.Name })
+	tbl := builder.Tree(TreeConfig{
+		IdField:          "id",
+		ParentIdField:    "parentId",
+		ExpandAllDefault: true,
+		HideCounts:       true,
+	}).Build()
+	tbl.SetData([]testTreeRow{{ID: 1, Name: "Wien"}})
+
+	output := tbl.Print(ctx)
+	tree := output["data"].(map[string]any)["options"].(map[string]any)["tree"].(map[string]any)
+
+	if tree["showCounts"] != false {
+		t.Errorf("Expected showCounts=false when HideCounts set, got %v", tree["showCounts"])
+	}
+	if tree["expandAllByDefault"] != true {
+		t.Errorf("Expected expandAllByDefault=true, got %v", tree["expandAllByDefault"])
+	}
+	// Optional keys must be omitted when unset.
+	if _, exists := tree["treeColumn"]; exists {
+		t.Error("Expected treeColumn omitted when empty")
+	}
+	if _, exists := tree["addSubUrl"]; exists {
+		t.Error("Expected addSubUrl omitted when nil")
+	}
+}
+
 // TestPrintNilCtx verifies that Print(nil) does not panic
 func TestPrintNilCtx(t *testing.T) {
 	builder := NewBuilder[testDeviceRow]()

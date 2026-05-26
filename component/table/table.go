@@ -67,9 +67,24 @@ type TableOptions struct {
 	SelectButtons []*button.TableButton
 	Display       *string
 	Footer        *bool
-	ServerSide    *bool   // Enable server-side pagination (data fetched page-by-page)
-	ScrollHeight  *string // Custom scroll height for the table container (e.g., "400px", "80vh")
-	EditUrl       *string // URL for inline edit save requests (POST { id, field, value })
+	ServerSide    *bool       // Enable server-side pagination (data fetched page-by-page)
+	ScrollHeight  *string     // Custom scroll height for the table container (e.g., "400px", "80vh")
+	EditUrl       *string     // URL for inline edit save requests (POST { id, field, value })
+	Tree          *TreeConfig // Opt-in tree mode (indent + expand/collapse per row); nil = flat table
+}
+
+// TreeConfig configures the opt-in tree mode of a table.
+// When set, the frontend renders rows hierarchically (indent + expand/collapse) based
+// on the IdField/ParentIdField values of each flat row. When nil, the table is flat and
+// the JSON output is byte-for-byte identical to a table built without Tree().
+type TreeConfig struct {
+	IdField          string    // Row field holding the node ID (required)
+	ParentIdField    string    // Row field holding the parent node ID (required); null/0 = root
+	TreeColumn       string    // Column that renders the indentation; empty = first column
+	ExpandAllDefault bool      // Expand all nodes initially (default: false)
+	HideCounts       bool      // Hide the child-count "(5)" badge when collapsed (default: counts shown)
+	PersistStateKey  string    // localStorage key for expand-state persistence; empty = no persistence
+	AddSubURL        *xurl.Url // When set, renders a "+ sub" button per row; frontend navigates here ({id} placeholder)
 }
 
 // ============================================================================
@@ -479,6 +494,27 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 	}
 	if opts.EditUrl != nil {
 		options["editUrl"] = *opts.EditUrl
+	}
+
+	// Tree mode: serialize the nested tree settings object (only when opted in).
+	// Keys must match the frontend XiriTableTreeSettings interface exactly.
+	if opts.Tree != nil {
+		tree := map[string]any{
+			"idField":            opts.Tree.IdField,
+			"parentIdField":      opts.Tree.ParentIdField,
+			"expandAllByDefault": opts.Tree.ExpandAllDefault,
+			"showCounts":         !opts.Tree.HideCounts,
+		}
+		if opts.Tree.TreeColumn != "" {
+			tree["treeColumn"] = opts.Tree.TreeColumn
+		}
+		if opts.Tree.PersistStateKey != "" {
+			tree["persistStateKey"] = opts.Tree.PersistStateKey
+		}
+		if opts.Tree.AddSubURL != nil {
+			tree["addSubUrl"] = opts.Tree.AddSubURL.Print()
+		}
+		options["tree"] = tree
 	}
 
 	return options
