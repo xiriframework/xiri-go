@@ -78,13 +78,13 @@ type TableOptions struct {
 // on the IdField/ParentIdField values of each flat row. When nil, the table is flat and
 // the JSON output is byte-for-byte identical to a table built without Tree().
 type TreeConfig struct {
-	IdField          string    // Row field holding the node ID (required)
-	ParentIdField    string    // Row field holding the parent node ID (required); null/0 = root
-	TreeColumn       string    // Column that renders the indentation; empty = first column
-	ExpandAllDefault bool      // Expand all nodes initially (default: false)
-	HideCounts       bool      // Hide the child-count "(5)" badge when collapsed (default: counts shown)
-	PersistStateKey  string    // localStorage key for expand-state persistence; empty = no persistence
-	AddSubURL        *xurl.Url // When set, renders a "+ sub" button per row; frontend navigates here ({id} placeholder)
+	IdField            string    // Row field holding the node ID (required)
+	ParentIdField      string    // Row field holding the parent node ID (required); null/0 = root
+	TreeColumn         string    // Column that renders the indentation; empty = first column
+	CollapseAllDefault bool      // Start collapsed (default: false → tree starts fully expanded)
+	HideCounts         bool      // Hide the child-count "(5)" badge when collapsed (default: counts shown)
+	PersistStateKey    string    // localStorage key for expand-state persistence; empty = no persistence
+	AddSubURL          *xurl.Url // When set, renders a "+ sub" button per row; frontend navigates here ({id} placeholder)
 }
 
 // ============================================================================
@@ -500,10 +500,10 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 	// Keys must match the frontend XiriTableTreeSettings interface exactly.
 	if opts.Tree != nil {
 		tree := map[string]any{
-			"idField":            opts.Tree.IdField,
-			"parentIdField":      opts.Tree.ParentIdField,
-			"expandAllByDefault": opts.Tree.ExpandAllDefault,
-			"showCounts":         !opts.Tree.HideCounts,
+			"idField":              opts.Tree.IdField,
+			"parentIdField":        opts.Tree.ParentIdField,
+			"collapseAllByDefault": opts.Tree.CollapseAllDefault,
+			"showCounts":           !opts.Tree.HideCounts,
 		}
 		if opts.Tree.TreeColumn != "" {
 			tree["treeColumn"] = opts.Tree.TreeColumn

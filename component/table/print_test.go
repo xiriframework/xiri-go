@@ -236,8 +236,8 @@ func TestPrintTreeMode(t *testing.T) {
 	if tree["showCounts"] != true {
 		t.Errorf("Expected showCounts=true (default), got %v", tree["showCounts"])
 	}
-	if tree["expandAllByDefault"] != false {
-		t.Errorf("Expected expandAllByDefault=false (default), got %v", tree["expandAllByDefault"])
+	if tree["collapseAllByDefault"] != false {
+		t.Errorf("Expected collapseAllByDefault=false (default → expanded), got %v", tree["collapseAllByDefault"])
 	}
 
 	// parentId must be present in the row data (id-format field, not hidden).
@@ -276,10 +276,10 @@ func TestPrintTreeShowCountsDisabled(t *testing.T) {
 	builder.IdField("parentId", "", func(r testTreeRow) int64 { return r.ParentID })
 	builder.TextField("name", "device.name", func(r testTreeRow) string { return r.Name })
 	tbl := builder.Tree(TreeConfig{
-		IdField:          "id",
-		ParentIdField:    "parentId",
-		ExpandAllDefault: true,
-		HideCounts:       true,
+		IdField:            "id",
+		ParentIdField:      "parentId",
+		CollapseAllDefault: true,
+		HideCounts:         true,
 	}).Build()
 	tbl.SetData([]testTreeRow{{ID: 1, Name: "Wien"}})
 
@@ -289,8 +289,8 @@ func TestPrintTreeShowCountsDisabled(t *testing.T) {
 	if tree["showCounts"] != false {
 		t.Errorf("Expected showCounts=false when HideCounts set, got %v", tree["showCounts"])
 	}
-	if tree["expandAllByDefault"] != true {
-		t.Errorf("Expected expandAllByDefault=true, got %v", tree["expandAllByDefault"])
+	if tree["collapseAllByDefault"] != true {
+		t.Errorf("Expected collapseAllByDefault=true, got %v", tree["collapseAllByDefault"])
 	}
 	// Optional keys must be omitted when unset.
 	if _, exists := tree["treeColumn"]; exists {
