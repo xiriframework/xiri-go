@@ -29,6 +29,7 @@ type tableCore struct {
 	options    TableOptions
 	outputType OutputType       // Current output mode (Web, CSV, PDF, Excel)
 	components []core.Component // Additional components (charts, stats, progress bars, etc.)
+	poll       int              // Auto-refresh poll interval in ms (0 = disabled); emitted for Web output
 }
 
 // Table is a generic type-safe table that maintains type safety internally
@@ -121,6 +122,16 @@ func (tc *tableCore) GetOptions() TableOptions {
 // SetOutputType sets the output type for the table.
 func (tc *tableCore) SetOutputType(output OutputType) {
 	tc.outputType = output
+}
+
+// SetPoll sets the auto-refresh poll interval (in milliseconds). While set (> 0),
+// the table data response (via wc.Data(tbl) / DataResponse / ToTableDataResponse)
+// includes a "poll" field, causing the frontend to reload the whole table after the
+// given interval and show a table-wide auto-refresh indicator with countdown.
+// Pass 0 to disable. Typically set per request while a background worker is still
+// running for one of the rows.
+func (tc *tableCore) SetPoll(intervalMs int) {
+	tc.poll = intervalMs
 }
 
 // AddButtonTop adds a button to the table's top toolbar.

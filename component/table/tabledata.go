@@ -15,7 +15,7 @@ import (
 //
 // This is the new location for TableDataResponse. The old ui/component/table_data.go is deprecated.
 //
-// JSON format: {"data": [...], "fields": [...], "footer": {...}, "components": [...]}
+// JSON format: {"data": [...], "fields": [...], "footer": {...}, "components": [...], "poll": 2000}
 // CSV format: {"csv": "field1;field2\nval1;val2\n"}
 // Excel format: {"excel": <binary bytes>}
 type TableDataResponse struct {
@@ -28,6 +28,7 @@ type TableDataResponse struct {
 	includeFields bool             // Whether to include fields in JSON output
 	excelData     []byte           // Excel binary data (only populated for OutputExcel)
 	totalCount    *int             // Optional - total record count for server-side pagination
+	poll          *int             // Optional - auto-refresh poll interval in ms (Web output only)
 }
 
 // NewTableDataResponse creates a new TableDataResponse with the given row data and output type.
@@ -104,6 +105,25 @@ func (td *TableDataResponse) WithTotalCount(count int) *TableDataResponse {
 	return td
 }
 
+// WithPoll sets the auto-refresh poll interval (in milliseconds) for this response.
+// While set (> 0), the frontend reloads the whole table after the given interval and
+// shows a table-wide "auto-refresh active" indicator with a countdown. Omitting it
+// (or passing 0) stops the polling on the next response.
+//
+// Use this when a background worker is still running for one of the returned rows:
+//
+//	td := tbl.ToTableDataResponse(ctx)
+//	if jobsStillRunning {
+//	    td.WithPoll(2000)
+//	}
+//	return wc.Data(td)
+//
+// The interval is only emitted for Web (JSON) output, never for CSV/Excel.
+func (td *TableDataResponse) WithPoll(intervalMs int) *TableDataResponse {
+	td.poll = &intervalMs
+	return td
+}
+
 // AddComponent adds a UI component to be displayed alongside the table.
 // Components are stored as Component objects and only rendered (Print()) when
 // the final response is built. This allows translation to be applied correctly.
@@ -131,6 +151,7 @@ func (td *TableDataResponse) AddComponent(comp core.Component) *TableDataRespons
 //	  "fields": [...],            // Only if WithFields() was called
 //	  "footer": {...},            // Only if WithFooter() was called
 //	  "components": [...]         // Only if AddComponent() was called
+//	  "poll": 2000                // Only if WithPoll() was called (auto-refresh interval in ms)
 //	}
 //
 // Output format for OutputCSV:
@@ -185,6 +206,11 @@ func (td *TableDataResponse) Print(ctx *core.UiContext) map[string]any {
 	// Add footer if set
 	if td.footer != nil && len(td.footer) > 0 {
 		response["footer"] = td.footer
+	}
+
+	// Add poll interval if set (auto-refresh) — Web output only
+	if td.poll != nil && *td.poll > 0 {
+		response["poll"] = *td.poll
 	}
 
 	// Render components if any were added

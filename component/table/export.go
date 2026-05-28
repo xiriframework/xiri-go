@@ -73,6 +73,11 @@ func (t *Table[T]) ToTableDataResponse(ctx *core.UiContext) *TableDataResponse {
 		for _, comp := range t.components {
 			resp.AddComponent(comp)
 		}
+
+		// Propagate auto-refresh poll interval (Web output only)
+		if t.poll > 0 {
+			resp.WithPoll(t.poll)
+		}
 	}
 
 	return resp
