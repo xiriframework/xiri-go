@@ -72,10 +72,11 @@ const (
 type DialogType string
 
 const (
-	DialogTypeForm     DialogType = "form"
-	DialogTypeQuestion DialogType = "question"
-	DialogTypeWaiting  DialogType = "waiting"
-	DialogTypeTable    DialogType = "table"
+	DialogTypeForm      DialogType = "form"
+	DialogTypeQuestion  DialogType = "question"
+	DialogTypeWaiting   DialogType = "waiting"
+	DialogTypeTable     DialogType = "table"
+	DialogTypeComponent DialogType = "component"
 )
 
 // TabHeaderPosition represents where tab headers are positioned

@@ -67,10 +67,11 @@ CardTypeTable CardType = "table"
 ## DialogType
 
 ```go
-DialogTypeForm     DialogType = "form"
-DialogTypeQuestion DialogType = "question"
-DialogTypeWaiting  DialogType = "waiting"
-DialogTypeTable    DialogType = "table"
+DialogTypeForm      DialogType = "form"
+DialogTypeQuestion  DialogType = "question"
+DialogTypeWaiting   DialogType = "waiting"
+DialogTypeTable     DialogType = "table"
+DialogTypeComponent DialogType = "component"   // beliebige core.Component als Dialog-Inhalt
 ```
 
 ## TabHeaderPosition

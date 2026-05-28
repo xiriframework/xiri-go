@@ -44,7 +44,7 @@ u.PrintPrefix()  // mit Prefix   — API-Calls, form/table Submit-URLs
 | -------------------------------------------------------- | ------------------------------------------- |
 | **Eine ganze Seite** (Page, Grid-Layout, Header, Farben) | `references/pages.md`                       |
 | **Eine Tabelle** (Spalten, Row/Top/Bulk-Buttons)         | `references/tables.md`                      |
-| **Einen Dialog** (Delete, Form, Table, Waiting)          | `references/dialogs.md`                     |
+| **Einen Dialog** (Delete, Form, Table, Waiting, Component) | `references/dialogs.md`                     |
 | **Ein Formular** (Felder, showWhen, Validierung)         | `references/form-fields.md` + `form-builder.md` |
 | **Filter + Pagination** mit GORM                         | `references/table-filtering.md`             |
 | **End-to-End Pattern** (CRUD, MassEdit, MassDelete, Stepper, Inline-Edit, Dashboard) | `references/patterns.md`                    |

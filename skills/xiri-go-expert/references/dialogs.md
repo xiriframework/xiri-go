@@ -1,6 +1,6 @@
 # Dialoge — alle Typen + Workflows
 
-`component/dialog` bietet vier Dialog-Typen (`question`, `form`, `table`, `waiting`) plus eine Handvoll Helper für die häufigen Fälle (Delete, Warning, MultiDelete). Jeder Dialog wird vom Backend als JSON-Response geliefert, das Frontend öffnet einen MatDialog daraus.
+`component/dialog` bietet fünf Dialog-Typen (`question`, `form`, `table`, `waiting`, `component`) plus eine Handvoll Helper für die häufigen Fälle (Delete, Warning, MultiDelete). Jeder Dialog wird vom Backend als JSON-Response geliefert, das Frontend öffnet einen MatDialog daraus.
 
 ## Dialog-Interface
 
@@ -25,7 +25,7 @@ type Dialog interface {
 
 ```go
 func dialog.NewDialog(
-    dialogType core.DialogType,         // DialogTypeQuestion | Form | Table | Waiting
+    dialogType core.DialogType,         // DialogTypeQuestion | Form | Table | Waiting | Component
     header     string,
     content    any,                      // DialogContent oder Component (wird geprintet)
     buttons    []*button.Button,
@@ -254,6 +254,42 @@ return wc.Component(dlg)
 
 Der Frontend-Flow: User klickt in der Zeile, `select`-Button liefert den Wert (`r.ID`) zurück an das Form, das den Dialog geöffnet hat.
 
+## Component-Dialog — beliebige Komponente im Dialog
+
+```go
+func dialog.NewDialogComponent(header string, component core.Component) Dialog
+```
+
+Rendert eine **beliebige `core.Component`** (z. B. `expansion`, `card`, `stepper`, `tabs`) als Dialog-Inhalt — ideal für read-only Detail-/Info-Ansichten, die mehr als eine Tabelle brauchen. Erzeugt einen `DialogTypeComponent` mit einem Default-`Close`-Button.
+
+Funktioniert **ohne eigene Serialisierung**, weil `core.Component` und `DialogContent` dieselbe Signatur `Print(ctx *core.UiContext) map[string]any` haben: `dialogImpl.Print()` ruft `component.Print(ctx)` und bettet das Ergebnis (`{type, display, data}`) als `content` ein. Das Frontend rendert diesen `content` über den generischen `xiri-dyncomponent` (siehe xiri-ng-expert).
+
+Anpassungen laufen über die fluente `Dialog`-Schnittstelle (`WithSize`, `SetButtons`, …).
+
+### Beispiel: Expansion-Akkordeon im Dialog
+
+```go
+func (c *Controller) OrderDetails(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
+    o, _ := c.svc.DB.Order.GetByID(id)
+
+    exp := expansion.NewExpansion().WithMulti(true).
+        AddPanel(expansion.NewPanel("Lieferadresse").WithIcon("local_shipping").WithExpanded(true).
+            AddContent(layout.NewHtml(renderAddress(o.Delivery), nil))).
+        AddPanel(expansion.NewPanel("Rechnungsadresse").WithIcon("receipt_long").
+            AddContent(layout.NewHtml(renderAddress(o.Billing), nil)))
+
+    dlg := dialog.NewDialogComponent(fmt.Sprintf("Order #%d", o.ID), exp).
+        WithSize(dialog.SizeLg)
+    return wc.Component(dlg)
+}
+```
+
+GET liefert `{header, type:"component", content:{type:"expansion", display, data:{panels:[…]}}, buttons:[close]}`. Da der Inhalt read-only ist, gibt es i. d. R. keinen POST-Submit — nur der Close-Button.
+
+> **Tipp:** Mehrere aufklappbare Abschnitte als gestapelte, unabhängige Panels gehören in eine `expansion` (echtes Akkordeon). Mehrere collapsible `HeaderField` in *einem Formular* erzeugen ebenfalls gestapelte Sektionen (jeder Header startet seine eigene Section bis zum nächsten Header) — aber ohne nestbare Inhalte. Für reine Detail-Ansichten im Dialog ist `NewDialogComponent` + `expansion` der direkte Weg.
+
 ## Waiting-Dialog — Long-Running-Tasks mit Polling
 
 ```go
@@ -424,7 +460,7 @@ Eingebaut:
 | `DialogQuestionContent` | `{icon, question}` — für Confirm-Dialoge  |
 | `DialogWaitingContent`  | `{icon, text}`     — für Waiting-Anzeige  |
 
-Custom-Content (z.B. eine Komponente): einfach eine Komponente als `content` an `NewDialog` übergeben. `dialogImpl.Print` ruft `content.Print(ctx)` (wenn es ein `core.Component` oder `DialogContent` ist) automatisch auf.
+Custom-Content (z.B. eine Komponente): einfach eine Komponente als `content` an `NewDialog` übergeben. `dialogImpl.Print` ruft `content.Print(ctx)` (wenn es ein `core.Component` oder `DialogContent` ist) automatisch auf. Für genau diesen Fall gibt es den Convenience-Konstruktor `NewDialogComponent(header, component)` mit `DialogTypeComponent` (siehe oben).
 
 ## Häufige Fehler
 
