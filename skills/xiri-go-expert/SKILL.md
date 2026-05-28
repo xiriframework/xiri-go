@@ -145,6 +145,9 @@ response.NewReturnDone()                 // Fertig
 response.NewReturnSuccess("Gespeichert") // Snackbar
 resp.WithMessage("Text", response.MessageSuccess)
 response.NewReturnInlineEdit().WithUpdates(upd).WithRefreshTable()
+response.NewReturnPoll(statusUrl, 2000)  // selbst-pollender Button (.WithText / .WithButton)
+response.NewButtonPatch().WithText("Erledigt").WithColor("success").Disable() // Button am Ende ändern (.WithButton)
+tbl.SetPoll(2000)                        // Tabelle pollt selbsttätig (auto-refresh), solange gesetzt
 ```
 
 ### Farben / Button-Types

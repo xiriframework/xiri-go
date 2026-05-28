@@ -269,3 +269,89 @@ func TestNewReturnError(t *testing.T) {
 		t.Errorf("expected %s, got %s", expected, string(data))
 	}
 }
+
+func TestNewReturnPoll(t *testing.T) {
+	r := NewReturnPoll("Test/Worker/Status", 2000)
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"poll":2000,"pollUrl":"Test/Worker/Status"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestNewReturnPollEmptyUrlOmitted(t *testing.T) {
+	r := NewReturnPoll("", 1500)
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"poll":1500}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnPollWithMessage(t *testing.T) {
+	r := NewReturnPoll("Test/Worker/Status", 2000).WithMessage("Started", MessageInfo)
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"poll":2000,"pollUrl":"Test/Worker/Status","message":"Started","messageType":"info"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnPollWithText(t *testing.T) {
+	r := NewReturnPoll("Test/Worker/Status", 2000).WithText("läuft… 50 %")
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"poll":2000,"pollUrl":"Test/Worker/Status","text":"läuft… 50 %"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnMessageWithButton(t *testing.T) {
+	r := NewReturnSuccess("Worker fertig").
+		WithButton(NewButtonPatch().WithText("Erledigt").WithColor("success").Disable())
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"button":{"text":"Erledigt","color":"success","disabled":true},"message":"Worker fertig","messageType":"success"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnPollWithButton(t *testing.T) {
+	r := NewReturnPoll("Test/Worker/Status", 2000).
+		WithButton(NewButtonPatch().WithColor("warn"))
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"poll":2000,"pollUrl":"Test/Worker/Status","button":{"color":"warn"}}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}

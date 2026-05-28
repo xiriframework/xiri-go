@@ -13,6 +13,44 @@ type SuccessResponse interface {
 	isSuccessResponse()
 }
 
+// ButtonPatch describes optional overrides applied to the initiating button after a response
+// (e.g. when a worker finishes): change its label, color, icon, type, hint or disabled state.
+// Attached via WithButton on a response and merged onto the button in the frontend.
+//
+// JSON output (only set fields): {"text":"Erledigt","color":"success","disabled":true}
+type ButtonPatch struct {
+	Text     string `json:"text,omitempty"`
+	Color    string `json:"color,omitempty"`
+	Icon     string `json:"icon,omitempty"`
+	Type     string `json:"type,omitempty"`
+	Hint     string `json:"hint,omitempty"`
+	Disabled *bool  `json:"disabled,omitempty"`
+}
+
+// NewButtonPatch creates an empty button patch; chain the With* helpers to set fields.
+func NewButtonPatch() ButtonPatch { return ButtonPatch{} }
+
+// WithText sets the new button label.
+func (b ButtonPatch) WithText(text string) ButtonPatch { b.Text = text; return b }
+
+// WithColor sets the new button color (e.g. "success", "warn", "primary").
+func (b ButtonPatch) WithColor(color string) ButtonPatch { b.Color = color; return b }
+
+// WithIcon sets the new button icon.
+func (b ButtonPatch) WithIcon(icon string) ButtonPatch { b.Icon = icon; return b }
+
+// WithType sets the new button type (e.g. "raised", "flat").
+func (b ButtonPatch) WithType(t string) ButtonPatch { b.Type = t; return b }
+
+// WithHint sets the new button tooltip/hint.
+func (b ButtonPatch) WithHint(hint string) ButtonPatch { b.Hint = hint; return b }
+
+// Disable marks the button disabled.
+func (b ButtonPatch) Disable() ButtonPatch { v := true; b.Disabled = &v; return b }
+
+// Enable marks the button enabled.
+func (b ButtonPatch) Enable() ButtonPatch { v := false; b.Disabled = &v; return b }
+
 // MessageType defines the type of snackbar/toast message shown to the user.
 type MessageType string
 
@@ -164,7 +202,8 @@ func (r ReturnGoto) WithMessage(text string, msgType MessageType) ReturnGoto {
 //
 // Use case: Operation completed, no further action needed
 type ReturnDone struct {
-	Done bool `json:"done"` // Always true
+	Done   bool         `json:"done"` // Always true
+	Button *ButtonPatch `json:"button,omitempty"`
 	Message
 }
 
@@ -177,17 +216,72 @@ func (r ReturnDone) WithMessage(text string, msgType MessageType) ReturnDone {
 	return r
 }
 
+// WithButton attaches button overrides applied after the action (text, color, disabled, …).
+func (r ReturnDone) WithButton(button ButtonPatch) ReturnDone {
+	r.Button = &button
+	return r
+}
+
 // ReturnMessage represents a standalone message response (snackbar only, no navigation).
 //
 // JSON output: {"done": true, "message": "Settings saved", "messageType": "success"}
 //
 // Use case: Show a message to the user without any page action
 type ReturnMessage struct {
-	Done bool `json:"done"` // Always true
+	Done   bool         `json:"done"` // Always true
+	Button *ButtonPatch `json:"button,omitempty"`
 	Message
 }
 
 func (r ReturnMessage) isSuccessResponse() {}
+
+// WithButton attaches button overrides applied after the action (text, color, disabled, …).
+func (r ReturnMessage) WithButton(button ButtonPatch) ReturnMessage {
+	r.Button = &button
+	return r
+}
+
+// ReturnPoll tells a button (or other initiator) to keep polling a status endpoint
+// at the given interval until a response without "poll" is returned.
+//
+// JSON output: {"done": true, "poll": 2000, "pollUrl": "Test/Worker/Status"}
+// With message: {"done": true, "poll": 2000, "pollUrl": "...", "message": "Started", "messageType": "info"}
+//
+// Use case: A button triggers a background worker (via api action or a dialog). While the
+// worker runs, return ReturnPoll so the frontend re-fetches PollUrl (GET) every Poll ms and
+// shows a countdown in the button. When the worker finishes, return a normal response without
+// poll (e.g. ReturnRefreshTable/ReturnDone) to stop the polling.
+type ReturnPoll struct {
+	Done    bool   `json:"done"`              // Always true
+	Poll    int    `json:"poll"`              // Poll interval in milliseconds
+	PollUrl string       `json:"pollUrl,omitempty"` // Status endpoint polled via GET (optional)
+	Text    string       `json:"text,omitempty"`    // Optional label shown inside the button while polling (e.g. "läuft… 50 %")
+	Button  *ButtonPatch `json:"button,omitempty"`  // Optional overrides applied to the initiating button
+	Message
+}
+
+func (r ReturnPoll) isSuccessResponse() {}
+
+// WithButton attaches button overrides applied while/after polling (text, color, disabled, …).
+func (r ReturnPoll) WithButton(button ButtonPatch) ReturnPoll {
+	r.Button = &button
+	return r
+}
+
+// WithMessage returns a copy with the given message and type.
+func (r ReturnPoll) WithMessage(text string, msgType MessageType) ReturnPoll {
+	r.MessageText = text
+	r.MessageType = msgType
+	return r
+}
+
+// WithText returns a copy that shows the given label inside the polling button
+// (replacing the default countdown). Can be updated on every poll tick to reflect
+// real progress, e.g. "läuft… 50 %".
+func (r ReturnPoll) WithText(text string) ReturnPoll {
+	r.Text = text
+	return r
+}
 
 // Constructor functions
 
@@ -203,6 +297,19 @@ func NewReturnRefreshPage() ReturnRefreshPage {
 // Returns: {"done": true, "refresh": "table"}
 func NewReturnRefreshTable() ReturnRefreshTable {
 	return ReturnRefreshTable{Done: true, Refresh: "table"}
+}
+
+// NewReturnPoll creates a poll response that asks the frontend to keep polling pollUrl
+// every intervalMs milliseconds until a response without "poll" is returned.
+//
+// Parameters:
+//   - pollUrl: the status endpoint to GET each tick (e.g. u.PrintPrefix()); may be empty
+//     to let the initiator fall back to its own url
+//   - intervalMs: poll interval in milliseconds
+//
+// Returns: {"done": true, "poll": intervalMs, "pollUrl": pollUrl}
+func NewReturnPoll(pollUrl string, intervalMs int) ReturnPoll {
+	return ReturnPoll{Done: true, Poll: intervalMs, PollUrl: pollUrl}
 }
 
 // NewReturnGoto creates a redirect/goto response.

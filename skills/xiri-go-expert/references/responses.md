@@ -65,6 +65,61 @@ resp := response.NewReturnError("Fehler beim Speichern")
 resp := response.NewReturnMessage("Hinweis", response.MessageWarning)
 ```
 
+### ReturnPoll — selbst-pollender Button (Background-Worker)
+
+Sagt dem auslösenden **Button** (oder anderem Initiator), eine Status-URL im Intervall
+weiter abzufragen, bis eine Antwort **ohne** `poll` kommt. Der Button zeigt währenddessen
+Spinner + Countdown (oder freien Text, s.u.) und ist disabled. Verwendung: Ein Button (per
+`action:'api'` oder Dialog) stößt einen Worker an; solange er läuft, liefert der
+Status-Handler `ReturnPoll`, am Ende eine normale Response (Snackbar/Refresh/Goto/Done).
+
+```go
+// Start-Handler: Worker anstoßen + Polling aktivieren
+return wc.Component(response.NewReturnPoll(statusUrl.PrintPrefix(), 2000).
+    WithMessage("Worker gestartet", response.MessageInfo))
+// → {"done":true,"poll":2000,"pollUrl":"/api/.../Status","message":"Worker gestartet","messageType":"info"}
+
+// Status-Handler (wird vom Button per GET gepollt):
+if worker.Running() {
+    return wc.Component(response.NewReturnPoll(statusUrl.PrintPrefix(), 2000).
+        WithText(fmt.Sprintf("läuft… %d %%", worker.Percent())))   // freier Button-Text pro Tick
+}
+// fertig → kein poll → Button stoppt; finale Response normal verarbeitet:
+return wc.Component(response.NewReturnRefreshTable().WithMessage("Fertig", response.MessageSuccess))
+```
+
+- `poll` (ms): Intervall; fehlt es / 0 → Polling stoppt.
+- `pollUrl`: Status-Endpoint (GET). Optional — fehlt er, nutzt der Button seine eigene `url`.
+  Bei **Dialog**-Buttons ist `pollUrl` Pflicht (button.url ist dort die Dialog-URL).
+- `WithText(...)`: optionaler Text **im Button** während des Pollings (überschreibt den
+  Countdown); kann pro Tick aktualisiert werden → echter Fortschritt.
+- Die finale Response (ohne poll) läuft durch den ResponseHandler → kann `RefreshPage`,
+  `RefreshTable`, `Goto`, `Message` sein.
+
+### ButtonPatch — Button am Ende/laufend ändern (`WithButton`)
+
+Jede Antwort, die ein Button verarbeitet (Poll-Tick **oder** finale Antwort), darf den
+Button selbst patchen: Text, Farbe, Icon, Type, Hint, disabled. Verfügbar via `WithButton`
+auf `ReturnPoll`, `ReturnMessage`, `ReturnDone`. Der Patch bleibt bestehen, bis die Aktion
+erneut ausgelöst wird.
+
+```go
+response.NewButtonPatch().
+    WithText("Erledigt ✓").WithColor("success").WithIcon("check").Disable()
+// → {"text":"Erledigt ✓","color":"success","icon":"check","disabled":true}
+
+// am Ende: Snackbar + Button auf "Erledigt"/grün/disabled
+return wc.Component(response.NewReturnSuccess("Worker fertig").
+    WithButton(response.NewButtonPatch().WithText("Erledigt ✓").WithColor("success").Disable()))
+
+// während des Pollings: Button-Farbe wechseln
+return wc.Component(response.NewReturnPoll(statusUrl.PrintPrefix(), 2000).
+    WithButton(response.NewButtonPatch().WithColor("warn")))
+```
+
+Setter: `WithText`, `WithColor`, `WithIcon`, `WithType`, `WithHint`, `Disable()`, `Enable()`
+(alle fluent, nur gesetzte Felder landen im JSON).
+
 ## Error Response
 
 Für HTTP-Fehler (400, 404, 500, etc.).

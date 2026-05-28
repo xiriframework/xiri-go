@@ -405,7 +405,7 @@ b.SetTextNoData("Keine Geräte")
 b.SetEmptyState(emptystateComponent)           // ganze EmptyState-Komponente
 
 // Features aktivieren/deaktivieren (bool-Pointer, Default: meist true)
-b.SetReload(true)           // Polling-Reload
+b.SetReload(true)           // manueller Reload-Button (Icon in der Toolbar)
 b.SetDense(true)            // enger Zeilen-Spacing
 b.SetPagination(true)
 b.SetSearch(true)
@@ -448,6 +448,31 @@ tbl := table.NewBuilder[Device]().
     SetSelectButtons(bulkButtons).
     Build()
 ```
+
+## Auto-Refresh (Polling während Background-Worker)
+
+Solange ein Background-Worker für Zeilen der Tabelle läuft, kann die Tabelle sich
+**selbsttätig** im Intervall neu laden — ohne dass der User manuell aktualisiert. Der
+Status steht dabei in den normalen Spalten; das Frontend zeigt tabellen-weit im Header
+„Auto-Refresh aktiv · nächste in Xs" mit Countdown. Sobald die Response **kein** `poll`
+mehr enthält, stoppt das Polling automatisch.
+
+Gesetzt wird das **pro Request** (zustandsabhängig), nicht am Builder:
+
+```go
+// im Daten-Handler, nachdem die Rows geladen sind:
+tbl.SetData(rows)
+if anyJobRunning {
+    tbl.SetPoll(2000)   // ms — fließt über wc.Data(tbl) als "poll":2000 in die Response
+}
+return wc.Data(tbl)
+```
+
+`SetPoll(ms)` liegt auf der gebauten `*Table[T]` und wird über
+`ToTableDataResponse` / `DataResponse` (Web-Output) durchgereicht. Alternativ direkt auf
+der Daten-Response: `tbl.ToTableDataResponse(ctx).WithPoll(2000)`. Für CSV/Excel wird `poll`
+nie ausgegeben. Worker fertig → `SetPoll` einfach **nicht** setzen → Response ohne `poll`
+→ Frontend stoppt.
 
 ## Tree-Modus (Hierarchie mit Einrückung + Expand/Collapse)
 
