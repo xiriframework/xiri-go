@@ -14,9 +14,11 @@ xiri-go provides Go types and builders for generating JSON that drives the xiri-
 
 ```go
 type Component interface {
-    Print(TranslateFunc) map[string]any
+    Print(ctx *core.UiContext) map[string]any
 }
 ```
+
+`*core.UiContext` carries per-request locale, timezone and an optional `Translate` function; it is nil-safe (pass `nil` for defaults).
 
 ### Packages
 
@@ -29,11 +31,20 @@ type Component interface {
 
 ## Quick Start
 
+A complete, runnable Echo server that serves a full page (header + data table) as JSON
+for the xiri-ng frontend to render. Copy, `go mod tidy`, run, done.
+
 ```go
+package main
+
 import (
+    "net/http"
+
+    "github.com/labstack/echo/v4"
+    "github.com/xiriframework/xiri-go/component/core"
+    "github.com/xiriframework/xiri-go/component/page"
+    "github.com/xiriframework/xiri-go/component/pageheader"
     "github.com/xiriframework/xiri-go/component/table"
-    "github.com/xiriframework/xiri-go/response"
-    "github.com/xiriframework/xiri-go/uicontext"
 )
 
 type Device struct {
@@ -41,18 +52,47 @@ type Device struct {
     Name string
 }
 
-func handleDeviceTable(ctx *uicontext.UiContext, translate func(string) string) map[string]any {
-    builder := table.NewBuilder[Device]()
+func main() {
+    e := echo.New()
+    e.GET("/api/devices", devicesPage)
+    e.Logger.Fatal(e.Start(":8080")) // xiri-ng dev server proxies /api here
+}
 
-    builder.IdField("id", "device.id", func(r Device) int64 { return r.ID })
-    builder.TextField("name", "device.name", func(r Device) string { return r.Name })
+func devicesPage(c echo.Context) error {
+    ctx := &core.UiContext{} // per-request locale/timezone/translator; nil-safe defaults
 
-    tbl := builder.Build()
-    tbl.SetData(devices)
+    // Typed table over the Device struct (inline data — no extra endpoint needed).
+    b := table.NewBuilder[Device]()
+    b.IdField("id", "ID", func(r Device) int64 { return r.ID })
+    b.TextField("name", "Name", func(r Device) string { return r.Name }).WithSort(true)
+    tbl := b.Build()
+    tbl.SetData([]Device{{ID: 1, Name: "Alpha"}, {ID: 2, Name: "Beta"}})
 
-    return response.NewDataResponse(tbl.Print(translate))
+    // Assemble the page and return its JSON.
+    p := page.NewPage()
+    p.Add(pageheader.New("Devices").Icon("devices", core.ColorPrimary))
+    p.Add(tbl)
+    return c.JSON(http.StatusOK, p.Print(ctx))
 }
 ```
+
+The matching frontend is a single Angular "DynPage" route that fetches this URL and renders
+the JSON via `xiri-dyncomponent` — see the [xiri-ng Quick Start](https://github.com/xiriframework/xiri-ng#quick-start).
+For larger apps, give a table its own data endpoint via `tbl.SetURL(...)` and return
+`wc.Data(tbl)` / `tbl.DataResponse(ctx)`; details in the bundled skill (below).
+
+## Start a new project (and let Claude help)
+
+The fastest path to a new Xiri app is to install **both** Claude Code skills, then describe
+what you want to build:
+
+- **`xiri-go-expert`** — bundled in this repo (see below). Knows every builder, response type,
+  filter/pagination pattern, dialog and URL-routing convention.
+- **`xiri-ng-expert`** — bundled in [xiri-ng](https://github.com/xiriframework/xiri-ng#claude-code-integration--xiri-ng-expert-skill).
+  Knows the Angular side: `provideXiriServices`, `xiri-dyncomponent`, tables, forms, theming.
+
+With both installed, Claude can scaffold the backend handlers **and** the matching Angular
+shell from a single prompt — no need to read the full API by hand.
 
 ## Requirements
 
