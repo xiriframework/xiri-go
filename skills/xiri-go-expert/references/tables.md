@@ -206,13 +206,21 @@ b.TextField("prio", "Prio", accessor).
     })                                     // Dropdown mit statischen Options
 
 b.TextField("owner", "Owner", accessor).
-    WithEditableOptionsUrl("/api/owners")  // Dropdown: Options vom Backend
+    WithEditableOptionsUrl("/api/owners")  // Dropdown: Options vom Backend (GET, einmalig)
+
+b.TextField("status", "Status", accessor).
+    WithEditableOptions(opts).
+    WithEditableOptionsSearch(true)        // Suchfeld, client-seitig (lokal filtern)
+
+b.TextField("owner", "Owner", accessor).
+    WithEditableSearchOptionsUrl("/api/owners/search") // Suchfeld, SERVER-seitig
+                                           // POST {id, field, search} → [{value,label,color?}]
 
 b.TextField("tags", "Tags", accessor).
     WithEditableChipOptions([]table.EditableChipOption{
         {Value: "fe", Label: "Frontend", Color: core.ColorPrimary},
         {Value: "be", Label: "Backend",  Color: core.ColorAccent},
-    })                                     // Chip-MultiSelect
+    })                                     // Chip-MultiSelect (Suche via WithEditableOptionsSearch/WithEditableSearchOptionsUrl kombinierbar)
 ```
 
 Die Tabelle selbst braucht dafür `b.SetEditUrl(c.apiUrl("inline-edit").PrintPrefix())` — das POST-Target für `tbl.ParseInlineEdit(ctx)`.

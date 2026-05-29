@@ -326,6 +326,38 @@ func (fb *FieldBuilder) WithEditableChipOptions(options []EditableChipOption) *F
 	return fb
 }
 
+// WithEditableOptionsSearch adds a search box to the inline-edit select for
+// client-side filtering of the option list. The options themselves still come
+// from WithEditableOptions (static) or WithEditableOptionsUrl (loaded per row);
+// this only enables the search input and local filtering by label.
+// Automatically sets editable=true.
+//
+// For server-side search use WithEditableSearchOptionsUrl instead.
+func (fb *FieldBuilder) WithEditableOptionsSearch(enable bool) *FieldBuilder {
+	fb.base.editable = true
+	fb.base.editableOptionsSearch = enable
+	return fb
+}
+
+// WithEditableSearchOptionsUrl marks the field as inline-editable with a
+// server-side searchable select. The Angular frontend shows a search box and,
+// on each (debounced) keystroke, POSTs {id, field, search} to url and renders
+// the returned []{value, label, color?} as options. Combine with
+// WithEditableOptions to seed the dropdown with initial options shown before
+// the user types.
+// Automatically sets editable=true and enables the search box.
+//
+// Example:
+//
+//	builder.TextField("category", "Category", categoryAccessor).
+//	    WithEditableSearchOptionsUrl("/api/categories/search")
+func (fb *FieldBuilder) WithEditableSearchOptionsUrl(url string) *FieldBuilder {
+	fb.base.editable = true
+	fb.base.editableSearchUrl = url
+	fb.base.editableOptionsSearch = true
+	return fb
+}
+
 // WithAccess sets required permissions
 func (fb *FieldBuilder) WithAccess(access []string) *FieldBuilder {
 	fb.base.access = access

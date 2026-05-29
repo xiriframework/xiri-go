@@ -119,9 +119,11 @@ type tableFieldJSON struct {
 	textSuffix *string
 
 	// inline editing
-	editable           bool
-	editableOptions    []editableOption
-	editableOptionsUrl string
+	editable              bool
+	editableOptions       []editableOption
+	editableOptionsUrl    string
+	editableOptionsSearch bool
+	editableSearchUrl     string
 
 	// access control
 	access []string
@@ -203,6 +205,12 @@ func (tf *tableFieldJSON) print(ctx *core.UiContext) map[string]any {
 	}
 	if tf.editableOptionsUrl != "" {
 		ret["editableOptionsUrl"] = tf.editableOptionsUrl
+	}
+	if tf.editableOptionsSearch {
+		ret["editableOptionsSearch"] = true
+	}
+	if tf.editableSearchUrl != "" {
+		ret["editableSearchUrl"] = tf.editableSearchUrl
 	}
 
 	// Text decoration

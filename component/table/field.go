@@ -50,9 +50,11 @@ type fieldBase struct {
 	textSuffix *string // Text suffix (e.g., " km", " €")
 
 	// Inline editing
-	editable           bool              // Field supports inline editing
-	editableOptions    []editableOption  // Predefined options for select-based inline editing
-	editableOptionsUrl string            // URL to load options dynamically per row
+	editable              bool             // Field supports inline editing
+	editableOptions       []editableOption // Predefined options for select-based inline editing
+	editableOptionsUrl    string           // URL to load options dynamically per row
+	editableOptionsSearch bool             // Show a search box in the inline-edit select (client-side filtering)
+	editableSearchUrl     string           // URL for server-side search: POST {id, field, search} -> [{value,label,color?}]
 
 	// Access control (potentially handled at higher level)
 	access []string // Required permissions
@@ -215,9 +217,11 @@ func (f *fieldBase) toTableField() *tableFieldJSON {
 		textSuffix: f.textSuffix,
 
 		// Unexported fields - inline editing
-		editable:           f.editable,
-		editableOptions:    f.editableOptions,
-		editableOptionsUrl: f.editableOptionsUrl,
+		editable:              f.editable,
+		editableOptions:       f.editableOptions,
+		editableOptionsUrl:    f.editableOptionsUrl,
+		editableOptionsSearch: f.editableOptionsSearch,
+		editableSearchUrl:     f.editableSearchUrl,
 
 		// Unexported fields - access control
 		access: f.access,

@@ -155,11 +155,24 @@ b.TextField("status", "Status", accessor).
     })
 
 // Select (dynamische Optionen per URL)
-// Frontend ruft GET {url}?id={rowId}&field={fieldId} auf
+// Frontend ruft GET {url}?id={rowId}&field={fieldId} auf — lädt EINMALIG die ganze Liste
 b.TextField("category", "Kategorie", accessor).
     WithEditableOptionsUrl("/api/categories")
 
+// Select mit Suchfeld, client-seitig (filtert die statische/geladene Liste lokal)
+b.TextField("status", "Status", accessor).
+    WithEditableOptions(map[string]string{"active": "Aktiv", "inactive": "Inaktiv"}).
+    WithEditableOptionsSearch(true)
+
+// Select mit SERVER-seitiger Suche (für große, remote-ladbare Listen)
+// Frontend POSTet pro (debounced) Tastendruck {id, field, search} → [{value,label,color?}]
+// Optional mit WithEditableOptions kombinieren für Initial-Optionen vor dem Tippen.
+b.TextField("category", "Kategorie", accessor).
+    WithEditableSearchOptionsUrl("/api/categories/search")
+
 // Chips (Multi-Select mit Farben — INLINE-EDIT)
+// Suche funktioniert auch hier: WithEditableOptionsSearch(true) bzw. WithEditableSearchOptionsUrl(...)
+// mit WithEditableChipOptions kombinieren.
 // Der Accessor liefert hier den aktuellen String-Slice der ausgewählten Werte.
 // Für reine Anzeige-Chips ohne Edit: siehe ChipsField oben.
 b.TextField("tags", "Tags", chipsAccessor).
@@ -212,6 +225,10 @@ type EditableChipOption struct {
     Label string
     Color core.Color
 }
+
+// Server-seitige Such-Optionen (WithEditableSearchOptionsUrl):
+// Request  (Frontend → Backend, POST an die Such-URL): { "id": ..., "field": "...", "search": "..." }
+// Response (Backend → Frontend): [ { "value": "...", "label": "...", "color": "..." }, ... ]
 ```
 
 ## Buttons in ButtonsField
