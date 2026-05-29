@@ -108,9 +108,38 @@ Der Go-Endpoint der diese Struktur liefert, baut sie mit `xurl.NewUrl(pagePrefix
 
 **Regel:** `pagePrefix` in Go = `prefix` in Sidebar-Config = gemeinsamer Anfang aller Page-URLs.
 
+### Aufklappbare Menüs (bis zu 3 Ebenen)
+
+Ein `XiriNavigationField` ist entweder ein **Link** (`link`), ein **externer Link** (`extern`) oder ein **aufklappbares Menü** (`menu: true` + `sub: XiriNavigationField[]`). Seit der Sidebar-Erweiterung können Sub-Einträge ihrerseits `menu: true` mit eigenem `sub` sein — damit sind **drei Ebenen** möglich (Top → Sub → Sub-Sub). Tiefer rendert das Frontend bewusst nicht; die dritte Ebene sind Blätter (`link`/`extern`).
+
+```json
+{
+  "prefix": "/portal/",
+  "fields": [
+    {
+      "name": "Forms", "icon": "edit_note", "menu": true,
+      "sub": [
+        { "name": "Basic", "link": "/portal/forms/basic", "icon": "text_fields" },
+        {
+          "name": "Advanced", "icon": "tune", "menu": true,
+          "sub": [
+            { "name": "Select",  "link": "/portal/forms/advanced/select" },
+            { "name": "Special", "link": "/portal/forms/advanced/special" }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+`menu`-Knoten brauchen kein `link` — der Klick togglet nur das Auf-/Zuklappen (`showSubmenu` wird vom Frontend verwaltet, nicht setzen). Alle URLs in `link` bleiben **ohne** API-Prefix, auf jeder Ebene.
+
 ## Active-State Matching
 
-Wenn die Sidebar eine bestimmte Section hervorheben soll, bei mehreren URL-Varianten (`/devices`, `/devices/edit/42`, `/devices/add`), kann man im `XiriNavigationField.path` ein Regex setzen — aber das ist Frontend-Sache und kommt in die JSON-Response der Sidebar-Endpoint.
+Wenn die Sidebar eine bestimmte Section hervorheben soll, bei mehreren URL-Varianten (`/devices`, `/devices/edit/42`, `/devices/add`), kann man im `XiriNavigationField.path` ein Regex setzen — das funktioniert auf **jeder** Ebene (auch auf einem verschachtelten `menu`-Knoten) und ist reine Frontend-Sache in der JSON-Response des Sidebar-Endpoints.
+
+Bei einem aktiven (Tief-)Link klappt das Frontend automatisch **alle Vorfahren** auf und markiert den aktiven Eintrag — man muss also keinen Expand-Zustand vorberechnen. `active`/`showSubmenu` nicht im Backend setzen; sie werden aus der aktuellen Route abgeleitet.
 
 ## Häufige Fallen
 
