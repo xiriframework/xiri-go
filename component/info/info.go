@@ -7,6 +7,7 @@ import "github.com/xiriframework/xiri-go/component/core"
 type InfoText struct {
 	text    string
 	display *string
+	html    bool
 }
 
 // NewInfoText creates a new info text component
@@ -24,14 +25,25 @@ func (it *InfoText) WithDisplay(display string) *InfoText {
 	return it
 }
 
+// WithHtml renders the text as raw HTML in the frontend (opt-in)
+// Returns the InfoText for method chaining
+func (it *InfoText) WithHtml() *InfoText {
+	it.html = true
+	return it
+}
+
 // Print returns the JSON representation of the info text
 func (it *InfoText) Print(ctx *core.UiContext) map[string]any {
+	data := map[string]any{
+		"text": it.text,
+	}
+	if it.html {
+		data["html"] = true
+	}
 	return map[string]any{
 		"type":    "infotext",
 		"display": it.display,
-		"data": map[string]any{
-			"text": it.text,
-		},
+		"data":    data,
 	}
 }
 
@@ -47,6 +59,7 @@ type InfoPoint struct {
 	dense     *bool
 	display   *string
 	compact   bool
+	html      bool
 }
 
 // NewInfoPoint creates a new info point component with required parameters
@@ -124,6 +137,13 @@ func (ip *InfoPoint) Compact() *InfoPoint {
 	return ip
 }
 
+// WithHtml renders text and subtext as raw HTML in the frontend (opt-in)
+// Returns the InfoPoint for method chaining
+func (ip *InfoPoint) WithHtml() *InfoPoint {
+	ip.html = true
+	return ip
+}
+
 // Print returns the JSON representation of the info point
 func (ip *InfoPoint) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
@@ -138,6 +158,9 @@ func (ip *InfoPoint) Print(ctx *core.UiContext) map[string]any {
 	}
 	if ip.compact {
 		data["compact"] = true
+	}
+	if ip.html {
+		data["html"] = true
 	}
 	return map[string]any{
 		"type":    "infopoint",

@@ -776,6 +776,7 @@ Custom-Payload-Konvention identisch zum Button: `WithData` für Frontend-Daten, 
 ```go
 info.NewInfoText("Hinweis: Dieses Feature ist Beta.", "")
 info.NewInfoPoint("192.168.1.1", "lan", core.ColorPrimary, nil, nil, nil, nil, nil, "")
+info.NewInfoText("Hinweis: <b>Beta</b>", "").WithHtml()  // Text als HTML rendern (opt-in, auch auf InfoPoint)
 ```
 
 ## TachoTime (`component/tachotime`)
