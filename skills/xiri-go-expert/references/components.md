@@ -362,6 +362,18 @@ bc := barchart.New("weekly").Mode(barchart.ModeSimple).
 // http(s)-URLs öffnen im Frontend in einem neuen Tab, interne Routen via Router.
 ```
 
+### Wert-/Text-Labels auf den Balken
+
+`ShowValues()` zeigt pro Balken ein Label. Standard ist der Wert; `LabelText(s)` überschreibt das Label des **zuletzt hinzugefügten** Balkens mit eigenem Text (z. B. `"8h"`). Position via `WithLabelPosition(LabelPositionTop|LabelPositionInside)` — Default `top` (über dem Balken), `inside` schreibt weißen Text in den Balken. In `ModeStacked` wird jedes Segment mit seinem Wert beschriftet (immer innen); `LabelText` greift dort am Balken, ist aber primär für simple gedacht. `ModeHeatmap` ignoriert Labels.
+
+```go
+bc := barchart.New("weekly").Mode(barchart.ModeSimple).
+    ShowValues().                                     // Werte über den Balken
+    WithLabelPosition(barchart.LabelPositionInside).  // optional: im Balken
+    Bar("M", 3).LabelText("3h").                      // eigener Text statt "3"
+    Bar("T", 8)                                       // zeigt "8"
+```
+
 ### Optionen / AJAX
 
 ```go

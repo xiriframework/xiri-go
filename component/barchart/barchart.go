@@ -31,6 +31,14 @@ const (
 	ModeHeatmap Mode = "heatmap"
 )
 
+// LabelPosition controls where value/text labels sit relative to a bar.
+type LabelPosition string
+
+const (
+	LabelPositionTop    LabelPosition = "top"    // above the bar (default)
+	LabelPositionInside LabelPosition = "inside" // inside the bar
+)
+
 // Segment is one colored slice of a stacked bar.
 //
 // Name is shown in tooltips. Color is the segment fill.
@@ -56,6 +64,7 @@ type simpleBar struct {
 	name  string
 	value float64
 	url   *url.Url
+	text  string // overrides the on-bar label (when ShowValues is on)
 }
 
 // stackedBar holds one labeled bar with stacked segments in ModeStacked.
@@ -64,6 +73,7 @@ type stackedBar struct {
 	name     string
 	segments []Segment
 	url      *url.Url
+	text     string // overrides the on-bar label (when ShowValues is on)
 }
 
 // heatPoint is one (time, value) pair in ModeHeatmap. Time is unix milliseconds.
@@ -91,6 +101,9 @@ type BarChart struct {
 	url     *url.Url
 	reload  *bool
 	compact bool
+
+	showValues bool
+	labelPos   LabelPosition
 }
 
 // New creates a new BarChart with the given id. Default mode is ModeSimple.
@@ -165,6 +178,39 @@ func (b *BarChart) Link(u *url.Url) *BarChart {
 	default:
 		if n := len(b.simple); n > 0 {
 			b.simple[n-1].url = u
+		}
+	}
+	return b
+}
+
+// ShowValues displays each bar's value as a label (default position: top).
+// In ModeStacked each segment is labeled with its own value. ModeHeatmap is unaffected.
+func (b *BarChart) ShowValues() *BarChart {
+	b.showValues = true
+	return b
+}
+
+// WithLabelPosition sets where value/text labels sit (LabelPositionTop or
+// LabelPositionInside). Only relevant when ShowValues is enabled.
+func (b *BarChart) WithLabelPosition(p LabelPosition) *BarChart {
+	b.labelPos = p
+	return b
+}
+
+// LabelText overrides the on-bar label of the most recently added bar with a
+// custom text (e.g. "8h" instead of "8"). Only shown when ShowValues is enabled.
+// Call it directly after the Bar/StackedBar it belongs to (no-op for ModeHeatmap).
+func (b *BarChart) LabelText(s string) *BarChart {
+	switch b.mode {
+	case ModeStacked:
+		if n := len(b.stacked); n > 0 {
+			b.stacked[n-1].text = s
+		}
+	case ModeHeatmap:
+		// not supported — heatmap bars are too thin for labels
+	default:
+		if n := len(b.simple); n > 0 {
+			b.simple[n-1].text = s
 		}
 	}
 	return b
@@ -260,6 +306,12 @@ func (b *BarChart) printData(ctx *core.UiContext) map[string]any {
 	if b.compact {
 		data["compact"] = true
 	}
+	if b.showValues {
+		data["showValues"] = true
+	}
+	if b.labelPos != "" {
+		data["labelPosition"] = string(b.labelPos)
+	}
 
 	switch b.mode {
 	case ModeStacked:
@@ -285,6 +337,9 @@ func (b *BarChart) simpleBarsJSON() []map[string]any {
 		}
 		if bar.url != nil {
 			m["url"] = bar.url.Print()
+		}
+		if bar.text != "" {
+			m["text"] = bar.text
 		}
 		out[i] = m
 	}
@@ -314,6 +369,9 @@ func (b *BarChart) stackedBarsJSON() []map[string]any {
 		}
 		if bar.url != nil {
 			m["url"] = bar.url.Print()
+		}
+		if bar.text != "" {
+			m["text"] = bar.text
 		}
 		out[i] = m
 	}

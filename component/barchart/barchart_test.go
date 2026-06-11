@@ -233,3 +233,56 @@ func TestBarChart_LinkHeatmap(t *testing.T) {
 		t.Errorf("Point()-only entry should not have a url key")
 	}
 }
+
+func TestBarChart_ShowValues(t *testing.T) {
+	withFlag := New("weekly").ShowValues().Bar("M", 3)
+	data := withFlag.Print(nil)["data"].(map[string]any)
+	if data["showValues"] != true {
+		t.Errorf("showValues=%v want true", data["showValues"])
+	}
+	if _, ok := data["labelPosition"]; ok {
+		t.Errorf("labelPosition should be absent when not set")
+	}
+
+	noFlag := New("weekly").Bar("M", 3)
+	data2 := noFlag.Print(nil)["data"].(map[string]any)
+	if _, ok := data2["showValues"]; ok {
+		t.Errorf("showValues key should be absent by default")
+	}
+}
+
+func TestBarChart_LabelPosition(t *testing.T) {
+	bc := New("weekly").ShowValues().WithLabelPosition(LabelPositionInside).Bar("M", 3)
+	data := bc.Print(nil)["data"].(map[string]any)
+	if data["labelPosition"] != "inside" {
+		t.Errorf("labelPosition=%v want inside", data["labelPosition"])
+	}
+}
+
+func TestBarChart_LabelTextSimple(t *testing.T) {
+	bc := New("weekly").ShowValues().
+		Bar("M", 3).LabelText("3h").
+		Bar("T", 8)
+	data := bc.Print(nil)["data"].(map[string]any)
+	bars := data["bars"].([]map[string]any)
+	if bars[0]["text"] != "3h" {
+		t.Errorf("bars[0].text=%v want 3h", bars[0]["text"])
+	}
+	if _, ok := bars[1]["text"]; ok {
+		t.Errorf("Bar()-only entry should not have a text key")
+	}
+}
+
+func TestBarChart_LabelTextStacked(t *testing.T) {
+	bc := New("strain").Mode(ModeStacked).ShowValues().
+		StackedBar("M", Seg(2, core.ColorGreen)).LabelText("OK").
+		StackedBar("T", Seg(3, core.ColorGreen))
+	data := bc.Print(nil)["data"].(map[string]any)
+	bars := data["bars"].([]map[string]any)
+	if bars[0]["text"] != "OK" {
+		t.Errorf("bars[0].text=%v want OK", bars[0]["text"])
+	}
+	if _, ok := bars[1]["text"]; ok {
+		t.Errorf("StackedBar()-only entry should not have a text key")
+	}
+}
