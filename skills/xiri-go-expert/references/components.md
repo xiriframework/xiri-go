@@ -349,6 +349,19 @@ bc.PointNamed(timestampMs, "Repeat #3", 1.0)
 
 `Bar/StackedBar/Point` (ohne Suffix) bleiben gültig — `name` wird nur in der JSON-Ausgabe gesetzt, wenn explizit gegeben.
 
+### Klickbare Balken (Navigation)
+
+`Link(u *url.Url)` macht den **zuletzt hinzugefügten** Balken/Punkt klickbar — das Frontend navigiert beim Klick zur URL. Direkt nach dem zugehörigen `Bar`/`StackedBar`/`Point` aufrufen. Funktioniert in allen drei Modi. Es ist ein Frontend-Link → mit `url.NewUrl(...)` (ohne Prefix) erstellen; serialisiert via `Print()` als `url` im Bar-JSON. Balken ohne `Link` sind nicht klickbar (kein Cursor-Pointer).
+
+```go
+bc := barchart.New("weekly").Mode(barchart.ModeSimple).
+    Bar("M", 3).Link(xurl.NewUrl("/day/mon")).
+    Bar("T", 8).Link(xurl.NewUrl("/day/tue")).
+    Bar("W", 6)   // ohne Link → nicht klickbar
+
+// http(s)-URLs öffnen im Frontend in einem neuen Tab, interne Routen via Router.
+```
+
 ### Optionen / AJAX
 
 ```go

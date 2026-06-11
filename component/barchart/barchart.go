@@ -55,6 +55,7 @@ type simpleBar struct {
 	label string
 	name  string
 	value float64
+	url   *url.Url
 }
 
 // stackedBar holds one labeled bar with stacked segments in ModeStacked.
@@ -62,6 +63,7 @@ type stackedBar struct {
 	label    string
 	name     string
 	segments []Segment
+	url      *url.Url
 }
 
 // heatPoint is one (time, value) pair in ModeHeatmap. Time is unix milliseconds.
@@ -69,6 +71,7 @@ type heatPoint struct {
 	timeMs int64
 	value  float64
 	name   string
+	url    *url.Url
 }
 
 // BarChart is a bar-chart component.
@@ -143,6 +146,27 @@ func (b *BarChart) Point(timeMs int64, value float64) *BarChart {
 // PointNamed is like Point but attaches a tooltip name to the point.
 func (b *BarChart) PointNamed(timeMs int64, name string, value float64) *BarChart {
 	b.heat = append(b.heat, heatPoint{timeMs: timeMs, value: value, name: name})
+	return b
+}
+
+// Link attaches a navigation target to the most recently added bar/point.
+// The frontend makes that bar clickable and navigates to the url on click.
+// Call it directly after the Bar/StackedBar/Point it belongs to.
+func (b *BarChart) Link(u *url.Url) *BarChart {
+	switch b.mode {
+	case ModeStacked:
+		if n := len(b.stacked); n > 0 {
+			b.stacked[n-1].url = u
+		}
+	case ModeHeatmap:
+		if n := len(b.heat); n > 0 {
+			b.heat[n-1].url = u
+		}
+	default:
+		if n := len(b.simple); n > 0 {
+			b.simple[n-1].url = u
+		}
+	}
 	return b
 }
 
@@ -259,6 +283,9 @@ func (b *BarChart) simpleBarsJSON() []map[string]any {
 		if bar.name != "" {
 			m["name"] = bar.name
 		}
+		if bar.url != nil {
+			m["url"] = bar.url.Print()
+		}
 		out[i] = m
 	}
 	return out
@@ -285,6 +312,9 @@ func (b *BarChart) stackedBarsJSON() []map[string]any {
 		if bar.name != "" {
 			m["name"] = bar.name
 		}
+		if bar.url != nil {
+			m["url"] = bar.url.Print()
+		}
 		out[i] = m
 	}
 	return out
@@ -299,6 +329,9 @@ func (b *BarChart) heatPointsJSON() []map[string]any {
 		}
 		if p.name != "" {
 			m["name"] = p.name
+		}
+		if p.url != nil {
+			m["url"] = p.url.Print()
 		}
 		out[i] = m
 	}

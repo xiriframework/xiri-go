@@ -181,3 +181,55 @@ func TestBarChart_NamedHeatmap(t *testing.T) {
 		t.Errorf("PointNamed should set name, got %v", pts[1]["name"])
 	}
 }
+
+func TestBarChart_LinkSimple(t *testing.T) {
+	bc := New("weekly").
+		Bar("M", 3).Link(url.NewUrl("/day/mon")).
+		Bar("T", 8)
+	data := bc.Print(nil)["data"].(map[string]any)
+	bars := data["bars"].([]map[string]any)
+	if bars[0]["url"] != "/day/mon" {
+		t.Errorf("bars[0].url=%v want /day/mon", bars[0]["url"])
+	}
+	if _, ok := bars[1]["url"]; ok {
+		t.Errorf("Bar()-only entry should not have a url key")
+	}
+}
+
+func TestBarChart_LinkUsesPrintWithoutPrefix(t *testing.T) {
+	bc := New("weekly").
+		Bar("M", 3).Link(url.NewUrlPrefix("/day/mon", "/api"))
+	data := bc.Print(nil)["data"].(map[string]any)
+	bars := data["bars"].([]map[string]any)
+	if bars[0]["url"] != "/day/mon" {
+		t.Errorf("bar url should use Print() (no prefix), got %v", bars[0]["url"])
+	}
+}
+
+func TestBarChart_LinkStacked(t *testing.T) {
+	bc := New("strain").Mode(ModeStacked).
+		StackedBar("M", Seg(2, core.ColorGreen)).Link(url.NewUrl("/day/mon")).
+		StackedBar("T", Seg(3, core.ColorGreen))
+	data := bc.Print(nil)["data"].(map[string]any)
+	bars := data["bars"].([]map[string]any)
+	if bars[0]["url"] != "/day/mon" {
+		t.Errorf("bars[0].url=%v want /day/mon", bars[0]["url"])
+	}
+	if _, ok := bars[1]["url"]; ok {
+		t.Errorf("StackedBar()-only entry should not have a url key")
+	}
+}
+
+func TestBarChart_LinkHeatmap(t *testing.T) {
+	bc := New("engine").Mode(ModeHeatmap).
+		Point(1, 0.1).Link(url.NewUrl("/event/1")).
+		Point(2, 1.0)
+	data := bc.Print(nil)["data"].(map[string]any)
+	pts := data["points"].([]map[string]any)
+	if pts[0]["url"] != "/event/1" {
+		t.Errorf("pts[0].url=%v want /event/1", pts[0]["url"])
+	}
+	if _, ok := pts[1]["url"]; ok {
+		t.Errorf("Point()-only entry should not have a url key")
+	}
+}
