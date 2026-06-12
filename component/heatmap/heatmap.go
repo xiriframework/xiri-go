@@ -58,6 +58,10 @@ func (h *Heatmap) ColorRange(low, high string) *Heatmap {
 // ShowValues prints values inside cells (useful for small grids).
 func (h *Heatmap) ShowValues() *Heatmap { h.showValues = true; return h }
 
+// XLabelRotate rotates the X-axis (column) labels by deg degrees (-90..90).
+// 90 = vertical. Helps when columns are narrow and labels are long.
+func (h *Heatmap) XLabelRotate(deg int) *Heatmap { h.base.SetXLabelRotate(deg); return h }
+
 // Compact, WithDisplay, SetURL, WithReload — Forward to BaseChart.
 func (h *Heatmap) Compact() *Heatmap                  { h.base.SetCompact(); return h }
 func (h *Heatmap) WithDisplay(d string) *Heatmap      { h.base.SetDisplay(d); return h }

@@ -374,6 +374,18 @@ bc := barchart.New("weekly").Mode(barchart.ModeSimple).
     Bar("T", 8)                                       // zeigt "8"
 ```
 
+### X-Achsen-Labels drehen (lange Beschriftungen)
+
+`XLabelRotate(deg int)` dreht die X-Achsen-Beschriftung um `deg` Grad (gültig **-90..90**; `90` = vertikal, `60`/`45` = schräg). Hilft bei schmalen Bars mit langen Labels — das Frontend erzwingt dabei die Anzeige **aller** Labels (kein Ausdünnen). Kein Effekt in `ModeHeatmap` (Zeitachse).
+
+```go
+bc := barchart.New("weekly").
+    Bar("Montag", 3).Bar("Dienstag", 8).Bar("Mittwoch", 6).
+    XLabelRotate(60)   // schräg; 90 = vertikal
+```
+
+Dieselbe Methode gibt es auf `linechart.LineChart` (auch via `LineBuilder`) und `heatmap.Heatmap` (dreht dort die X-/Spalten-Labels).
+
 ### Optionen / AJAX
 
 ```go
@@ -412,6 +424,8 @@ lc := linechart.New("revenue").
 ```
 
 Pro-Linien-Optionen via `LineBuilder`-Chain: `.Color(c)`, `.Dashed()`, `.Area()` (Fill unter der Linie). `.Done()` gibt den `LineChart` zurück für weitere Kette.
+
+`XLabelRotate(deg int)` dreht die X-Achsen-Labels um `deg` Grad (-90..90; `90` = vertikal) — hilft bei langen Kategorie-Beschriftungen. Auch via `LineBuilder` verfügbar (`.XLabelRotate(45)`).
 
 AJAX-Mode: `lc.SetURL(u).WithReload(true)`, `lc.PrintData(ctx)`, `lc.DataResponse(ctx)`.
 
@@ -483,6 +497,8 @@ for _, m := range measurements {
     h.Cell(m.HourIdx, m.DayIdx, m.Value)
 }
 ```
+
+`XLabelRotate(deg int)` dreht die X-/Spalten-Labels um `deg` Grad (-90..90; `90` = vertikal) — nützlich für lange Spalten-/Bereichsnamen.
 
 ## Calendar (`component/calendar`)
 

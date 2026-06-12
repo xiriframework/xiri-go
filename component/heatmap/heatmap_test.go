@@ -34,3 +34,22 @@ func TestHeatmap_Basic(t *testing.T) {
 		t.Errorf("showValues=%v", data["showValues"])
 	}
 }
+
+func TestHeatmap_XLabelRotate(t *testing.T) {
+	h := New("activity").
+		XLabels("Morning", "Afternoon", "Evening").
+		YLabels("Mon").
+		Cell(0, 0, 1).
+		XLabelRotate(90)
+
+	data := h.Print(ctxDe())["data"].(map[string]any)
+	if data["xLabelRotate"] != 90 {
+		t.Errorf("xLabelRotate=%v want 90", data["xLabelRotate"])
+	}
+
+	noRotate := New("x").XLabels("a").YLabels("b").Cell(0, 0, 1)
+	data2 := noRotate.Print(ctxDe())["data"].(map[string]any)
+	if _, ok := data2["xLabelRotate"]; ok {
+		t.Errorf("xLabelRotate key should be absent by default")
+	}
+}

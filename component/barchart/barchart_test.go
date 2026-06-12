@@ -286,3 +286,17 @@ func TestBarChart_LabelTextStacked(t *testing.T) {
 		t.Errorf("StackedBar()-only entry should not have a text key")
 	}
 }
+
+func TestBarChart_XLabelRotate(t *testing.T) {
+	bc := New("weekly").Bar("Monday", 3).Bar("Tuesday", 8).XLabelRotate(60)
+	data := bc.Print(nil)["data"].(map[string]any)
+	if data["xLabelRotate"] != 60 {
+		t.Errorf("xLabelRotate=%v want 60", data["xLabelRotate"])
+	}
+
+	noRotate := New("weekly").Bar("M", 3)
+	data2 := noRotate.Print(nil)["data"].(map[string]any)
+	if _, ok := data2["xLabelRotate"]; ok {
+		t.Errorf("xLabelRotate key should be absent by default")
+	}
+}

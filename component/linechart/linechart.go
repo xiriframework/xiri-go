@@ -53,6 +53,10 @@ func (lc *LineChart) YAxis(min, max float64) *LineChart { lc.yMin = &min; lc.yMa
 // Smooth enables smoothed (curved) lines.
 func (lc *LineChart) Smooth() *LineChart { lc.smooth = true; return lc }
 
+// XLabelRotate rotates the X-axis labels by deg degrees (-90..90). 90 = vertical.
+// Helps when categories are narrow and labels are long.
+func (lc *LineChart) XLabelRotate(deg int) *LineChart { lc.base.SetXLabelRotate(deg); return lc }
+
 // Color sets the default color (used as fallback for individual lines).
 func (lc *LineChart) Color(c core.Color) *LineChart { lc.base.SetColor(c); return lc }
 
@@ -101,6 +105,7 @@ func (b *LineBuilder) Title(t string) *LineBuilder                     { b.lc.Ti
 func (b *LineBuilder) XLabels(labels ...string) *LineBuilder           { b.lc.XLabels(labels...); return b }
 func (b *LineBuilder) YAxis(min, max float64) *LineBuilder             { b.lc.YAxis(min, max); return b }
 func (b *LineBuilder) Smooth() *LineBuilder                            { b.lc.Smooth(); return b }
+func (b *LineBuilder) XLabelRotate(deg int) *LineBuilder               { b.lc.XLabelRotate(deg); return b }
 func (b *LineBuilder) Compact() *LineBuilder                           { b.lc.Compact(); return b }
 func (b *LineBuilder) WithDisplay(d string) *LineBuilder               { b.lc.WithDisplay(d); return b }
 

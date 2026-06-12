@@ -104,6 +104,8 @@ type BarChart struct {
 
 	showValues bool
 	labelPos   LabelPosition
+
+	xLabelRotate *int
 }
 
 // New creates a new BarChart with the given id. Default mode is ModeSimple.
@@ -223,6 +225,13 @@ func (b *BarChart) YAxis(min, max float64) *BarChart {
 	return b
 }
 
+// XLabelRotate rotates the X-axis labels by deg degrees (-90..90). 90 = vertical.
+// Helps when bars are narrow and labels are long. No effect in ModeHeatmap (time axis).
+func (b *BarChart) XLabelRotate(deg int) *BarChart {
+	b.xLabelRotate = &deg
+	return b
+}
+
 // Color sets a single color for ModeSimple / ModeHeatmap (ignored by ModeStacked).
 func (b *BarChart) Color(c core.Color) *BarChart {
 	b.color = &c
@@ -311,6 +320,9 @@ func (b *BarChart) printData(ctx *core.UiContext) map[string]any {
 	}
 	if b.labelPos != "" {
 		data["labelPosition"] = string(b.labelPos)
+	}
+	if b.xLabelRotate != nil {
+		data["xLabelRotate"] = *b.xLabelRotate
 	}
 
 	switch b.mode {

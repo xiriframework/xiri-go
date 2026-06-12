@@ -73,3 +73,20 @@ func TestLineChart_DashedArea(t *testing.T) {
 		t.Errorf("dashed/area not set: %v", lines[0])
 	}
 }
+
+func TestLineChart_XLabelRotate(t *testing.T) {
+	lc := New("revenue").
+		XLabels("January", "February", "March").
+		Line("A", []float64{1, 2, 3}).XLabelRotate(45).Done()
+
+	data := lc.Print(ctxDe())["data"].(map[string]any)
+	if data["xLabelRotate"] != 45 {
+		t.Errorf("xLabelRotate=%v want 45", data["xLabelRotate"])
+	}
+
+	noRotate := New("x").Line("A", []float64{1}).Done()
+	data2 := noRotate.Print(ctxDe())["data"].(map[string]any)
+	if _, ok := data2["xLabelRotate"]; ok {
+		t.Errorf("xLabelRotate key should be absent by default")
+	}
+}
