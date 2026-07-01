@@ -113,3 +113,42 @@ func TestTableButton_WithData_PassesThroughToButton(t *testing.T) {
 		t.Errorf("d[\"_csv\"] = %v, want true", d["_csv"])
 	}
 }
+
+func TestButton_WithAutoLoad_AddsAutoLoadKey(t *testing.T) {
+	btn := button.NewSimpleApiButton("Go", url.NewUrl("/x"), core.ColorPrimary)
+	btn.WithAutoLoad(true)
+
+	out := btn.Print(nil)
+
+	if out["autoLoad"] != true {
+		t.Errorf("out[\"autoLoad\"] = %v, want true", out["autoLoad"])
+	}
+}
+
+func TestButton_NoAutoLoad_OmitsAutoLoadKey(t *testing.T) {
+	btn := button.NewSimpleApiButton("Go", url.NewUrl("/x"), core.ColorPrimary)
+
+	out := btn.Print(nil)
+
+	if _, ok := out["autoLoad"]; ok {
+		t.Errorf("expected no \"autoLoad\" key by default, got %v", out["autoLoad"])
+	}
+}
+
+func TestTableButton_WithAutoLoad_PassesThroughToButton(t *testing.T) {
+	tb := button.NewTableButton(
+		core.ButtonActionApi,
+		"refresh",
+		url.NewUrl("/x"),
+		"Reload",
+		core.ColorPrimary,
+		false,
+		nil,
+	).WithAutoLoad(true)
+
+	out := tb.Print(nil)
+
+	if out["autoLoad"] != true {
+		t.Errorf("out[\"autoLoad\"] = %v, want true", out["autoLoad"])
+	}
+}

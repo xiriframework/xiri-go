@@ -219,6 +219,22 @@ func (c *Controller) Page(ctx echo.Context) error {
 
 Die Data-Route (`apiUrl("data")`) bleibt **gleich** wie bei nicht-filtered Tabellen — `LoadFilterData` parst automatisch die Filter-Fields.
 
+### Automatisches Laden beim Seitenaufruf
+
+Es gibt zwei Wege, die Daten schon beim Laden (ohne Klick) zu zeigen:
+
+- **Query mit `url`** (wie oben): lädt **automatisch** beim ersten gültigen Filter-Zustand. Kein Button nötig — das ist der Standard-Fall für Filter+Tabelle.
+- **ButtonLine-Button mit `WithAutoLoad(true)`**: Wenn der Filter statt der Query-`url` einen expliziten Button zum Nachladen verwendet (z. B. wegen Snackbar/Poll/`WithData`-Payload), triggert `WithAutoLoad(true)` diesen Button **einmalig automatisch beim Laden**, sobald der Filter gültig ist:
+
+  ```go
+  bl := button.NewButtonLine("right", nil)
+  bl.Add(button.NewSimpleApiButton("Suchen", c.apiUrl("data"), core.ColorPrimary).WithAutoLoad(true))
+
+  q := query.NewQueryWithFormGroup(fg, nil, nil /* keine url */, bl, nil, nil)
+  ```
+
+  Feuert genau einmal; spätere Filter-Änderungen erfordern wieder den Klick. Details: `references/components.md` → „Auto-Load via `WithAutoLoad`".
+
 ## Flags — UI-Only State, der nicht als Filter zählt
 
 Manchmal schickt das Frontend zusätzliche UI-State-Keys mit (z.B. View-Modus), die **nicht** als Filter in die DB-Query gehören:

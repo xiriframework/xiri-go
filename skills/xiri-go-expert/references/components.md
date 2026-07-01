@@ -752,6 +752,7 @@ button.NewLinkButton(
 btn.WithHint("Details anzeigen")
 btn.WithDisabled(true)
 btn.WithData(map[string]any{"_csv": true})  // Custom-Payload an Frontend (siehe unten)
+btn.WithAutoLoad(true)                       // Aktion einmalig automatisch beim Laden auslösen (siehe unten)
 // … siehe button.go für weitere Optionen (WithIcon, WithTarget, etc.)
 ```
 
@@ -776,6 +777,22 @@ Verhalten:
 - `TableButton` hat dieselbe Pass-Through-Methode (`*TableButton.WithData`).
 
 > **Nicht** `WithOption("csv", true)` o. ä. verwenden — landet als Top-Level-Feld am Button-JSON, das Frontend liest dort nicht. `WithOption`/`WithOptions` sind für Custom-Payload deprecated.
+
+### Auto-Load via `WithAutoLoad`
+
+Standardmäßig lädt ein Filter mit Button (ButtonLine in der Query) erst beim **Klick**. Mit `WithAutoLoad(true)` triggert das Frontend die Button-Aktion **einmalig automatisch beim Laden** — sobald der Button nicht mehr disabled ist (d. h. der Filter gültig/vorhanden ist). Gedacht für datenladende Aktionen (`ButtonActionApi`, `ButtonActionDownload`), damit die Daten ohne initialen Klick erscheinen:
+
+```go
+// Filter-Button, der die Ergebnisse sofort beim Seitenaufruf lädt
+reloadBtn := button.NewSimpleApiButton("Suchen", c.apiUrl("query/table"), core.ColorPrimary).
+    WithAutoLoad(true)
+```
+
+Verhalten:
+- Feuert **genau einmal**; spätere Filter-Änderungen lösen kein erneutes Auto-Load aus (der Nutzer klickt dann wie gewohnt).
+- `false`/nicht gesetzt ⇒ kein `autoLoad`-Key im JSON (backward-kompatibel).
+- `TableButton` hat dieselbe Pass-Through-Methode (`*TableButton.WithAutoLoad`).
+- Alternative ohne Button: Query mit gesetzter `url` lädt bereits automatisch beim ersten gültigen Filter-Zustand (siehe `references/table-filtering.md`).
 
 ### ButtonLine (Container)
 

@@ -22,6 +22,7 @@ type Button struct {
 	target     string
 	options    map[string]any
 	data       map[string]any
+	autoLoad   bool
 }
 
 // TableButton represents a type-safe button specifically for table actions.
@@ -44,6 +45,12 @@ func (tb *TableButton) GetButton() *Button {
 // WithData sets the custom payload on the underlying Button. See Button.WithData.
 func (tb *TableButton) WithData(payload map[string]any) *TableButton {
 	tb.button.WithData(payload)
+	return tb
+}
+
+// WithAutoLoad sets auto-load on the underlying Button. See Button.WithAutoLoad.
+func (tb *TableButton) WithAutoLoad(autoLoad bool) *TableButton {
+	tb.button.WithAutoLoad(autoLoad)
 	return tb
 }
 
@@ -453,6 +460,16 @@ func (b *Button) WithData(payload map[string]any) *Button {
 	return b
 }
 
+// WithAutoLoad makes the frontend trigger this button's action automatically
+// once on load, as soon as the button becomes enabled (i.e. the filter is
+// valid/present). Intended for data-loading actions (e.g. api/download) used in
+// query filters, so the data loads without requiring an initial click.
+// Returns the Button for method chaining.
+func (b *Button) WithAutoLoad(autoLoad bool) *Button {
+	b.autoLoad = autoLoad
+	return b
+}
+
 // Print returns the JSON representation of the button
 func (b *Button) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
@@ -498,6 +515,11 @@ func (b *Button) Print(ctx *core.UiContext) map[string]any {
 	// overrides any options["data"] set via legacy WithOption("data", …).
 	if len(b.data) > 0 {
 		data["data"] = b.data
+	}
+
+	// Emit autoLoad only when enabled (keeps existing JSON backward-compatible).
+	if b.autoLoad {
+		data["autoLoad"] = true
 	}
 
 	return data
