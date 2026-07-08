@@ -28,7 +28,6 @@ type dialogImpl struct {
 	options         map[string]any
 	data            map[string]any
 	showTableHeader bool
-	hookContent     func(any)
 }
 
 // newDialog creates a new dialog component (package-private base constructor)
@@ -44,13 +43,12 @@ func newDialog(
 		options = make(map[string]any)
 	}
 	return &dialogImpl{
-		dialogType:  dialogType,
-		header:      header,
-		content:     content,
-		buttons:     buttons,
-		extra:       extra,
-		options:     options,
-		hookContent: nil,
+		dialogType: dialogType,
+		header:     header,
+		content:    content,
+		buttons:    buttons,
+		extra:      extra,
+		options:    options,
 	}
 }
 
@@ -146,9 +144,6 @@ func (d *dialogImpl) Print(ctx *core.UiContext) map[string]any {
 	}
 
 	content := d.content
-	if d.hookContent != nil {
-		d.hookContent(content)
-	}
 
 	var processedContent any
 	if contentPrinter, ok := content.(DialogContent); ok {
