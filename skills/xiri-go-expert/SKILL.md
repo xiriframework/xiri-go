@@ -38,6 +38,8 @@ u.PrintPrefix()  // mit Prefix   — API-Calls, form/table Submit-URLs
 
 **Regel:** Page-/Link-URLs = `Print()`. API-URLs (`tbl.SetURL`, `form.NewForm`, Dialog-Submit) = `*xurl.Url` direkt (intern korrekt aufgelöst) oder `PrintPrefix()` wo `string` erwartet wird. Controller-Helper + Sidebar-Pattern: **`references/url-routing.md`**.
 
+**Query-String in Navigations-Links ist erlaubt:** `xurl.NewUrl("/Admin/Devices/Table?config=98")` funktioniert für Frontend-Links (Button `action: 'link'`, cardlink, links/list/sidenav, Tabellen-Link-Felder) — das Frontend parst den `?…`-Teil zu Route-Query-Params (via `xiriUrl`-Pipe in xiri-ng). `Add(...)` hängt nur Path-Segmente an (`/…/98`); für Query-Params den String direkt an `NewUrl` übergeben.
+
 ## Was wann lesen
 
 | Du baust / brauchst …                                    | Lies                                        |
