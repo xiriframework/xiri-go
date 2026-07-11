@@ -14,6 +14,7 @@ const (
 	FieldTypeBool       FieldType = "bool"
 	FieldTypeInt        FieldType = "number"
 	FieldTypeSelect     FieldType = "select"
+	FieldTypeRadio      FieldType = "radio"
 	FieldTypeText       FieldType = "text"
 	FieldTypeArray FieldType = "array"
 	FieldTypeFile       FieldType = "file"
