@@ -32,6 +32,7 @@ type Stat struct {
 	prefix    *string
 	suffix    *string
 	color     *string
+	reference *string
 	display   *string
 	url       *url.Url
 	reload    *bool
@@ -79,6 +80,16 @@ func (s *Stat) Suffix(suffix string) *Stat {
 // Color sets the value color.
 func (s *Stat) Color(color string) *Stat {
 	s.color = &color
+	return s
+}
+
+// Reference sets a muted benchmark/anchor line shown next to the value, e.g.
+// "Gate ≥ 1,1" or "Backtest: 51 %". Gives the number a reference so it can be
+// judged at a glance instead of in the reader's head.
+// ponytail: freier String reicht als Kontext-Anker; strukturiertes {value,label}
+// mit Delta-Färbung erst, wenn Ist-vs-Soll-Einfärbung wirklich gebraucht wird.
+func (s *Stat) Reference(text string) *Stat {
+	s.reference = &text
 	return s
 }
 
@@ -175,6 +186,9 @@ func (s *Stat) printData(ctx *core.UiContext) map[string]any {
 	}
 	if s.color != nil {
 		data["color"] = *s.color
+	}
+	if s.reference != nil {
+		data["reference"] = *s.reference
 	}
 
 	return data
