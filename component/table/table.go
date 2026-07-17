@@ -67,7 +67,13 @@ type TableOptions struct {
 	BordersHeader *bool
 	Select        *bool
 	SelectButtons []*button.TableButton
-	Display       *string
+	// UX-007 Bulk actions (additive). BulkActions, when non-empty, makes the frontend show a
+	// selection column and a sticky context bar with these actions. SelectAllResults offers
+	// "select all results" (whole filter, not just the page); StickyBulkBar pins the bar.
+	BulkActions      []*button.TableButton
+	SelectAllResults *bool
+	StickyBulkBar    *bool
+	Display          *string
 	Footer        *bool
 	ServerSide    *bool       // Enable server-side pagination (data fetched page-by-page)
 	ScrollHeight  *string     // Custom scroll height for the table container (e.g., "400px", "80vh")
@@ -495,6 +501,20 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 			buttons[i] = btn.Print(ctx)
 		}
 		options["selectButtons"] = buttons
+	}
+	// BulkActions (UX-007): serialize like SelectButtons; only when set.
+	if len(opts.BulkActions) > 0 {
+		buttons := make([]map[string]any, len(opts.BulkActions))
+		for i, btn := range opts.BulkActions {
+			buttons[i] = btn.Print(ctx)
+		}
+		options["bulkActions"] = buttons
+	}
+	if opts.SelectAllResults != nil {
+		options["selectAllResults"] = *opts.SelectAllResults
+	}
+	if opts.StickyBulkBar != nil {
+		options["stickyBulkBar"] = *opts.StickyBulkBar
 	}
 	if opts.Footer != nil {
 		options["footer"] = *opts.Footer

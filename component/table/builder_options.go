@@ -291,6 +291,41 @@ func (b *TableBuilder[T]) ClearSelectButtons() *TableBuilder[T] {
 }
 
 // ============================================================================
+// Table Option Setters - Bulk Actions (UX-007)
+// ============================================================================
+
+// BulkActions sets the bulk-action buttons (UX-007). When set, the frontend shows a selection
+// column and a sticky context bar with these actions once at least one row is selected. The
+// triggered action receives the selected ids plus the selection mode (page vs. all results);
+// in "all results" mode the active filter is sent too. Additive: unset = unchanged behaviour.
+//
+// Example:
+//
+//	builder.BulkActions(
+//	    button.NewTableButton(core.ButtonActionApi, "archive", xurl.NewUrl("/Bulk/Archive"), "ARCHIVIEREN", core.ColorPrimary, false, nil),
+//	    button.NewTableButton(core.ButtonActionApi, "delete", xurl.NewUrl("/Bulk/Delete"), "LOESCHEN", core.ColorWarning, false, nil),
+//	)
+func (b *TableBuilder[T]) BulkActions(buttons ...*button.TableButton) *TableBuilder[T] {
+	b.table.options.BulkActions = buttons
+	return b
+}
+
+// SelectAllResults enables the "select all results" affordance in the bulk bar, letting the
+// user act on the whole filtered result set (all pages) instead of just the current page.
+func (b *TableBuilder[T]) SelectAllResults() *TableBuilder[T] {
+	enabled := true
+	b.table.options.SelectAllResults = &enabled
+	return b
+}
+
+// StickyBulkBar keeps the bulk context bar pinned to the top while the table is scrolled.
+func (b *TableBuilder[T]) StickyBulkBar() *TableBuilder[T] {
+	enabled := true
+	b.table.options.StickyBulkBar = &enabled
+	return b
+}
+
+// ============================================================================
 // Table Option Setters - Standard Multi-Action Button Helpers
 // ============================================================================
 

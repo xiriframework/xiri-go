@@ -469,3 +469,72 @@ func TestMultiButtonMethodChaining(t *testing.T) {
 		t.Errorf("Expected 2 select buttons, got %d", len(opts.SelectButtons))
 	}
 }
+
+// TestBulkActionsOptions verifies the additive UX-007 bulk-action option setters.
+func TestBulkActionsOptions(t *testing.T) {
+	builder := NewBuilder[testOptionRow]()
+
+	archive := button.NewTableButton(core.ButtonActionApi, "archive", xurl.NewUrl("/Bulk/Archive"), "ARCHIVE", core.ColorPrimary, false, nil)
+	del := button.NewTableButton(core.ButtonActionApi, "delete", xurl.NewUrl("/Bulk/Delete"), "DELETE", core.ColorWarning, false, nil)
+
+	builder.
+		BulkActions(archive, del).
+		SelectAllResults().
+		StickyBulkBar()
+
+	opts := builder.Build().GetOptions()
+
+	if len(opts.BulkActions) != 2 {
+		t.Fatalf("Expected 2 bulk actions, got %d", len(opts.BulkActions))
+	}
+	if opts.SelectAllResults == nil || !*opts.SelectAllResults {
+		t.Error("Expected SelectAllResults to be true")
+	}
+	if opts.StickyBulkBar == nil || !*opts.StickyBulkBar {
+		t.Error("Expected StickyBulkBar to be true")
+	}
+}
+
+// TestBulkActionsNotSerializedWhenUnset guards the additive contract: without the setters,
+// none of the bulk keys appear in the printed options.
+func TestBulkActionsNotSerializedWhenUnset(t *testing.T) {
+	ctx := testOptionContext()
+	builder := NewBuilder[testOptionRow]()
+	builder.TextField("name", "Name", func(r testOptionRow) string { return r.Name })
+
+	out := builder.Build().Print(ctx)
+	data, _ := out["data"].(map[string]any)
+	opts, _ := data["options"].(map[string]any)
+
+	for _, key := range []string{"bulkActions", "selectAllResults", "stickyBulkBar"} {
+		if _, ok := opts[key]; ok {
+			t.Errorf("Expected %q to be absent when bulk actions are not configured", key)
+		}
+	}
+}
+
+// TestBulkActionsSerialized verifies the bulk options reach the printed JSON when set.
+func TestBulkActionsSerialized(t *testing.T) {
+	ctx := testOptionContext()
+	builder := NewBuilder[testOptionRow]()
+	builder.TextField("name", "Name", func(r testOptionRow) string { return r.Name })
+	builder.
+		BulkActions(button.NewTableButton(core.ButtonActionApi, "archive", xurl.NewUrl("/Bulk/Archive"), "ARCHIVE", core.ColorPrimary, false, nil)).
+		SelectAllResults().
+		StickyBulkBar()
+
+	out := builder.Build().Print(ctx)
+	data, _ := out["data"].(map[string]any)
+	opts, _ := data["options"].(map[string]any)
+
+	actions, ok := opts["bulkActions"].([]map[string]any)
+	if !ok || len(actions) != 1 {
+		t.Fatalf("Expected 1 serialized bulk action, got %#v", opts["bulkActions"])
+	}
+	if opts["selectAllResults"] != true {
+		t.Errorf("Expected selectAllResults=true, got %#v", opts["selectAllResults"])
+	}
+	if opts["stickyBulkBar"] != true {
+		t.Errorf("Expected stickyBulkBar=true, got %#v", opts["stickyBulkBar"])
+	}
+}

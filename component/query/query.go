@@ -16,8 +16,10 @@ type Query struct {
 	saveStateId *string
 	extra       map[string]any
 	display     *string
-	data        []map[string]any
-	collapsed   *bool
+	data              []map[string]any
+	collapsed         *bool
+	showActiveFilters *bool
+	showResultCount   *bool
 }
 
 // NewQuery creates a new query component
@@ -115,6 +117,18 @@ func (q *Query) WithDisplay(display string) *Query {
 	return q
 }
 
+// ShowActiveFilters toggles the visible, removable active-filter chips (optional)
+func (q *Query) ShowActiveFilters(show bool) *Query {
+	q.showActiveFilters = &show
+	return q
+}
+
+// ShowResultCount toggles the visible result count (optional)
+func (q *Query) ShowResultCount(show bool) *Query {
+	q.showResultCount = &show
+	return q
+}
+
 // Print returns the JSON representation of the query
 func (q *Query) Print(ctx *core.UiContext) map[string]any {
 	data := map[string]any{
@@ -129,6 +143,14 @@ func (q *Query) Print(ctx *core.UiContext) map[string]any {
 
 	if q.collapsed != nil {
 		data["collapsed"] = *q.collapsed
+	}
+
+	if q.showActiveFilters != nil {
+		data["showActiveFilters"] = *q.showActiveFilters
+	}
+
+	if q.showResultCount != nil {
+		data["showResultCount"] = *q.showResultCount
 	}
 
 	if q.url != nil {
