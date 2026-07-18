@@ -143,7 +143,11 @@ s := stat.New("18h", "Today").Compact().WithDisplay("xcol-6")
 
 ## StatGrid (`component/statgrid`)
 
-Grid-Layout für mehrere Stats.
+Grid-Layout für mehrere eigenständige Stat-**Karten**.
+
+> **Für zusammengehörige Zahlen → `MultiStat` (siehe unten), nicht StatGrid.**
+> StatGrid ist für separate, je-für-sich-stehende KPIs. Ein Satz verwandter
+> Kennzahlen (z. B. „offen / läuft / fertig") gehört in **eine** MultiStat-Karte.
 
 ```go
 sg := statgrid.New()
@@ -153,6 +157,53 @@ sg.Add(stat.New("42", "devices.total").Icon("devices"))
 sg.Add(stat.New("3", "devices.offline").Icon("warning").IconColor(core.ColorError))
 sg.Add(stat.New("98%", "devices.uptime").Icon("check_circle").IconColor(core.ColorSuccess))
 sg.Print(ctx)
+```
+
+## MultiStat (`component/multistat`)
+
+> **Standard für mehrere zusammengehörige Zahlen.** Baue **nicht** mehrere `stat`
+> nebeneinander (eigene `xcol`-Spalten) und **kein** `StatGrid` mit N Karten, wenn
+> die Zahlen inhaltlich zusammengehören — nimm **ein** `MultiStat`. Das ist
+> kompakter, hat einen gemeinsamen Header, ist responsiv (Items brechen auf
+> schmalen Breiten sauber um) und liest sich als eine Kennzahlen-Einheit.
+
+Mehrere Kennzahlen in **einer** Karte — je mit eigener Farbe/Icon/Trend, unter
+gemeinsamem Header (Titel + Kopf-Icon). Anders als `StatGrid` (N separate Karten)
+sitzen alle Items nebeneinander in derselben Karte. Item-Typ ist `*stat.Stat` —
+alle stat-Setter (`Icon`, `Color`, `Prefix`, `Suffix`, `SetTrend`, `Link`) gelten pro Zahl.
+
+```go
+ms := multistat.New()
+ms.Title("dashboard.orders.today")
+ms.Icon("shopping_cart")
+ms.IconColor("primary")
+ms.Add(stat.New(12, "orders.open").Icon("inventory").Color("orange"))
+ms.Add(stat.New(8, "orders.running").Icon("sync").Color("blue"))
+ms.Add(stat.New(45, "orders.done").Icon("check_circle").Color("green").SetTrend(5, stat.TrendUp))
+ms.Print(ctx)
+```
+
+Farbe/IconColor sind hier freie Strings (wie bei `stat`), nicht `core.Color`.
+Header (`Title`/`Icon`/`IconColor`) ist optional — ohne rendert die Karte nur die
+Zahlen. Items werden standardmäßig **horizontal** angeordnet (Icon links neben
+Wert/Label); `VerticalItems()` stapelt sie stattdessen (Icon oben).
+
+**AJAX-Nachladen** (`SetURL` + `WithReload`, wie `card`): Items werden vom Backend
+geladen, Header bleibt sofort sichtbar, `WithReload(true)` zeigt einen Reload-Button.
+
+```go
+ms := multistat.New().Title("Live-Kennzahlen").Icon("monitoring").IconColor("accent")
+ms.SetURL(c.apiUrl("multistat", "live"))   // Frontend lädt Items per POST
+ms.WithReload(true)
+// Endpoint liefert die Items via ms.DataResponse(ctx) bzw. wc.Data(ms)
+```
+
+**Klickbare Zahl** (`stat.Link`): macht einen Wert zu einem SPA-Navigations-Link
+(inkl. Query-Parametern). Unterscheidet sich von `stat.SetURL` (= AJAX-Datenquelle).
+
+```go
+ms.Add(stat.New(12, "Offen").Icon("inventory").Color("orange").
+    Link(xurl.NewUrl("/Orders/Table?status=open")))
 ```
 
 ## Tabs (`component/tabs`)

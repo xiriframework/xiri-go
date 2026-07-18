@@ -35,6 +35,7 @@ type Stat struct {
 	reference *string
 	display   *string
 	url       *url.Url
+	link      *url.Url
 	reload    *bool
 	compact   bool
 }
@@ -102,6 +103,13 @@ func (s *Stat) WithDisplay(display string) *Stat {
 // SetURL sets the AJAX data URL. When set, the frontend loads stat data dynamically.
 func (s *Stat) SetURL(url *url.Url) *Stat {
 	s.url = url
+	return s
+}
+
+// Link makes the value a clickable navigation link (SPA routerLink, query
+// params supported). Distinct from SetURL, which is the AJAX data source.
+func (s *Stat) Link(u *url.Url) *Stat {
+	s.link = u
 	return s
 }
 
@@ -189,6 +197,9 @@ func (s *Stat) printData(ctx *core.UiContext) map[string]any {
 	}
 	if s.reference != nil {
 		data["reference"] = *s.reference
+	}
+	if s.link != nil {
+		data["link"] = s.link.PrintPrefix()
 	}
 
 	return data

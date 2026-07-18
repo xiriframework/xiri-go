@@ -163,6 +163,7 @@ Unterstützt:
 | `Card`            | `card.DataResponse(ctx)`                 | AJAX-Card lädt neue Inhalte              |
 | `Stat`            | `stat.DataResponse(ctx)`                 | Polling-KPI                              |
 | `StatGrid`        | `statgrid.DataResponse(ctx)`             | Polling-Dashboard                        |
+| `MultiStat`       | `multistat.DataResponse(ctx)`            | Polling-KPI-Karte (mehrere Zahlen)       |
 | `List`            | `list.DataResponse(ctx)`                 | Dynamische Listen-Updates                |
 | `MultiProgress`   | `mp.DataResponse(ctx)`                   | Progress-Bar-Update                      |
 | `EmptyState`      | `es.DataResponse(ctx)`                   | State-Wechsel                            |

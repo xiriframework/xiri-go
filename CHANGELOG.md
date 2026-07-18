@@ -14,6 +14,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **`component/progress`**: `Progress` — einzelne determinate Fortschrittsanzeige („current of total"), inkl. `Indeterminate()`-Modus. Für Share-of-Sum weiterhin `MultiProgress`.
 - **`component/bulletchart`**: Chart-Builder als kompakte Gauge-Alternative (`value` / `target` / `max` / `label`).
 - **`component/stat`**: `Stat.Reference(text)` — muted Benchmark-/Anker-Zeile neben dem Wert (z. B. „Gate ≥ 1,1"), macht die Zahl auf einen Blick einordbar.
+- **`component/multistat`**: `MultiStat` — mehrere Kennzahlen in einer KPI-Karte, je mit eigener Farbe/Icon/Trend, unter gemeinsamem Header. Item-Typ ist `*stat.Stat`. Inkl. AJAX-Nachladen via `SetURL`/`WithReload` (Card-Muster). Items standardmäßig horizontal; `VerticalItems()` stapelt sie.
+- **`component/stat`**: `Stat.Link(u)` — macht den Wert zu einem SPA-Navigations-Link (mit Query-Parametern); getrennt von `SetURL` (AJAX-Datenquelle). Wirkt u. a. pro Zahl in `multistat`.
 - **`form/field`**: `radio`-Feldtyp — Single-Select über `SelectField` mit `type=radio`, für kleine Optionsmengen.
 
 [Unreleased]: https://github.com/xiriframework/xiri-go/compare/v0.2.30...HEAD
