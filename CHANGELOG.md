@@ -7,7 +7,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-Noch keine Änderungen seit `v0.3.0`.
+Noch keine Änderungen seit `v0.3.1`.
+
+## [0.3.1] - 2026-07-25
+
+### Security
+
+- **Dependencies aktualisiert, 15 Dependabot-Alerts geschlossen.** Beide direkten Dependencies
+  angehoben: `echo/v4` v4.15.1 → v4.15.4 und `excelize/v2` v2.10.1 → v2.11.0 (letzteres schließt
+  CVE-2026-54063, High). Damit ziehen die transitiven Module automatisch über die betroffenen
+  Schwellen: `golang.org/x/crypto` v0.48.0 → v0.53.0 (13 Alerts, davon 7 kritisch),
+  `golang.org/x/net` v0.51.0 → v0.56.0. Zusätzlich `golang.org/x/text` → v0.39.0 (GO-2026-5970).
+  `govulncheck` meldet vorher wie nachher **0 aufgerufene** Schwachstellen — betroffen war also nur
+  mitkompilierter, von dieser Library nicht erreichter Code; für Consumer, die dieselben Module
+  selbst nutzen, war die Exposition dennoch real.
 
 ## [0.3.0] - 2026-07-25
 
@@ -101,6 +114,7 @@ falsche Ergebnisse geliefert haben. Migration jeweils unter dem Eintrag.
 - **`component/stat`**: `Stat.Link(u)` — macht den Wert zu einem SPA-Navigations-Link (mit Query-Parametern); getrennt von `SetURL` (AJAX-Datenquelle). Wirkt u. a. pro Zahl in `multistat`.
 - **`form/field`**: `radio`-Feldtyp — Single-Select über `SelectField` mit `type=radio`, für kleine Optionsmengen.
 
-[Unreleased]: https://github.com/xiriframework/xiri-go/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/xiriframework/xiri-go/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/xiriframework/xiri-go/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/xiriframework/xiri-go/compare/v0.2.31...v0.3.0
 [0.2.31]: https://github.com/xiriframework/xiri-go/compare/v0.2.30...v0.2.31
