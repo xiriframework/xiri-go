@@ -91,3 +91,26 @@ func TestSelectField_Single_ExportHasNoMultiple(t *testing.T) {
 		t.Error("expected no multiple key in single-select export")
 	}
 }
+
+// TestSelectFieldParse_NoFloatTruncation verifies that a fractional value does not
+// match an integer option via truncation (#5) — 2.9 must not select option 2.
+func TestSelectFieldParse_NoFloatTruncation(t *testing.T) {
+	t.Run("single", func(t *testing.T) {
+		f := NewSelectField("status", "Status", false, selectTestOptions())
+		if err := f.BindValue(2.9); err == nil {
+			t.Errorf("expected error for 2.9, got nil (value=%d)", f.Value)
+		}
+		if err := f.BindValue(2.0); err != nil {
+			t.Errorf("unexpected error for 2.0: %v", err)
+		} else if f.Value != 2 {
+			t.Errorf("expected Value=2, got %d", f.Value)
+		}
+	})
+
+	t.Run("multi", func(t *testing.T) {
+		f := NewSelectField("status", "Status", false, selectTestOptions()).SetMultiple(true)
+		if err := f.BindValue([]interface{}{2.9}); err == nil {
+			t.Errorf("expected error for [2.9], got nil (values=%v)", f.Values)
+		}
+	})
+}

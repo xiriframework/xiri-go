@@ -180,45 +180,14 @@ func (f *TimeField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 	}
 	result["subtype"] = f.Subtype
 
-	// Add min/max with day offset handling (same as TimeRangeField)
-	// Days offset is calculated from midnight in user's timezone
+	// Add min/max with day offset handling (same as TimeRangeField).
+	// One `now` for both bounds so they cannot straddle midnight.
+	now := time.Now()
 	if f.Min != nil {
-		minVal := *f.Min
-		// If value is between -10000 and 10000, treat as days offset from midnight today
-		if minVal > -10000 && minVal < 10000 {
-			// Get user's timezone
-			loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
-			if err != nil {
-				loc = time.UTC
-			}
-			// Calculate midnight today in user's timezone, then add days offset
-			// This ensures DST transitions are handled correctly
-			now := time.Now().In(loc)
-			midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-			targetDate := midnight.AddDate(0, 0, int(minVal))
-			result["min"] = targetDate.Unix()
-		} else {
-			result["min"] = minVal
-		}
+		result["min"] = resolveDateBound(ctx, *f.Min, now)
 	}
 	if f.Max != nil {
-		maxVal := *f.Max
-		// If value is between -10000 and 10000, treat as days offset from midnight today
-		if maxVal > -10000 && maxVal < 10000 {
-			// Get user's timezone
-			loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
-			if err != nil {
-				loc = time.UTC
-			}
-			// Calculate midnight today in user's timezone, then add days offset
-			// This ensures DST transitions are handled correctly
-			now := time.Now().In(loc)
-			midnight := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-			targetDate := midnight.AddDate(0, 0, int(maxVal))
-			result["max"] = targetDate.Unix()
-		} else {
-			result["max"] = maxVal
-		}
+		result["max"] = resolveDateBound(ctx, *f.Max, now)
 	}
 
 	return result

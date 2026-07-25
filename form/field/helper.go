@@ -2,14 +2,54 @@ package field
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+// toInt32 converts numeric and string input to int32 without loss. Fractional
+// numbers, NaN/Inf and values outside the int32 range are rejected instead of
+// being truncated or wrapped — silently turning 1.9 into ID 1, or 3000000000
+// into -1294967296, selects the wrong record.
+func toInt32(raw interface{}) (int32, error) {
+	switch v := raw.(type) {
+	case int32:
+		return v, nil
+	case int:
+		return toInt32(int64(v))
+	case int64:
+		if v > math.MaxInt32 || v < math.MinInt32 {
+			return 0, fmt.Errorf("value %d out of int32 range", v)
+		}
+		return int32(v), nil
+	case float64:
+		if math.IsNaN(v) || math.IsInf(v, 0) {
+			return 0, fmt.Errorf("value %v is not a number", v)
+		}
+		if math.Trunc(v) != v {
+			return 0, fmt.Errorf("value %v is not an integer", v)
+		}
+		if v > math.MaxInt32 || v < math.MinInt32 {
+			return 0, fmt.Errorf("value %v out of int32 range", v)
+		}
+		return int32(v), nil
+	case string:
+		parsed, err := strconv.ParseInt(v, 10, 32)
+		if err != nil {
+			return 0, fmt.Errorf("value %q is not an int32", v)
+		}
+		return int32(parsed), nil
+	default:
+		return 0, fmt.Errorf("unsupported int32 value type: %T", raw)
+	}
+}
 
 // parseDateTime parses a date/time from various formats:
 // - Unix timestamp (int, int64, float64)
@@ -53,6 +93,31 @@ func parseDateTime(raw interface{}) (time.Time, error) {
 	}
 }
 
+// dayOffsetLimit is the threshold that separates a relative day offset from an
+// absolute Unix timestamp in Min/Max bounds.
+const dayOffsetLimit = 10000
+
+// resolveDateBound converts a Min/Max bound into an absolute Unix timestamp.
+// Values within ±dayOffsetLimit are day offsets, anchored to local midnight in the
+// user's timezone; larger values are already absolute timestamps and pass through.
+//
+// Anchoring to local midnight and stepping with AddDate keeps the boundary correct
+// across DST transitions, where a day is not 86400 seconds long.
+func resolveDateBound(ctx *core.UiContext, bound int64, now time.Time) int64 {
+	if bound <= -dayOffsetLimit || bound >= dayOffsetLimit {
+		return bound
+	}
+
+	loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
+	if err != nil {
+		loc = time.UTC
+	}
+
+	local := now.In(loc)
+	midnight := time.Date(local.Year(), local.Month(), local.Day(), 0, 0, 0, 0, loc)
+	return midnight.AddDate(0, 0, int(bound)).Unix()
+}
+
 // ModelListValue represents a list of selected model IDs
 type ModelListValue []int32
 
@@ -71,25 +136,11 @@ func parseModelListValue(raw interface{}, defaultValue interface{}) (ModelListVa
 		// Array of numbers
 		result := make(ModelListValue, 0, len(v))
 		for _, item := range v {
-			switch id := item.(type) {
-			case float64:
-				result = append(result, int32(id))
-			case int:
-				result = append(result, int32(id))
-			case int32:
-				result = append(result, id)
-			case int64:
-				result = append(result, int32(id))
-			case string:
-				// Try to parse string to int
-				parsed, err := strconv.ParseInt(id, 10, 32)
-				if err != nil {
-					return nil, fmt.Errorf("invalid model ID: %s", id)
-				}
-				result = append(result, int32(parsed))
-			default:
-				return nil, fmt.Errorf("invalid model ID type: %T", item)
+			id, err := toInt32(item)
+			if err != nil {
+				return nil, fmt.Errorf("invalid model ID %v: %w", item, err)
 			}
+			result = append(result, id)
 		}
 		return result, nil
 
@@ -105,11 +156,11 @@ func parseModelListValue(raw interface{}, defaultValue interface{}) (ModelListVa
 			if part == "" {
 				continue
 			}
-			parsed, err := strconv.ParseInt(part, 10, 32)
+			id, err := toInt32(part)
 			if err != nil {
-				return nil, fmt.Errorf("invalid model ID: %s", part)
+				return nil, fmt.Errorf("invalid model ID %q: %w", part, err)
 			}
-			result = append(result, int32(parsed))
+			result = append(result, id)
 		}
 		return result, nil
 

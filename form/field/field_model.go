@@ -2,8 +2,6 @@ package field
 
 import (
 	"fmt"
-	"math"
-	"strconv"
 
 	"github.com/xiriframework/xiri-go/component/core"
 )
@@ -80,28 +78,13 @@ func (f *ModelField) Parse(raw interface{}) (interface{}, error) {
 		return f.GetDefault(), nil
 	}
 
-	// Parse to int32 (model ID)
-	switch v := raw.(type) {
-	case int:
-		return int32(v), nil
-	case int32:
-		return v, nil
-	case int64:
-		return int32(v), nil
-	case float64:
-		if v > math.MaxInt32 || v < math.MinInt32 || v != float64(int32(v)) {
-			return nil, fmt.Errorf("invalid model ID for %s", f.ID)
-		}
-		return int32(v), nil
-	case string:
-		parsed, err := strconv.ParseInt(v, 10, 32)
-		if err != nil {
-			return nil, fmt.Errorf("invalid model ID: %s", v)
-		}
-		return int32(parsed), nil
-	default:
-		return nil, fmt.Errorf("cannot parse model ID from %T", raw)
+	// Parse to int32 (model ID) — a truncated or wrapped ID would select
+	// a different record, so anything lossy is rejected.
+	id, err := toInt32(raw)
+	if err != nil {
+		return nil, fmt.Errorf("invalid model ID for %s: %w", f.ID, err)
 	}
+	return id, nil
 }
 
 // BindValue parses, validates, and stores the value in the field

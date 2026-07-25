@@ -4,6 +4,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/xiriframework/xiri-go/component/core"
+	"github.com/xiriframework/xiri-go/types/timezone"
 )
 
 func TestTimeRangeField_Validate_Required(t *testing.T) {
@@ -184,5 +187,76 @@ func TestTimeRangeField_BindValue(t *testing.T) {
 	}
 	if !f.Value.End.Equal(expectedEnd) {
 		t.Errorf("expected end %v, got %v", expectedEnd, f.Value.End)
+	}
+}
+
+// TestTimeRangeField_Export_DayOffsetAnchoredToLocalMidnight verifies that a relative
+// Min/Max day offset is anchored to local midnight in the user's timezone instead of
+// "now + n*86400" (#15). Anchoring to the current wall clock makes the boundary drift
+// with the time of day and breaks across DST transitions.
+func TestTimeRangeField_Export_DayOffsetAnchoredToLocalMidnight(t *testing.T) {
+	ctx := &core.UiContext{Timezone: timezone.EuropeVienna}
+	loc, err := time.LoadLocation("Europe/Vienna")
+	if err != nil {
+		t.Fatalf("loading location: %v", err)
+	}
+
+	minOffset, maxOffset := int64(-7), int64(1)
+	f := NewTimeRangeField("range", "RANGE", false)
+	f.Min = &minOffset
+	f.Max = &maxOffset
+
+	out := f.ExportForFrontend(ctx, nil)
+
+	for key, offset := range map[string]int64{"min": minOffset, "max": maxOffset} {
+		ts, ok := out[key].(int64)
+		if !ok {
+			t.Fatalf("%s: expected int64, got %T (%v)", key, out[key], out[key])
+		}
+		got := time.Unix(ts, 0).In(loc)
+		if got.Hour() != 0 || got.Minute() != 0 || got.Second() != 0 {
+			t.Errorf("%s: expected local midnight in Europe/Vienna, got %s", key, got.Format(time.RFC3339))
+		}
+		now := time.Now().In(loc)
+		want := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc).AddDate(0, 0, int(offset))
+		if !got.Equal(want) {
+			t.Errorf("%s: expected %s, got %s", key, want.Format(time.RFC3339), got.Format(time.RFC3339))
+		}
+	}
+}
+
+// TestTimeRangeField_Export_AbsoluteBoundsUnchanged verifies absolute timestamps
+// (outside the ±10000 day-offset window) are passed through untouched.
+func TestTimeRangeField_Export_AbsoluteBoundsUnchanged(t *testing.T) {
+	absolute := int64(1750000000)
+	f := NewTimeRangeField("range", "RANGE", false)
+	f.Min = &absolute
+
+	out := f.ExportForFrontend(&core.UiContext{Timezone: timezone.EuropeVienna}, nil)
+	if out["min"] != absolute {
+		t.Errorf("expected absolute min %d unchanged, got %v", absolute, out["min"])
+	}
+}
+
+// TestTimeRangeField_Export_NilValueUsesDefault verifies the field default is used
+// when no value is bound, instead of silently falling back to now (#15).
+func TestTimeRangeField_Export_NilValueUsesDefault(t *testing.T) {
+	f := NewTimeRangeFieldWithDefault("range", "RANGE", false, 7)
+	def, ok := f.GetDefault().(*TimeRangeValue)
+	if !ok {
+		t.Fatalf("expected *TimeRangeValue default, got %T", f.GetDefault())
+	}
+
+	out := f.ExportForFrontend(&core.UiContext{Timezone: timezone.EuropeVienna}, nil)
+	value, ok := out["value"].(map[string]int64)
+	if !ok {
+		t.Fatalf("expected map[string]int64 value, got %T", out["value"])
+	}
+
+	if value["start"] != def.Start.Unix() {
+		t.Errorf("expected start from default (%d), got %d", def.Start.Unix(), value["start"])
+	}
+	if value["end"] != def.End.Unix() {
+		t.Errorf("expected end from default (%d), got %d", def.End.Unix(), value["end"])
 	}
 }

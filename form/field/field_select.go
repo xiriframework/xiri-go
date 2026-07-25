@@ -24,23 +24,12 @@ type SelectOption struct {
 }
 
 // optionExists checks if the given int32 id matches one of the field's options.
+// Option values that cannot be represented as int32 losslessly never match.
 func (f *SelectField) optionExists(id int32) bool {
 	for _, opt := range f.Options {
-		switch v := opt.Value.(type) {
-		case int32:
-			if v == id {
-				return true
-			}
-		case int:
-			if int32(v) == id {
-				return true
-			}
-		case int64:
-			if int32(v) == id {
-				return true
-			}
-		case float64:
-			if int32(v) == id {
+		switch opt.Value.(type) {
+		case int, int32, int64, float64:
+			if optID, err := toInt32(opt.Value); err == nil && optID == id {
 				return true
 			}
 		}
@@ -108,40 +97,30 @@ func (f *SelectField) Parse(raw interface{}) (interface{}, error) {
 
 	// Try to match against options
 	for _, opt := range f.Options {
-		switch optVal := opt.Value.(type) {
-		case string:
-			if str, ok := raw.(string); ok && str == optVal {
+		if optVal, ok := opt.Value.(string); ok {
+			if str, isStr := raw.(string); isStr && str == optVal {
 				return optVal, nil
 			}
-		case int:
-			if num, ok := raw.(float64); ok && int(num) == optVal {
-				return optVal, nil
-			}
-			if num, ok := raw.(int); ok && num == optVal {
-				return optVal, nil
-			}
-		case int32:
-			// Handle int32 options (common for database IDs)
-			if num, ok := raw.(float64); ok && int32(num) == optVal {
-				return optVal, nil
-			}
-			if num, ok := raw.(int32); ok && num == optVal {
-				return optVal, nil
-			}
-			if num, ok := raw.(int); ok && int32(num) == optVal {
-				return optVal, nil
-			}
-		case int64:
-			// Handle int64 options
-			if num, ok := raw.(float64); ok && int64(num) == optVal {
-				return optVal, nil
-			}
-			if num, ok := raw.(int64); ok && num == optVal {
-				return optVal, nil
-			}
-			if num, ok := raw.(int); ok && int64(num) == optVal {
-				return optVal, nil
-			}
+			continue
+		}
+
+		// Numeric option: compare exact values. A fractional value like 2.9 must
+		// not match option 2 by truncation.
+		switch raw.(type) {
+		case int, int32, int64, float64:
+		default:
+			continue
+		}
+		optID, err := toInt32(opt.Value)
+		if err != nil {
+			continue
+		}
+		rawID, err := toInt32(raw)
+		if err != nil {
+			continue
+		}
+		if optID == rawID {
+			return opt.Value, nil
 		}
 	}
 

@@ -2,8 +2,6 @@ package field
 
 import (
 	"fmt"
-	"math"
-	"strconv"
 
 	"github.com/xiriframework/xiri-go/component/core"
 )
@@ -31,13 +29,15 @@ func (f *IntField) Validate(value interface{}) error {
 	}
 
 	var num int
-	switch v := value.(type) {
-	case int:
-		num = v
-	case int32:
-		num = int(v)
-	case int64:
-		num = int(v)
+	switch value.(type) {
+	case int, int32, int64:
+		// Value is stored as *int32 — reject what cannot be stored, even when
+		// Validate is called directly instead of through Parse.
+		v32, err := toInt32(value)
+		if err != nil {
+			return fmt.Errorf("int field %s: %w", f.ID, err)
+		}
+		num = int(v32)
 	default:
 		return fmt.Errorf("invalid int value type for %s", f.ID)
 	}
@@ -58,27 +58,13 @@ func (f *IntField) Parse(raw interface{}) (interface{}, error) {
 		return f.GetDefault(), nil
 	}
 
-	switch v := raw.(type) {
-	case int:
-		return v, nil
-	case int32:
-		return int(v), nil
-	case int64:
-		return int(v), nil
-	case float64:
-		if v > math.MaxInt32 || v < math.MinInt32 {
-			return nil, fmt.Errorf("int value out of range for %s", f.ID)
-		}
-		return int(v), nil
-	case string:
-		parsed, err := strconv.Atoi(v)
-		if err != nil {
-			return nil, fmt.Errorf("invalid int value: %s", v)
-		}
-		return parsed, nil
-	default:
-		return nil, fmt.Errorf("cannot parse int from %T", raw)
+	// Value is stored as *int32, so every input must fit losslessly.
+	// Returns int (not int32) — BindValue asserts parsed.(int).
+	num, err := toInt32(raw)
+	if err != nil {
+		return nil, fmt.Errorf("invalid int value for %s: %w", f.ID, err)
 	}
+	return int(num), nil
 }
 
 // BindValue parses, validates, and stores the value in the field
@@ -138,18 +124,26 @@ func NewIntFieldWithBounds(id, name string, required bool, currentValue int32, m
 	}
 }
 
-// NewNumberField creates a number form field (alias for IntField)
-func NewNumberField(id, name string, required bool, defaultValue float64) *IntField {
+// NewNumberField creates a number form field (alias for IntField).
+// The default must be an integer within int32 range — the field stores its value
+// as *int32, so a fractional or out-of-range default is reported instead of being
+// silently truncated.
+func NewNumberField(id, name string, required bool, defaultValue float64) (*IntField, error) {
+	def, err := toInt32(defaultValue)
+	if err != nil {
+		return nil, fmt.Errorf("number field %s default: %w", id, err)
+	}
+
 	return &IntField{
 		BaseField: &BaseField{
 			ID:       id,
 			Type:     FieldTypeInt,
 			Name:     name,
 			Required: required,
-			Default:  int(defaultValue),
+			Default:  int(def),
 			Form:     true,
 		},
-	}
+	}, nil
 }
 
 // ExportForFrontend exports the field for frontend rendering

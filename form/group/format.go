@@ -12,7 +12,7 @@ import (
 func (fg *FormGroup) FormatNumber(value float64, decimals int) string {
 	if fg.ctx == nil {
 		// Default to English format
-		return fmt.Sprintf("%%.%df", decimals)
+		return fmt.Sprintf("%.*f", decimals, value)
 	}
 
 	return formatter.FormatNumberLocale(value, decimals, fg.ctx.Locale)

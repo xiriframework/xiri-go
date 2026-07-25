@@ -114,18 +114,21 @@ func (f *TimeRangeField) ExportForFrontend(ctx *core.UiContext, value interface{
 	}
 	result["subtype"] = f.Subtype
 
-	// Handle value - expect TimeRangeValue or use default
+	now := time.Now()
+
+	// Value takes precedence, then the field default, then now.
 	var start, end time.Time
-	if value != nil {
-		if tr, ok := value.(*TimeRangeValue); ok {
+	if tr, ok := value.(*TimeRangeValue); ok && tr != nil {
+		start = tr.Start
+		end = tr.End
+	}
+	if start.IsZero() || end.IsZero() {
+		if tr, ok := f.GetDefault().(*TimeRangeValue); ok && tr != nil {
 			start = tr.Start
 			end = tr.End
 		}
 	}
-
-	// Use current time if no value
 	if start.IsZero() || end.IsZero() {
-		now := time.Now()
 		start = now
 		end = now
 	}
@@ -136,24 +139,13 @@ func (f *TimeRangeField) ExportForFrontend(ctx *core.UiContext, value interface{
 		"end":   end.Unix(),
 	}
 
-	// Add min/max if specified
+	// Add min/max if specified — day offsets are anchored to local midnight
+	// in the user's timezone (same as TimeField).
 	if f.Min != nil {
-		minVal := *f.Min
-		// Day offsets: if between -10000 and 10000, treat as days from now
-		if minVal > -10000 && minVal < 10000 {
-			result["min"] = time.Now().Unix() + (minVal * 86400) // 86400 = seconds per day
-		} else {
-			result["min"] = minVal
-		}
+		result["min"] = resolveDateBound(ctx, *f.Min, now)
 	}
 	if f.Max != nil {
-		maxVal := *f.Max
-		// Day offsets: if between -10000 and 10000, treat as days from now
-		if maxVal > -10000 && maxVal < 10000 {
-			result["max"] = time.Now().Unix() + (maxVal * 86400)
-		} else {
-			result["max"] = maxVal
-		}
+		result["max"] = resolveDateBound(ctx, *f.Max, now)
 	}
 
 	return result
