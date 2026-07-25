@@ -38,10 +38,26 @@ func (uc *UiContext) SafeLocale() locale.Locale {
 	return uc.Locale
 }
 
-// SafeTimezone returns the timezone or a default (UTC) if ctx is nil.
+// SafeTimezone returns the timezone or a default (Europe/Vienna) if ctx is nil.
 func (uc *UiContext) SafeTimezone() timezone.Timezone {
 	if uc == nil {
 		return timezone.EuropeVienna
 	}
 	return uc.Timezone
+}
+
+// SafeDistance returns the distance unit or a default (Kilometer) if ctx is nil.
+func (uc *UiContext) SafeDistance() distance.Distance {
+	if uc == nil {
+		return distance.Kilometer
+	}
+	return uc.Distance
+}
+
+// SafePressure returns the pressure unit or a default (Bar) if ctx is nil.
+func (uc *UiContext) SafePressure() pressure.Pressure {
+	if uc == nil {
+		return pressure.Bar
+	}
+	return uc.Pressure
 }

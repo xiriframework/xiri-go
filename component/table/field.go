@@ -1,6 +1,15 @@
 package table
 
-import "github.com/xiriframework/xiri-go/component/core"
+import (
+	"log/slog"
+
+	"github.com/xiriframework/xiri-go/component/core"
+)
+
+// maxButtonKey caps the button key used as a slice index during serialization.
+// Keys are position indices assigned by application code; a negative key would
+// panic and an arbitrarily large one would allocate a huge slice.
+const maxButtonKey = 1000
 
 // fieldBase contains all type-independent field properties.
 // Extracted from field[T] to avoid generic monomorphization of methods
@@ -152,7 +161,13 @@ func (f *fieldBase) format(value any, row Row, output OutputType, ctx *core.UiCo
 }
 
 // addButton adds a button definition to a buttons-type field.
-func (f *fieldBase) addButton(key int, action FieldButtonAction, icon string, color core.Color, hint string) {
+// It returns false (and adds nothing) when the key is out of range, so callers
+// that keep parallel state (e.g. AddMenu) can skip recording the rejected key.
+func (f *fieldBase) addButton(key int, action FieldButtonAction, icon string, color core.Color, hint string) bool {
+	if key < 0 || key > maxButtonKey {
+		slog.Warn("addButton: button key out of range, ignoring", "key", key, "max", maxButtonKey)
+		return false
+	}
 	if f.buttons == nil {
 		f.buttons = make(map[int]*buttonDef)
 	}
@@ -163,6 +178,7 @@ func (f *fieldBase) addButton(key int, action FieldButtonAction, icon string, co
 		hint:    hint,
 		options: make(map[string]any),
 	}
+	return true
 }
 
 // addIcon adds an icon mapping to an icon-type field.

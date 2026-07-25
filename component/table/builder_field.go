@@ -396,7 +396,9 @@ func WithRowHint[T any](fb *FieldBuilder, accessor func(T) string) *FieldBuilder
 // - "": hide the menu item for this row
 // Returning nil hides the entire menu button for this row.
 func AddMenu[T any](fb *FieldBuilder, key int, icon string, color core.Color, hint string, accessor func(T) []string) *FieldBuilder {
-	fb.base.addButton(key, FieldButtonActionMenu, icon, color, hint)
+	if !fb.base.addButton(key, FieldButtonActionMenu, icon, color, hint) {
+		return fb // out-of-range key rejected; do not record parallel menu state
+	}
 
 	f := fb.typedField.(*field[T])
 	if f.menuAccessors == nil {

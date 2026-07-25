@@ -170,8 +170,10 @@ func (tc *tableCore) LoadFilterData(c echo.Context) (map[string]any, error) {
 	// Parse request body (contains filter fields + _csv flag)
 	var requestData map[string]interface{}
 	if err := c.Bind(&requestData); err != nil {
-		slog.Debug("LoadFilterData: failed to bind request body, using empty map", "error", err)
-		requestData = make(map[string]interface{})
+		// A malformed body must not be silently treated as "no filter" (which could
+		// trigger an unfiltered full-table export). Empty bodies do not reach here:
+		// echo's binder returns nil for zero-length content.
+		return nil, err
 	}
 
 	// Check for CSV flag and set output type (only if CSV export is enabled in options)

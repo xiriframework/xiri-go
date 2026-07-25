@@ -26,7 +26,7 @@ func createIntegerFormatter() OutputFormatter {
 	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		num := toInt64(value)
 		if output == OutputWeb || output == OutputPDF {
-			return formatter.FormatNumberLocale(float64(num), 0, ctx.SafeLocale())
+			return formatter.FormatInteger(num, ctx)
 		}
 		return fmt.Sprint(num)
 	})
@@ -140,8 +140,8 @@ func createText2IntFormatter() OutputFormatter {
 		switch output {
 		case OutputWeb, OutputPDF:
 			return [2]string{
-				formatter.FormatNumberLocale(float64(arr[0]), 0, ctx.SafeLocale()),
-				formatter.FormatNumberLocale(float64(arr[1]), 0, ctx.SafeLocale()),
+				formatter.FormatInteger(int64(arr[0]), ctx),
+				formatter.FormatInteger(int64(arr[1]), ctx),
 			}
 		case OutputCSV, OutputExcel:
 			primary := fmt.Sprint(arr[0])
@@ -308,7 +308,7 @@ func createText2DistanceFormatter(decimals int) OutputFormatter {
 			return [2]string{"", ""}
 		}
 
-		distanceUnit := ctx.Distance
+		distanceUnit := ctx.SafeDistance()
 
 		switch output {
 		case OutputWeb, OutputPDF:
@@ -345,7 +345,7 @@ func createText2SpeedFormatter(decimals int) OutputFormatter {
 			return [2]string{"", ""}
 		}
 
-		distanceUnit := ctx.Distance // Speed uses distance unit
+		distanceUnit := ctx.SafeDistance() // Speed uses distance unit
 
 		// Determine unit suffix
 		unit := " km/h"
@@ -494,7 +494,7 @@ func createIntegerNFormatter() OutputFormatter {
 		if output == OutputWeb || output == OutputPDF {
 			result := make([]string, len(arr))
 			for i, v := range arr {
-				result[i] = formatter.FormatNumberLocale(float64(v), 0, ctx.SafeLocale())
+				result[i] = formatter.FormatInteger(int64(v), ctx)
 			}
 			return result
 		}
@@ -617,7 +617,7 @@ func createDistanceNFormatter(decimals int) OutputFormatter {
 			return []string{}
 		}
 
-		distanceUnit := ctx.Distance
+		distanceUnit := ctx.SafeDistance()
 
 		if output == OutputWeb || output == OutputPDF {
 			result := make([]string, len(arr))
@@ -647,7 +647,7 @@ func createSpeedNFormatter(decimals int) OutputFormatter {
 			return []string{}
 		}
 
-		distanceUnit := ctx.Distance
+		distanceUnit := ctx.SafeDistance()
 
 		unit := " km/h"
 		switch distanceUnit {
@@ -820,7 +820,7 @@ func createDateFormatter() OutputFormatter {
 func createDistanceFormatter(decimals int) OutputFormatter {
 	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		km := toFloat64(value)
-		distanceUnit := ctx.Distance
+		distanceUnit := ctx.SafeDistance()
 
 		if output == OutputWeb || output == OutputPDF {
 			return formatter.FormatDistanceLocaleWithDecimals(km, distanceUnit, ctx.SafeLocale(), decimals)
@@ -834,13 +834,16 @@ func createDistanceFormatter(decimals int) OutputFormatter {
 func createPressureFormatter(decimals int) OutputFormatter {
 	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		bar := toFloat64(value)
-		pressureUnit := ctx.Pressure
+		pressureUnit := ctx.SafePressure()
 
 		if output == OutputWeb || output == OutputPDF {
 			converted := convertPressureValue(bar, pressureUnit)
 			unit := " bar"
-			if pressureUnit == pressure.Psi {
+			switch pressureUnit {
+			case pressure.Psi:
 				unit = " psi"
+			case pressure.Kpa:
+				unit = " kPa"
 			}
 			return formatter.FormatNumberLocale(converted, decimals, ctx.SafeLocale()) + unit
 		}
@@ -853,7 +856,7 @@ func createPressureFormatter(decimals int) OutputFormatter {
 func createSpeedFormatter(decimals int) OutputFormatter {
 	return FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
 		kmh := toFloat64(value)
-		distanceUnit := ctx.Distance // Speed uses distance unit
+		distanceUnit := ctx.SafeDistance() // Speed uses distance unit
 
 		if output == OutputWeb || output == OutputPDF {
 			converted := convertDistanceValue(kmh, distanceUnit)
@@ -893,6 +896,8 @@ func convertPressureValue(bar float64, unit pressure.Pressure) float64 {
 	switch unit {
 	case pressure.Psi:
 		return bar * 14.5038
+	case pressure.Kpa:
+		return bar * 100
 	default:
 		return bar
 	}

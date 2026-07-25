@@ -1,6 +1,8 @@
 package formatter
 
 import (
+	"strconv"
+
 	"github.com/xiriframework/xiri-go/component/core"
 )
 
@@ -17,7 +19,12 @@ func FormatDouble2(value float64, ctx *core.UiContext) string {
 // Example (de): 1234567 → "1.234.567"
 // Uses the user's locale settings from UiContext.
 func FormatInteger(value int64, ctx *core.UiContext) string {
-	return FormatNumberLocale(float64(value), 0, ctx.SafeLocale())
+	// Format the int64 directly (no float64 detour) to keep full precision above 2^53.
+	str := strconv.FormatInt(value, 10)
+	if usesCommaDecimal(ctx.SafeLocale()) {
+		return addThousandSeparatorsLocale(str, '.', ',')
+	}
+	return addThousandSeparatorsLocale(str, ',', '.')
 }
 
 // FormatBigNumber formats a large number with thousand separators and no decimals.

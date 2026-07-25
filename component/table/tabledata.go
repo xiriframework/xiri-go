@@ -249,18 +249,17 @@ func (td *TableDataResponse) DataResponse(ctx *core.UiContext) response.DataResu
 // For each field where any row contains a []string value, it determines the maximum slice length
 // and creates that many individual columns. The first column keeps the original field ID/name,
 // subsequent columns get "_2", "_3" suffixes (e.g., "distance", "distance_2", "distance_3").
-func (td *TableDataResponse) expandNFieldColumns() {
-	fieldsToUse := td.fieldsForCSV
-	if fieldsToUse == nil {
-		fieldsToUse = td.fields
-	}
-	if len(fieldsToUse) == 0 || len(td.data) == 0 {
-		return
+// expandNFieldColumns is a pure function: it never mutates the input data or
+// fields, returning freshly built slices instead. This keeps repeated exports
+// and concurrent Print() calls on the same TableDataResponse race-free.
+func expandNFieldColumns(data []map[string]any, fields []map[string]any) ([]map[string]any, []map[string]any) {
+	if len(fields) == 0 || len(data) == 0 {
+		return data, fields
 	}
 
 	// Pass 1: Find maximum N for each field that has []string values
 	maxN := make(map[string]int)
-	for _, row := range td.data {
+	for _, row := range data {
 		for key, val := range row {
 			if strs, ok := val.([]string); ok {
 				if len(strs) > maxN[key] {
@@ -271,12 +270,12 @@ func (td *TableDataResponse) expandNFieldColumns() {
 	}
 
 	if len(maxN) == 0 {
-		return
+		return data, fields
 	}
 
 	// Pass 2: Expand field definitions
-	expandedFields := make([]map[string]any, 0, len(fieldsToUse))
-	for _, fieldDef := range fieldsToUse {
+	expandedFields := make([]map[string]any, 0, len(fields))
+	for _, fieldDef := range fields {
 		fieldID, hasID := fieldDef["id"].(string)
 		fieldName, _ := fieldDef["name"].(string)
 		n, isNField := maxN[fieldID]
@@ -290,9 +289,7 @@ func (td *TableDataResponse) expandNFieldColumns() {
 			for k, v := range fieldDef {
 				newDef[k] = v
 			}
-			if i == 0 {
-				// First column keeps original ID and name
-			} else {
+			if i != 0 {
 				newDef["id"] = fmt.Sprintf("%s_%d", fieldID, i+1)
 				newDef["name"] = fmt.Sprintf("%s %d", fieldName, i+1)
 			}
@@ -300,8 +297,13 @@ func (td *TableDataResponse) expandNFieldColumns() {
 		}
 	}
 
-	// Pass 3: Expand data rows
-	for _, row := range td.data {
+	// Pass 3: Expand data rows into copies (never mutate the input rows)
+	expandedData := make([]map[string]any, len(data))
+	for idx, row := range data {
+		newRow := make(map[string]any, len(row)+len(maxN))
+		for k, v := range row {
+			newRow[k] = v
+		}
 		for fieldID, n := range maxN {
 			val, exists := row[fieldID]
 			if !exists {
@@ -313,28 +315,24 @@ func (td *TableDataResponse) expandNFieldColumns() {
 			}
 			// Set first value
 			if len(strs) > 0 {
-				row[fieldID] = strs[0]
+				newRow[fieldID] = strs[0]
 			} else {
-				row[fieldID] = ""
+				newRow[fieldID] = ""
 			}
 			// Set subsequent values
 			for i := 1; i < n; i++ {
 				expandedID := fmt.Sprintf("%s_%d", fieldID, i+1)
 				if i < len(strs) {
-					row[expandedID] = strs[i]
+					newRow[expandedID] = strs[i]
 				} else {
-					row[expandedID] = ""
+					newRow[expandedID] = ""
 				}
 			}
 		}
+		expandedData[idx] = newRow
 	}
 
-	// Update field definitions
-	if td.fieldsForCSV != nil {
-		td.fieldsForCSV = expandedFields
-	} else {
-		td.fields = expandedFields
-	}
+	return expandedData, expandedFields
 }
 
 // sanitizeExportValue prevents formula injection in CSV/Excel exports.
@@ -351,26 +349,24 @@ func sanitizeExportValue(s string) string {
 // Uses semicolon (;) delimiter for Excel compatibility.
 // Only includes fields that are marked as CSV-enabled.
 func (td *TableDataResponse) generateCSV(ctx *core.UiContext) string {
-	td.expandNFieldColumns()
+	fieldsToUse := td.fieldsForCSV
+	if fieldsToUse == nil {
+		fieldsToUse = td.fields
+	}
+	data, fieldsToUse := expandNFieldColumns(td.data, fieldsToUse)
 
 	buf := new(bytes.Buffer)
 	writer := csv.NewWriter(buf)
 	writer.Comma = ';' // Semicolon separator for Excel compatibility (European locale)
 
 	// If no data, return empty CSV
-	if len(td.data) == 0 {
+	if len(data) == 0 {
 		return ""
 	}
 
 	// Build field ID to name mapping from field definitions
 	fieldIDToName := make(map[string]string)
 	fieldIDsOrdered := make([]string, 0)
-
-	// Use fieldsForCSV first (internal), then fall back to fields (public)
-	fieldsToUse := td.fieldsForCSV
-	if fieldsToUse == nil {
-		fieldsToUse = td.fields
-	}
 
 	if fieldsToUse != nil && len(fieldsToUse) > 0 {
 		// Use field definitions to get proper order and names
@@ -386,20 +382,20 @@ func (td *TableDataResponse) generateCSV(ctx *core.UiContext) string {
 
 	// Fallback: if no field definitions, use keys from first row
 	if len(fieldIDsOrdered) == 0 {
-		firstRow := td.data[0]
+		firstRow := data[0]
 		for fieldID := range firstRow {
 			fieldIDsOrdered = append(fieldIDsOrdered, fieldID)
 			fieldIDToName[fieldID] = fieldID // Use ID as name
 		}
 	}
 
-	// Write header row with field names (translated)
+	// Write header row with field names (translated), sanitized against formula injection
 	headerRow := make([]string, len(fieldIDsOrdered))
 	for i, fieldID := range fieldIDsOrdered {
 		if name, ok := fieldIDToName[fieldID]; ok {
-			headerRow[i] = name
+			headerRow[i] = sanitizeExportValue(name)
 		} else {
-			headerRow[i] = fieldID
+			headerRow[i] = sanitizeExportValue(fieldID)
 		}
 	}
 	if err := writer.Write(headerRow); err != nil {
@@ -407,7 +403,7 @@ func (td *TableDataResponse) generateCSV(ctx *core.UiContext) string {
 	}
 
 	// Write data rows
-	for _, rowData := range td.data {
+	for _, rowData := range data {
 		row := make([]string, len(fieldIDsOrdered))
 		for i, fieldID := range fieldIDsOrdered {
 			// Convert value to string
@@ -443,10 +439,14 @@ func (td *TableDataResponse) generateCSV(ctx *core.UiContext) string {
 // Uses excelize library to create a properly formatted Excel workbook.
 // Only includes fields that are marked as CSV-enabled (same logic as CSV).
 func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) {
-	td.expandNFieldColumns()
+	fieldsToUse := td.fieldsForCSV
+	if fieldsToUse == nil {
+		fieldsToUse = td.fields
+	}
+	data, fieldsToUse := expandNFieldColumns(td.data, fieldsToUse)
 
 	// If no data, return empty Excel file
-	if len(td.data) == 0 {
+	if len(data) == 0 {
 		f := excelize.NewFile()
 		defer f.Close()
 		buf, err := f.WriteToBuffer()
@@ -471,12 +471,6 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 	fieldIDToName := make(map[string]string)
 	fieldIDsOrdered := make([]string, 0)
 
-	// Use fieldsForCSV first (internal), then fall back to fields (public)
-	fieldsToUse := td.fieldsForCSV
-	if fieldsToUse == nil {
-		fieldsToUse = td.fields
-	}
-
 	if fieldsToUse != nil && len(fieldsToUse) > 0 {
 		// Use field definitions to get proper order and names
 		for _, fieldDef := range fieldsToUse {
@@ -491,14 +485,14 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 
 	// Fallback: if no field definitions, use keys from first row
 	if len(fieldIDsOrdered) == 0 {
-		firstRow := td.data[0]
+		firstRow := data[0]
 		for fieldID := range firstRow {
 			fieldIDsOrdered = append(fieldIDsOrdered, fieldID)
 			fieldIDToName[fieldID] = fieldID // Use ID as name
 		}
 	}
 
-	// Write header row with field names
+	// Write header row with field names, sanitized against formula injection
 	for colIdx, fieldID := range fieldIDsOrdered {
 		cellName, err := excelize.CoordinatesToCellName(colIdx+1, 1)
 		if err != nil {
@@ -508,13 +502,13 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 		if name == "" {
 			name = fieldID
 		}
-		if err := f.SetCellValue(sheetName, cellName, name); err != nil {
+		if err := f.SetCellValue(sheetName, cellName, sanitizeExportValue(name)); err != nil {
 			return nil, fmt.Errorf("error writing header cell: %w", err)
 		}
 	}
 
 	// Write data rows
-	for rowIdx, rowData := range td.data {
+	for rowIdx, rowData := range data {
 		excelRow := rowIdx + 2 // Excel rows are 1-indexed, +1 for header
 		for colIdx, fieldID := range fieldIDsOrdered {
 			cellName, err := excelize.CoordinatesToCellName(colIdx+1, excelRow)
@@ -561,7 +555,7 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 		}
 
 		// Check data values in this column
-		for _, rowData := range td.data {
+		for _, rowData := range data {
 			value := rowData[fieldID]
 			if value == nil {
 				continue

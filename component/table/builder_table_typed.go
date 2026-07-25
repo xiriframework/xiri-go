@@ -415,7 +415,11 @@ func (b *TableBuilder[T]) BoolField(id, name string, accessor func(T) bool) *Fie
 //	})
 func (b *TableBuilder[T]) DateTimeField(id, name string, accessor func(T) time.Time) *FieldBuilder {
 	return b.fieldInternal(id, name, dateTime, func(row T) any {
-		return accessor(row).Unix() // Convert to Unix seconds
+		t := accessor(row)
+		if t.IsZero() {
+			return int64(0) // Zero time renders as empty (formatter treats 0 as empty)
+		}
+		return t.Unix() // Convert to Unix seconds
 	})
 }
 
@@ -429,7 +433,11 @@ func (b *TableBuilder[T]) DateTimeField(id, name string, accessor func(T) time.T
 //	})
 func (b *TableBuilder[T]) DateField(id, name string, accessor func(T) time.Time) *FieldBuilder {
 	return b.fieldInternal(id, name, date, func(row T) any {
-		return accessor(row).Unix() // Convert to Unix seconds
+		t := accessor(row)
+		if t.IsZero() {
+			return int64(0) // Zero time renders as empty (formatter treats 0 as empty)
+		}
+		return t.Unix() // Convert to Unix seconds
 	})
 }
 
@@ -447,7 +455,7 @@ func (b *TableBuilder[T]) DistanceField(id, name string, accessor func(T) float6
 	})
 }
 
-// PressureField adds a pressure field with automatic bar/psi conversion.
+// PressureField adds a pressure field with automatic bar/psi/kPa conversion.
 // Expects value in bar.
 //
 // Example:

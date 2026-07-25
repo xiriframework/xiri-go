@@ -40,7 +40,7 @@ func (i *Item) Done() *DescriptionList {
 
 // DescriptionList represents a collection of key-value pairs for detail views.
 type DescriptionList struct {
-	items   []Item
+	items   []*Item
 	columns *int
 	layout  *string
 	display *string
@@ -49,15 +49,15 @@ type DescriptionList struct {
 // New creates a new DescriptionList.
 func New() *DescriptionList {
 	return &DescriptionList{
-		items: make([]Item, 0),
+		items: make([]*Item, 0),
 	}
 }
 
 // Add adds a new item with label and value, returning the Item for further configuration.
 func (d *DescriptionList) Add(label, value string) *Item {
-	item := Item{label: label, value: value, list: d}
+	item := &Item{label: label, value: value, list: d}
 	d.items = append(d.items, item)
-	return &d.items[len(d.items)-1]
+	return item
 }
 
 // Columns sets the number of columns (1, 2, or 3).
