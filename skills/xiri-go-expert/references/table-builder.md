@@ -43,6 +43,7 @@ b.DateNField("dates", "device.dates", func(d Device) []*int64 { return []*int64{
 b.DistanceField("km", "device.distance", func(d Device) float64 { return d.Km })
 b.SpeedField("speed", "device.speed", func(d Device) float64 { return d.Speed })
 b.PressureField("pressure", "device.pressure", func(d Device) float64 { return d.Pressure })
+// Accessor liefert immer bar; Ausgabe je UiContext.Pressure in bar, psi oder kPa
 
 // Dauer (HH:MM oder Xd HH:MM)
 b.TimeLengthField("duration", "device.duration", func(d Device) int { return d.DurationMin })
@@ -323,7 +324,9 @@ func HandleDeviceTable(c echo.Context) error {
     ctx := getUiContext(c)
     t := buildDeviceTable()
 
-    if err := t.LoadFilterData(c); err != nil {
+    // gibt (map[string]any, error) zurück; hier werden die Werte unten über
+    // GetFilterValues() gelesen, der Fehler darf aber nicht verworfen werden
+    if _, err := t.LoadFilterData(c); err != nil {
         return c.JSON(http.StatusBadRequest, response.NewErrorResponse(err.Error()))
     }
 

@@ -91,7 +91,10 @@ tbl := b.Build()
 tbl.SetURL(c.apiUrl("data"))
 
 // Data-Handler
-filters, _ := tbl.LoadFilterData(ctx)
+filters, err := tbl.LoadFilterData(ctx)   // Fehler NICHT verwerfen: ein fehlerhafter
+if err != nil {                           // Body würde sonst als "kein Filter" gelten
+    return err                            // und einen Full-Table-Export auslösen
+}
 pg := tbl.LoadPaginationParams()  // entfernen bei client-seitiger Pagination (default)
 tbl.SetData(rows)
 return wc.Data(tbl)

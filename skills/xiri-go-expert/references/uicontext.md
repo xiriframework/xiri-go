@@ -40,6 +40,12 @@ func (uc *UiContext) SafeLocale() locale.Locale
 
 func (uc *UiContext) SafeTimezone() timezone.Timezone
   // gibt timezone.EuropeVienna (Default) zurück wenn uc==nil
+
+func (uc *UiContext) SafeDistance() distance.Distance
+  // gibt distance.Kilometer (Default) zurück wenn uc==nil
+
+func (uc *UiContext) SafePressure() pressure.Pressure
+  // gibt pressure.Bar (Default) zurück wenn uc==nil
 ```
 
 Es gibt außerdem eine freie Funktion:
@@ -147,9 +153,39 @@ s := formatter.FormatDateTime(time.Now(), uc)   // nil-safe
 
 Default = `timezone.EuropeVienna`. Wird von `FormatTimestampDateTime` und verwandten Helpern gelesen, um Unix-Timestamps in lokale Zeit umzurechnen.
 
-### Distance / Pressure
+### `SafeDistance()` / `SafePressure()`
 
-Sind nur in `FormatDistanceLocale*` / `FormatPressureLocale` / `FormatSpeedLocale` relevant. Ohne Nil-safe-Wrapper — übergib sie explizit an den Formatter (siehe `formatter.md`).
+Defaults = `distance.Kilometer` bzw. `pressure.Bar`. Relevant für `FormatDistanceLocale*` /
+`FormatPressureLocale` / `FormatSpeedLocale` und die Tabellen-Formatter, die diese Einheiten
+umrechnen. Nutze immer die Safe-Variante — `ctx.Distance` direkt zu dereferenzieren paniced bei
+`nil`-Context, und `core.Component.Print` erlaubt `ctx == nil` ausdrücklich.
+
+## Enum-Werte aufzählen
+
+Die Lookup-Tabellen der `types/*`-Packages sind **nicht** öffentlich. Für einzelne Werte gibt es
+Accessoren, zum Aufzählen (z. B. für ein Dropdown) `All()`:
+
+```go
+for _, tz := range timezone.All() {          // sortiert nach numerischem Wert
+    fmt.Println(tz.ToInt32(), timezone.GetName(tz), tz.GetIANA())
+}
+```
+
+Gibt es in `timezone`, `locale`, `language`, `distance` und `pressure`. Die zurückgegebene Slice ist
+pro Aufruf frisch alloziert und darf gefahrlos sortiert oder gefiltert werden.
+
+**Achtung:** `GetName` ist eine **Package-Funktion** (`timezone.GetName(tz)`), die übrigen
+Accessoren sind Methoden auf dem Wert.
+
+| Package    | Name                  | Zweiter Accessor (Methode) |
+| ---------- | --------------------- | -------------------------- |
+| `timezone` | `timezone.GetName(v)` | `v.GetIANA()`              |
+| `locale`   | `locale.GetName(v)`   | `v.GetLocaleString()`      |
+| `language` | `language.GetName(v)` | `v.GetCode()`              |
+| `distance` | `distance.GetName(v)` | `v.GetSymbol()`            |
+| `pressure` | `pressure.GetName(v)` | `v.GetSymbol()`            |
+
+Alternativ liefert `v.String()` denselben Namen wie `GetName` (bzw. `"Unknown"`).
 
 ## Minimale Fake-Implementation für Tests
 

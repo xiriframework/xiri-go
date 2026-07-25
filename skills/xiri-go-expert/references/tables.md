@@ -48,7 +48,7 @@ Alle Field-Konstruktoren haben die **gleiche Signatur**: `(id, name string, acce
 | `TimeLengthField`                      | `int64` (Sekunden)| Dauer z.B. "2h 15min"                  |
 | `DistanceField`                        | `float64` (m)     | Distanz (km/mi je nach UiContext)      |
 | `SpeedField`                           | `float64` (m/s)   | Geschwindigkeit                        |
-| `PressureField`                        | `float64`         | Druck (Locale-abhängig)                |
+| `PressureField`                        | `float64` (bar)   | Druck, konvertiert nach bar/psi/kPa je UiContext |
 | `HtmlField`                            | `string`          | RAW HTML (keine Escape-Logik!)         |
 | `HeaderField`                          | `string`          | Gruppierungs-Header in der Zeile       |
 
@@ -229,10 +229,16 @@ Die Tabelle selbst braucht dafür `b.SetEditUrl(c.apiUrl("inline-edit").PrintPre
 
 ```go
 b.TextField("salary", "Gehalt", accessor).
-    WithAccess([]string{"admin", "hr"})    // Spalte nur für diese Rollen sichtbar
+    WithAccess([]string{"admin", "hr"})    // Rollen-Metadaten für das Frontend
 ```
 
-Die tatsächliche Rollen-Prüfung geschieht im Backend bei `exportFields` — der Skill-User setzt die Rollen via UiContext oder Session.
+> ⚠️ **`WithAccess` ist kein Zugriffsschutz.** Die Library wertet die Rollen **nirgends** aus — es
+> gibt keine Backend-Prüfung. Die Werte landen als Metadaten im JSON-Modell; ob und wie das Frontend
+> sie berücksichtigt, ist nicht Sache der Library. Wer eine Spalte wirklich schützen will, darf sie
+> **gar nicht erst in die Tabelle aufnehmen** (bzw. den Accessor rollenabhängig leer liefern lassen)
+> und muss den Zugriff im eigenen Handler prüfen. Ein Klient sieht sonst den Wert im Response.
+>
+> (Bekannt als Finding #2 des Audits; eine echte Durchsetzung steht noch aus.)
 
 ## Row Buttons (Aktionen pro Zeile)
 
@@ -250,6 +256,10 @@ b.ButtonsField("actions", "", func(r Device) map[string]string {
     AddButton(1, table.FieldButtonActionDialog,   "delete", core.ColorWarning, "Löschen").
     AddButton(2, table.FieldButtonActionLink,     "visibility", core.ColorAccent, "Ansehen")
 ```
+
+Der Key ist ein Positions-Index und muss zwischen `0` und `1000` liegen — er wird bei der
+Serialisierung als Slice-Index benutzt. Keys außerhalb werden ignoriert und per `slog.Warn`
+gemeldet (früher: Panic bei negativem, Riesenallokation bei sehr großem Key).
 
 ### `FieldButtonAction`-Werte
 

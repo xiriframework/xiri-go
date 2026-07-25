@@ -11,10 +11,17 @@ field.SetClass("xcol-md-6")      // CSS-Klasse (Grid-Breite)
 field.SetHint("tooltip.text")    // Tooltip/Hilfetext
 field.SetStep(1)                 // Schritt in Multi-Step-Forms
 field.SetDisabled(true)          // Deaktiviert
-field.SetAccess([]string{"admin"}) // Zugriffskontrolle
-field.SetScenario([]string{"add"}) // Nur in bestimmten Szenarien
+field.SetAccess([]string{"admin"}) // Rollen-Metadaten (KEIN Zugriffsschutz, siehe unten)
+field.SetScenario([]string{"add"}) // Szenario-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetForm(false)             // Nicht im Formular anzeigen
 ```
+
+> ⚠️ **`SetAccess`/`SetScenario` erzwingen nichts.** Weder der Export noch das Binding werten sie
+> aus — ein manipulierter Request kann ein so markiertes Feld trotzdem setzen. Wer ein Feld
+> wirklich schützen will, darf es rollenabhängig **nicht in die `FormGroup` aufnehmen**; der
+> Form-Binder schützt korrekt gegen Overposting und akzeptiert nur deklarierte, aktive Felder.
+>
+> (Finding #2 des Audits; echte Durchsetzung steht noch aus.)
 
 ### ShowWhen (Bedingte Sichtbarkeit)
 
@@ -59,14 +66,15 @@ name := *f.Value  // string
 Zahleneingabe. Value: `*int32`
 
 ```go
-f := field.NewIntField("count", "device.count", true, nil)
-// Parameter: id, translationKey, required, currentValue (*int32)
+f := field.NewIntField("count", "device.count", true, 0)
+// Parameter: id, translationKey, required, currentValue (int32)
 
-f := field.NewIntFieldWithBounds("count", "device.count", true, nil, intPtr(0), intPtr(100))
-// Mit Min/Max-Grenzen
+f := field.NewIntFieldWithBounds("count", "device.count", true, 0, 0, 100)
+// Mit Min/Max-Grenzen (min, max sind int, nicht *int)
 
-f := field.NewNumberField("price", "device.price", true, nil)
-// Alias mit Subtype "float"
+f, err := field.NewNumberField("price", "device.price", true, 42.0)
+// Alias für IntField. Gibt einen Fehler zurück, wenn der Default nicht verlustfrei
+// in int32 passt (Bruchzahl oder außerhalb des int32-Bereichs).
 
 // Optionale Konfiguration:
 f.Subtype = "float"   // int (default), pint (positive int), float, bigint, real
@@ -76,6 +84,9 @@ f.TextSuffix = "Stück"
 // Nach BindAndValidate:
 count := *f.Value  // int32
 ```
+
+Parsing ist verlustfrei: `1.9`, `"1.9"` und `"3000000000"` werden abgelehnt, nicht trunkiert oder
+gewrappt. Gleiches gilt für Model-IDs (`ModelField`, `ModelListField`) und `SelectField`-Optionen.
 
 ## BoolField
 

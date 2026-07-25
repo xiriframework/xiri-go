@@ -27,7 +27,7 @@ type Component interface {
 - **formatter/** - Number, date, and time formatting utilities
 - **response/** - HTTP response helpers for Echo framework
 - **types/** - Shared type definitions
-- **uicontext/** - Request context with locale and timezone
+- **component/core/** - `UiContext` (request context with locale and timezone), `Component` interface, `TranslateFunc`
 
 ## Quick Start
 

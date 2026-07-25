@@ -27,3 +27,7 @@ go.work.sum
 xiri-go.iml
 CLAUDE.md
 
+
+# Audit-Arbeitsdateien (lokal, nicht Teil des Releases)
+TODO-go.md
+FIX-PLAN-go.md
