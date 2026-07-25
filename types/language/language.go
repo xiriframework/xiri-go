@@ -1,5 +1,7 @@
 package language
 
+import "slices"
+
 // Language represents a user interface language
 // It's a type-safe enum backed by int for database compatibility
 type Language int
@@ -36,8 +38,8 @@ const (
 	Arabisch        Language = 26 // Arabic
 )
 
-// Names maps language values to human-readable names for debugging and logging
-var Names = map[Language]string{
+// names maps language values to human-readable names for debugging and logging
+var names = map[Language]string{
 	Deutsch:         "Deutsch",
 	Englisch:        "Englisch",
 	Kroatisch:       "Kroatisch",
@@ -67,8 +69,8 @@ var Names = map[Language]string{
 	Arabisch:        "Arabisch",
 }
 
-// LanguageCodes maps language values to ISO 639-1 language codes
-var LanguageCodes = map[Language]string{
+// languageCodes maps language values to ISO 639-1 language codes
+var languageCodes = map[Language]string{
 	Deutsch:         "de",
 	Englisch:        "en",
 	Kroatisch:       "hr",
@@ -98,9 +100,21 @@ var LanguageCodes = map[Language]string{
 	Arabisch:        "ar",
 }
 
+// All returns every valid Language, ordered by its numeric value.
+// The returned slice is freshly allocated on each call, so callers can sort or
+// filter it without affecting the package's internal lookup tables.
+func All() []Language {
+	out := make([]Language, 0, len(names))
+	for v := range names {
+		out = append(out, v)
+	}
+	slices.Sort(out)
+	return out
+}
+
 // String returns the string representation of the language value
 func (l Language) String() string {
-	if name, ok := Names[l]; ok {
+	if name, ok := names[l]; ok {
 		return name
 	}
 	return "Unknown"
@@ -113,7 +127,7 @@ func GetName(l Language) string {
 
 // GetCode returns the ISO 639-1 language code for a language value
 func (l Language) GetCode() string {
-	if code, ok := LanguageCodes[l]; ok {
+	if code, ok := languageCodes[l]; ok {
 		return code
 	}
 	return ""
@@ -121,7 +135,7 @@ func (l Language) GetCode() string {
 
 // IsValid checks if a language value is valid
 func IsValid(l Language) bool {
-	_, ok := Names[l]
+	_, ok := names[l]
 	return ok
 }
 
@@ -137,7 +151,7 @@ func FromInt32(i int32) Language {
 
 // FromCode converts a language code to a Language
 func FromCode(code string) (Language, bool) {
-	for lang, c := range LanguageCodes {
+	for lang, c := range languageCodes {
 		if c == code {
 			return lang, true
 		}

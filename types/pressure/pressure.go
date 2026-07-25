@@ -1,5 +1,7 @@
 package pressure
 
+import "slices"
+
 // Pressure represents a pressure unit preference
 // It's a type-safe enum backed by int for database compatibility
 type Pressure int
@@ -12,23 +14,35 @@ const (
 	Kpa Pressure = 2 // kPa - Kilopascal (metric)
 )
 
-// Names maps pressure values to human-readable names for debugging and logging
-var Names = map[Pressure]string{
+// names maps pressure values to human-readable names for debugging and logging
+var names = map[Pressure]string{
 	Bar: "Bar",
 	Psi: "Psi",
 	Kpa: "Kpa",
 }
 
-// Symbols maps pressure values to their unit symbols
-var Symbols = map[Pressure]string{
+// symbols maps pressure values to their unit symbols
+var symbols = map[Pressure]string{
 	Bar: "bar",
 	Psi: "psi",
 	Kpa: "kPa",
 }
 
+// All returns every valid Pressure, ordered by its numeric value.
+// The returned slice is freshly allocated on each call, so callers can sort or
+// filter it without affecting the package's internal lookup tables.
+func All() []Pressure {
+	out := make([]Pressure, 0, len(names))
+	for v := range names {
+		out = append(out, v)
+	}
+	slices.Sort(out)
+	return out
+}
+
 // String returns the string representation of the pressure value
 func (p Pressure) String() string {
-	if name, ok := Names[p]; ok {
+	if name, ok := names[p]; ok {
 		return name
 	}
 	return "Unknown"
@@ -41,7 +55,7 @@ func GetName(p Pressure) string {
 
 // GetSymbol returns the unit symbol for a pressure value
 func (p Pressure) GetSymbol() string {
-	if symbol, ok := Symbols[p]; ok {
+	if symbol, ok := symbols[p]; ok {
 		return symbol
 	}
 	return ""
@@ -49,7 +63,7 @@ func (p Pressure) GetSymbol() string {
 
 // IsValid checks if a pressure value is valid
 func IsValid(p Pressure) bool {
-	_, ok := Names[p]
+	_, ok := names[p]
 	return ok
 }
 

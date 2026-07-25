@@ -1,5 +1,7 @@
 package locale
 
+import "slices"
+
 // Locale represents a locale for formatting preferences (dates, numbers, etc.)
 // It's a type-safe enum backed by int for database compatibility
 type Locale int
@@ -40,8 +42,8 @@ const (
 	ArAE Locale = 30 // Arabic (UAE)
 )
 
-// Names maps locale values to human-readable names for debugging and logging
-var Names = map[Locale]string{
+// names maps locale values to human-readable names for debugging and logging
+var names = map[Locale]string{
 	De:   "De",
 	EnGB: "EnGB",
 	Hr:   "Hr",
@@ -75,8 +77,8 @@ var Names = map[Locale]string{
 	ArAE: "ArAE",
 }
 
-// LocaleStrings maps locale values to standard locale strings (e.g., "de-DE", "en-GB")
-var LocaleStrings = map[Locale]string{
+// localeStrings maps locale values to standard locale strings (e.g., "de-DE", "en-GB")
+var localeStrings = map[Locale]string{
 	De:   "de-DE",
 	EnGB: "en-GB",
 	Hr:   "hr-HR",
@@ -110,9 +112,21 @@ var LocaleStrings = map[Locale]string{
 	ArAE: "ar-AE",
 }
 
+// All returns every valid Locale, ordered by its numeric value.
+// The returned slice is freshly allocated on each call, so callers can sort or
+// filter it without affecting the package's internal lookup tables.
+func All() []Locale {
+	out := make([]Locale, 0, len(names))
+	for v := range names {
+		out = append(out, v)
+	}
+	slices.Sort(out)
+	return out
+}
+
 // String returns the string representation of the locale value
 func (l Locale) String() string {
-	if name, ok := Names[l]; ok {
+	if name, ok := names[l]; ok {
 		return name
 	}
 	return "Unknown"
@@ -125,7 +139,7 @@ func GetName(l Locale) string {
 
 // GetLocaleString returns the standard locale string (e.g., "de-DE", "en-GB")
 func (l Locale) GetLocaleString() string {
-	if localeStr, ok := LocaleStrings[l]; ok {
+	if localeStr, ok := localeStrings[l]; ok {
 		return localeStr
 	}
 	return ""
@@ -133,7 +147,7 @@ func (l Locale) GetLocaleString() string {
 
 // IsValid checks if a locale value is valid
 func IsValid(l Locale) bool {
-	_, ok := Names[l]
+	_, ok := names[l]
 	return ok
 }
 
@@ -149,7 +163,7 @@ func FromInt32(i int32) Locale {
 
 // FromLocaleString converts a locale string to a Locale
 func FromLocaleString(localeStr string) (Locale, bool) {
-	for locale, str := range LocaleStrings {
+	for locale, str := range localeStrings {
 		if str == localeStr {
 			return locale, true
 		}

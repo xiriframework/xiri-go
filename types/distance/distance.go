@@ -1,5 +1,7 @@
 package distance
 
+import "slices"
+
 // Distance represents a distance unit preference
 // It's a type-safe enum backed by int for database compatibility
 type Distance int
@@ -12,23 +14,35 @@ const (
 	Seemiles  Distance = 2 // Nautical miles (maritime)
 )
 
-// Names maps distance values to human-readable names for debugging and logging
-var Names = map[Distance]string{
+// names maps distance values to human-readable names for debugging and logging
+var names = map[Distance]string{
 	Kilometer: "Kilometer",
 	Miles:     "Miles",
 	Seemiles:  "Seemiles",
 }
 
-// Symbols maps distance values to their unit symbols
-var Symbols = map[Distance]string{
+// symbols maps distance values to their unit symbols
+var symbols = map[Distance]string{
 	Kilometer: "km",
 	Miles:     "mi",
 	Seemiles:  "NM",
 }
 
+// All returns every valid Distance, ordered by its numeric value.
+// The returned slice is freshly allocated on each call, so callers can sort or
+// filter it without affecting the package's internal lookup tables.
+func All() []Distance {
+	out := make([]Distance, 0, len(names))
+	for v := range names {
+		out = append(out, v)
+	}
+	slices.Sort(out)
+	return out
+}
+
 // String returns the string representation of the distance value
 func (d Distance) String() string {
-	if name, ok := Names[d]; ok {
+	if name, ok := names[d]; ok {
 		return name
 	}
 	return "Unknown"
@@ -41,7 +55,7 @@ func GetName(d Distance) string {
 
 // GetSymbol returns the unit symbol for a distance value
 func (d Distance) GetSymbol() string {
-	if symbol, ok := Symbols[d]; ok {
+	if symbol, ok := symbols[d]; ok {
 		return symbol
 	}
 	return ""
@@ -49,7 +63,7 @@ func (d Distance) GetSymbol() string {
 
 // IsValid checks if a distance value is valid
 func IsValid(d Distance) bool {
-	_, ok := Names[d]
+	_, ok := names[d]
 	return ok
 }
 

@@ -1,5 +1,7 @@
 package timezone
 
+import "slices"
+
 // Timezone represents a timezone for user preferences
 // It's a type-safe enum backed by int for database compatibility
 type Timezone int
@@ -45,8 +47,8 @@ const (
 	UTC               Timezone = 35 // UTC
 )
 
-// Names maps timezone values to human-readable names for debugging and logging
-var Names = map[Timezone]string{
+// names maps timezone values to human-readable names for debugging and logging
+var names = map[Timezone]string{
 	EuropeVienna:      "Europe/Vienna",
 	EuropeBerlin:      "Europe/Berlin",
 	EuropeZagreb:      "Europe/Zagreb",
@@ -85,8 +87,8 @@ var Names = map[Timezone]string{
 	UTC:               "UTC",
 }
 
-// TimezoneStrings maps timezone values to IANA timezone strings
-var TimezoneStrings = map[Timezone]string{
+// timezoneStrings maps timezone values to IANA timezone strings
+var timezoneStrings = map[Timezone]string{
 	EuropeVienna:      "Europe/Vienna",
 	EuropeBerlin:      "Europe/Berlin",
 	EuropeZagreb:      "Europe/Zagreb",
@@ -123,11 +125,23 @@ var TimezoneStrings = map[Timezone]string{
 	AsiaDubai:         "Asia/Dubai",
 	AustraliaSydney:   "Australia/Sydney",
 	UTC:               "UTC",
+}
+
+// All returns every valid Timezone, ordered by its numeric value.
+// The returned slice is freshly allocated on each call, so callers can sort or
+// filter it without affecting the package's internal lookup tables.
+func All() []Timezone {
+	out := make([]Timezone, 0, len(names))
+	for v := range names {
+		out = append(out, v)
+	}
+	slices.Sort(out)
+	return out
 }
 
 // String returns the string representation of the timezone value
 func (tz Timezone) String() string {
-	if name, ok := Names[tz]; ok {
+	if name, ok := names[tz]; ok {
 		return name
 	}
 	return "Unknown"
@@ -140,7 +154,7 @@ func GetName(tz Timezone) string {
 
 // GetIANA returns the IANA timezone string (e.g., "Europe/Vienna")
 func (tz Timezone) GetIANA() string {
-	if tzStr, ok := TimezoneStrings[tz]; ok {
+	if tzStr, ok := timezoneStrings[tz]; ok {
 		return tzStr
 	}
 	return ""
@@ -148,7 +162,7 @@ func (tz Timezone) GetIANA() string {
 
 // IsValid checks if a timezone value is valid
 func IsValid(tz Timezone) bool {
-	_, ok := Names[tz]
+	_, ok := names[tz]
 	return ok
 }
 
@@ -164,7 +178,7 @@ func FromInt32(i int32) Timezone {
 
 // FromIANA converts an IANA timezone string to a Timezone
 func FromIANA(tzStr string) (Timezone, bool) {
-	for tz, str := range TimezoneStrings {
+	for tz, str := range timezoneStrings {
 		if str == tzStr {
 			return tz, true
 		}
