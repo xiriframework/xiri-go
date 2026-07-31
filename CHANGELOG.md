@@ -7,6 +7,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+Noch keine Änderungen seit `v0.3.2`.
+
+## [0.3.2] - 2026-07-31
+
 ### Added
 
 - **Download-Buttons können die Datei im Tab anzeigen lassen statt sie zu speichern.**
