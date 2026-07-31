@@ -139,6 +139,24 @@ func (fb *FieldBuilder) AddButton(
 	return fb
 }
 
+// WithButtonTarget sets the link target of a previously added button.
+//
+// For action "download", "_blank" makes the frontend display the file in a new tab
+// instead of saving it — see button.Button.WithTarget. Unknown keys are ignored, so
+// this stays safe after AddButton rejected an out-of-range key.
+//
+// Example:
+//
+//	builder.ButtonsField("actions", "actions", accessor).
+//	    AddButton(0, table.FieldButtonActionDownload, "picture_as_pdf", core.ColorPrimary, "PDF").
+//	    WithButtonTarget(0, "_blank")
+func (fb *FieldBuilder) WithButtonTarget(key int, target string) *FieldBuilder {
+	if btn, ok := fb.base.buttons[key]; ok {
+		btn.options["target"] = target
+	}
+	return fb
+}
+
 // WithDecimals sets the number of decimal places for numeric fields.
 // This is used with Float, Distance, Pressure, Speed, and Text2 numeric field types.
 //

@@ -7,7 +7,34 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-Noch keine Änderungen seit `v0.3.1`.
+### Added
+
+- **Download-Buttons können die Datei im Tab anzeigen lassen statt sie zu speichern.**
+  `WithTarget("_blank")` an einem Download-Button ist nicht mehr wirkungslos: das Frontend öffnet
+  die Datei damit in einem neuen Tab — der Fall „generiertes PDF ansehen" statt „PDF in den
+  Download-Ordner legen". Voraussetzung ist ein Content-Type, den der Browser rendern kann
+  (`application/pdf`); `Content-Disposition` ist dafür irrelevant, weil das Frontend den Blob aus
+  dem Response-Body selbst baut und nur noch den Dateinamen aus dem Header liest. Braucht
+  `@xiriframework/xiri-ng` mit der zugehörigen Änderung — ältere Frontend-Versionen ignorieren
+  `target` bei `download` weiterhin.
+
+  Neu für die Kontexte, die vorher keinen Weg zu `target` hatten:
+  `TableButton.WithTarget()` (Table-Top- und Bulk-Buttons; bisher nur über
+  `GetButton().WithTarget()` erreichbar) und `FieldBuilder.WithButtonTarget(key, target)` für
+  Zellen-Buttons — letzteres schreibt in die schon vorhandenen Button-Options, die als
+  Top-Level-Keys im Button-JSON landen, ein Serializer-Change war nicht nötig. Unbekannte Keys
+  ignoriert der Setter, damit er nach einem von `AddButton` verworfenen Out-of-Range-Key nicht
+  ins Leere schreibt.
+
+  Ohne Benutzer-Interaktion (`WithAutoLoad`) blockt der Browser das Tab — die Datei wird dann
+  heruntergeladen. Das ist Absicht, nicht abgefangen.
+
+### Documentation
+
+- **`xiri-go-expert` skill**: neuer Abschnitt „Datei anzeigen statt herunterladen" in
+  `components.md` (alle drei Button-Varianten) und in `tables.md` (Zellen-Buttons);
+  `WithTarget` in der Chain-Methoden-Liste ergänzt, samt Hinweis welche Methoden `*TableButton`
+  durchreicht.
 
 ## [0.3.1] - 2026-07-25
 

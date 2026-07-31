@@ -758,6 +758,31 @@ layout.NewHtml("<b>HTML</b>", "")                        // Raw HTML
 | `NewBackButton`             | `ButtonActionBack`           | Zurück-Navigation                                 |
 | `NewTableButton`            | beliebig, `ButtonTypeIcon`   | Icon-only — für Table-Top/Select-Buttons          |
 
+#### Datei anzeigen statt herunterladen
+
+`WithTarget("_blank")` an einem Download-Button lässt das Frontend die Datei in einem neuen Tab
+**anzeigen** statt sie zu speichern — der Fall „generiertes PDF ansehen":
+
+```go
+button.NewDownloadButton("PDF", url.NewUrl("/report/pdf"), core.ColorPrimary,
+    core.ButtonTypeRaised, "", &filename, false, nil, nil).
+    WithTarget("_blank")
+
+// Table-Top/Bulk-Button
+button.NewTableButton(core.ButtonActionDownload, "pdf", tblUrl, "PDF", core.ColorAccent, false, nil).
+    WithTarget("_blank")
+
+// Zellen-Button pro Zeile
+builder.ButtonsField("actions", "actions", accessor).
+    AddButton(0, table.FieldButtonActionDownload, "picture_as_pdf", core.ColorPrimary, "PDF").
+    WithButtonTarget(0, "_blank")
+```
+
+Voraussetzung ist ein Content-Type, den der Browser rendern kann (`application/pdf`).
+`Content-Disposition` spielt keine Rolle — das Frontend baut den Blob selbst. Ohne
+Benutzer-Interaktion (z. B. `WithAutoLoad`) blockt der Browser das Tab; die Datei wird dann
+heruntergeladen.
+
 ### Simple-Konstruktoren (3 Parameter, sane defaults)
 
 ```go
@@ -804,8 +829,12 @@ btn.WithHint("Details anzeigen")
 btn.WithDisabled(true)
 btn.WithData(map[string]any{"_csv": true})  // Custom-Payload an Frontend (siehe unten)
 btn.WithAutoLoad(true)                       // Aktion einmalig automatisch beim Laden auslösen (siehe unten)
-// … siehe button.go für weitere Optionen (WithIcon, WithTarget, etc.)
+btn.WithTarget("_blank")                     // bei ButtonActionDownload: im Tab anzeigen (siehe oben)
+// … siehe button.go für weitere Optionen (WithIcon, etc.)
 ```
+
+`*TableButton` reicht `WithData`, `WithAutoLoad` und `WithTarget` an den darunterliegenden
+`*Button` durch; alles andere via `GetButton()`.
 
 ### Custom-Payload via `WithData`
 

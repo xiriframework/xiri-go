@@ -54,6 +54,12 @@ func (tb *TableButton) WithAutoLoad(autoLoad bool) *TableButton {
 	return tb
 }
 
+// WithTarget sets the link target on the underlying Button. See Button.WithTarget.
+func (tb *TableButton) WithTarget(target string) *TableButton {
+	tb.button.WithTarget(target)
+	return tb
+}
+
 // NewButton creates a new button with full configuration
 func NewButton(
 	action core.ButtonAction,
@@ -417,7 +423,12 @@ func (b *Button) WithDefault(isDefault bool) *Button {
 	return b
 }
 
-// WithTarget sets the link target (optional, e.g., "_blank", "_self")
+// WithTarget sets the link target (optional, e.g., "_blank", "_self").
+//
+// For action "download", "_blank" makes the frontend display the file in a new tab
+// instead of saving it. That requires a Content-Type the browser can render (e.g.
+// "application/pdf") in the application's file response; Content-Disposition is
+// irrelevant there, the frontend builds the blob itself.
 // Returns the Button for method chaining
 func (b *Button) WithTarget(target string) *Button {
 	b.target = target

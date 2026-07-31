@@ -261,6 +261,24 @@ Der Key ist ein Positions-Index und muss zwischen `0` und `1000` liegen — er w
 Serialisierung als Slice-Index benutzt. Keys außerhalb werden ignoriert und per `slog.Warn`
 gemeldet (früher: Panic bei negativem, Riesenallokation bei sehr großem Key).
 
+### Datei anzeigen statt herunterladen
+
+`WithButtonTarget(key, "_blank")` an einem Download-Zellen-Button lässt das Frontend die Datei in
+einem neuen Tab **anzeigen** statt sie zu speichern — der Fall „PDF dieser Zeile ansehen":
+
+```go
+b.ButtonsField("actions", "", func(r Device) map[string]string {
+    return map[string]string{"0": c.apiUrl("pdf", strconv.FormatInt(r.ID, 10)).PrintPrefix()}
+}).
+    AddButton(0, table.FieldButtonActionDownload, "picture_as_pdf", core.ColorPrimary, "PDF").
+    WithButtonTarget(0, "_blank")
+```
+
+Voraussetzung ist ein Content-Type, den der Browser rendern kann (`application/pdf`);
+`Content-Disposition` spielt keine Rolle, weil das Frontend den Blob selbst baut. Unbekannte Keys
+ignoriert der Setter, er ist also nach einem verworfenen Out-of-Range-Key gefahrlos.
+Für Table-Top-/Bulk-Buttons heißt das Pendant `TableButton.WithTarget("_blank")`.
+
 ### `FieldButtonAction`-Werte
 
 | Enum                              | Verhalten                                              |
@@ -270,7 +288,7 @@ gemeldet (früher: Panic bei negativem, Riesenallokation bei sehr großem Key).
 | `FieldButtonActionApi`            | POST, keine Response-Action                            |
 | `FieldButtonActionDialog`         | POST → MatDialog öffnen mit Response                   |
 | `FieldButtonActionForm`           | POST → öffnet Form-Dialog                              |
-| `FieldButtonActionDownload`       | POST → Blob-Download                                    |
+| `FieldButtonActionDownload`       | POST → Blob-Download (mit `WithButtonTarget(key, "_blank")` im Tab anzeigen) |
 | `FieldButtonActionGet/Post/Put/Delete` | Entsprechende HTTP-Methode                         |
 | `FieldButtonActionSave` / `Close` / `Back` | Spezielle Flow-Actions                         |
 | `FieldButtonActionMenu`           | Öffnet Menü mit weiteren Items (siehe unten)           |

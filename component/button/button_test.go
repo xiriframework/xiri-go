@@ -152,3 +152,34 @@ func TestTableButton_WithAutoLoad_PassesThroughToButton(t *testing.T) {
 		t.Errorf("out[\"autoLoad\"] = %v, want true", out["autoLoad"])
 	}
 }
+
+// "_blank" on a download button is what makes the frontend display the file in a
+// new tab instead of saving it — it has to survive the TableButton wrapper too.
+func TestTableButton_WithTarget_PassesThroughToButton(t *testing.T) {
+	tb := button.NewTableButton(
+		core.ButtonActionDownload,
+		"pdf",
+		url.NewUrl("/x"),
+		"PDF",
+		core.ColorAccent,
+		false,
+		nil,
+	).WithTarget("_blank")
+
+	out := tb.Print(nil)
+
+	if out["target"] != "_blank" {
+		t.Errorf("out[\"target\"] = %v, want \"_blank\"", out["target"])
+	}
+}
+
+func TestDownloadButton_DefaultTarget_IsSelf(t *testing.T) {
+	filename := "report.csv"
+	btn := button.NewDownloadButton("CSV", url.NewUrl("/x"), core.ColorPrimary, core.ButtonTypeRaised, "", &filename, false, nil, nil)
+
+	out := btn.Print(nil)
+
+	if out["target"] != "_self" {
+		t.Errorf("out[\"target\"] = %v, want \"_self\"", out["target"])
+	}
+}
