@@ -25,6 +25,7 @@ type Button struct {
 	options    map[string]any
 	data       map[string]any
 	autoLoad   bool
+	warnedHint bool
 }
 
 // TableButton represents a type-safe button specifically for table actions.
@@ -83,13 +84,6 @@ func NewButton(
 	if tabIndex == nil {
 		defaultTabIndex := -1
 		tabIndex = &defaultTabIndex
-	}
-	// Icon-only buttons show no text, and Print() does not emit "text" for those
-	// types — the frontend can build an accessible name from "hint" alone. Without
-	// one, screen readers announce an unlabelled button.
-	if hint == "" && (buttonType == core.ButtonTypeIcon || buttonType == core.ButtonTypeFab || buttonType == core.ButtonTypeMiniFab) {
-		slog.Warn("button: icon-only button without hint has no accessible name",
-			"action", string(action), "type", string(buttonType), "icon", icon)
 	}
 	return &Button{
 		action:     action,
@@ -490,8 +484,28 @@ func (b *Button) WithAutoLoad(autoLoad bool) *Button {
 	return b
 }
 
+// warnMissingHint reports an icon-only button that the frontend cannot name.
+//
+// Print() emits no "text" for icon types (see below), so "hint" is the only
+// label source left — without it screen readers announce an unlabelled button.
+// Checked here rather than in the constructor because the hint may still arrive
+// via WithHint(); warns once per button so repeated Print() calls stay quiet.
+func (b *Button) warnMissingHint() {
+	if b.warnedHint || b.hint != "" {
+		return
+	}
+	if b.buttonType != core.ButtonTypeIcon && b.buttonType != core.ButtonTypeFab && b.buttonType != core.ButtonTypeMiniFab {
+		return
+	}
+	b.warnedHint = true
+	slog.Warn("button: icon-only button without hint has no accessible name",
+		"action", string(b.action), "type", string(b.buttonType), "icon", b.icon)
+}
+
 // Print returns the JSON representation of the button
 func (b *Button) Print(ctx *core.UiContext) map[string]any {
+	b.warnMissingHint()
+
 	data := map[string]any{
 		"action":   string(b.action),
 		"url":      b.url.PrintPrefix(),

@@ -20,8 +20,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **Warnung bei Icon-Buttons ohne `hint`.** `Print()` emittiert für `ButtonTypeIcon`, `Fab` und
   `MiniFab` **kein** `text` — bei leerem Icon wandert `text` sogar in das `icon`-Feld. Für diese
   Typen ist `hint` damit die einzige Quelle, aus der das Frontend einen Accessible Name bauen kann;
-  ohne `hint` melden Screenreader einen Button ohne Namen. `NewButton` meldet das jetzt per
-  `slog.Warn`, an der Stelle wo es entsteht.
+  ohne `hint` melden Screenreader einen Button ohne Namen. Gemeldet wird das per `slog.Warn` in
+  `Print()` — nicht im Konstruktor, weil der Hint auch später über `WithHint()` kommen darf und
+  eine Warnung dort korrekte Fluent-Nutzung anmeckern würde. Pro Button wird höchstens einmal
+  gewarnt, damit wiederholtes `Print()` das Log nicht flutet.
 
 ### Documentation
 

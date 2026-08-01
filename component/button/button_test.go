@@ -196,11 +196,48 @@ func TestButton_IconTypeWithoutHint_Warns(t *testing.T) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
 	defer slog.SetDefault(prev)
 
-	button.NewButton(core.ButtonActionApi, "", url.NewUrl("/x"), core.ColorPrimary,
+	btn := button.NewButton(core.ButtonActionApi, "", url.NewUrl("/x"), core.ColorPrimary,
 		core.ButtonTypeIcon, "", "edit", false, nil, false, "_self", nil)
+	btn.Print(nil)
 
 	if !strings.Contains(buf.String(), "hint") {
 		t.Errorf("expected a warning about the missing hint, got %q", buf.String())
+	}
+}
+
+// The hint may arrive after the constructor — warning before the button is
+// fully configured would flag correct fluent usage.
+func TestButton_IconTypeHintViaBuilder_DoesNotWarn(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(prev)
+
+	btn := button.NewButton(core.ButtonActionApi, "", url.NewUrl("/x"), core.ColorPrimary,
+		core.ButtonTypeIcon, "", "edit", false, nil, false, "_self", nil).
+		WithHint("Bearbeiten")
+	btn.Print(nil)
+
+	if buf.Len() != 0 {
+		t.Errorf("expected no warning, got %q", buf.String())
+	}
+}
+
+// Print() may run more than once per button; the warning must not pile up.
+func TestButton_IconTypeWithoutHint_WarnsOnlyOnce(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(prev)
+
+	btn := button.NewButton(core.ButtonActionApi, "", url.NewUrl("/x"), core.ColorPrimary,
+		core.ButtonTypeIcon, "", "edit", false, nil, false, "_self", nil)
+	btn.Print(nil)
+	btn.Print(nil)
+	btn.Print(nil)
+
+	if n := strings.Count(buf.String(), "hint"); n != 1 {
+		t.Errorf("expected exactly one warning, got %d in %q", n, buf.String())
 	}
 }
 
@@ -210,8 +247,9 @@ func TestButton_IconTypeWithHint_DoesNotWarn(t *testing.T) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
 	defer slog.SetDefault(prev)
 
-	button.NewButton(core.ButtonActionApi, "", url.NewUrl("/x"), core.ColorPrimary,
+	btn := button.NewButton(core.ButtonActionApi, "", url.NewUrl("/x"), core.ColorPrimary,
 		core.ButtonTypeIcon, "Bearbeiten", "edit", false, nil, false, "_self", nil)
+	btn.Print(nil)
 
 	if buf.Len() != 0 {
 		t.Errorf("expected no warning, got %q", buf.String())
@@ -225,7 +263,7 @@ func TestButton_TextTypeWithoutHint_DoesNotWarn(t *testing.T) {
 	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
 	defer slog.SetDefault(prev)
 
-	button.NewSimpleApiButton("Speichern", url.NewUrl("/x"), core.ColorPrimary)
+	button.NewSimpleApiButton("Speichern", url.NewUrl("/x"), core.ColorPrimary).Print(nil)
 
 	if buf.Len() != 0 {
 		t.Errorf("expected no warning, got %q", buf.String())
