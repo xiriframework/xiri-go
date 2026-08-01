@@ -17,9 +17,25 @@ func (b *TableBuilder[T]) SetReload(reload bool) *TableBuilder[T] {
 	return b
 }
 
-// SetDense enables/disables dense spacing in the table
+// SetDense enables/disables dense spacing in the table.
+//
+// Legacy setter: the frontend treats dense: true as an alias for
+// DensityCompact and cannot express DensityRelaxed this way. Prefer SetDensity.
 func (b *TableBuilder[T]) SetDense(dense bool) *TableBuilder[T] {
 	b.table.options.Dense = &dense
+	return b
+}
+
+// SetDensity sets the row height of the table (compact, regular or relaxed).
+//
+// Takes precedence over SetDense in the frontend, so both may be set — the
+// alias only applies when no explicit density arrived.
+//
+// Example:
+//
+//	builder.SetDensity(table.DensityRelaxed)
+func (b *TableBuilder[T]) SetDensity(density Density) *TableBuilder[T] {
+	b.table.options.Density = &density
 	return b
 }
 

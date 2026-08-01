@@ -442,7 +442,7 @@ b.SetEmptyState(emptystateComponent)           // ganze EmptyState-Komponente
 
 // Features aktivieren/deaktivieren (bool-Pointer, Default: meist true)
 b.SetReload(true)           // manueller Reload-Button (Icon in der Toolbar)
-b.SetDense(true)            // enger Zeilen-Spacing
+b.SetDense(true)            // Legacy: Alias für DensityCompact, kann kein "relaxed"
 b.SetPagination(true)
 b.SetSearch(true)
 b.SetQuery(false)           // Filter-Panel oben automatisch
@@ -453,6 +453,9 @@ b.SetSaveStateId("device-table")
 b.SetBorders(true)
 b.SetBordersHeader(true)
 b.SetSelect(true)           // Row-Checkboxen (SetSelectButtons macht das auto)
+
+// Zeilenhöhe — die vollständige 3-Werte-API des Frontends
+b.SetDensity(table.DensityCompact)   // "compact" | "regular" | "relaxed"
 b.SetFooter(true)           // Summenzeile anzeigen
 b.SetScrollHeight("600px")
 b.SetMinWidth("1200px")

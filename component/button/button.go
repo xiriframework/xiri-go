@@ -2,6 +2,8 @@
 package button
 
 import (
+	"log/slog"
+
 	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/component/url"
 )
@@ -81,6 +83,13 @@ func NewButton(
 	if tabIndex == nil {
 		defaultTabIndex := -1
 		tabIndex = &defaultTabIndex
+	}
+	// Icon-only buttons show no text, and Print() does not emit "text" for those
+	// types — the frontend can build an accessible name from "hint" alone. Without
+	// one, screen readers announce an unlabelled button.
+	if hint == "" && (buttonType == core.ButtonTypeIcon || buttonType == core.ButtonTypeFab || buttonType == core.ButtonTypeMiniFab) {
+		slog.Warn("button: icon-only button without hint has no accessible name",
+			"action", string(action), "type", string(buttonType), "icon", icon)
 	}
 	return &Button{
 		action:     action,

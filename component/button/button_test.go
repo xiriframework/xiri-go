@@ -1,6 +1,9 @@
 package button_test
 
 import (
+	"bytes"
+	"log/slog"
+	"strings"
 	"testing"
 
 	"github.com/xiriframework/xiri-go/component/button"
@@ -181,5 +184,50 @@ func TestDownloadButton_DefaultTarget_IsSelf(t *testing.T) {
 
 	if out["target"] != "_self" {
 		t.Errorf("out[\"target\"] = %v, want \"_self\"", out["target"])
+	}
+}
+
+// Icon-only buttons carry no visible text, so the frontend can only build an
+// accessible name from "hint" — Print() does not even emit "text" for those
+// types. A missing hint therefore means a button screen readers cannot name.
+func TestButton_IconTypeWithoutHint_Warns(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(prev)
+
+	button.NewButton(core.ButtonActionApi, "", url.NewUrl("/x"), core.ColorPrimary,
+		core.ButtonTypeIcon, "", "edit", false, nil, false, "_self", nil)
+
+	if !strings.Contains(buf.String(), "hint") {
+		t.Errorf("expected a warning about the missing hint, got %q", buf.String())
+	}
+}
+
+func TestButton_IconTypeWithHint_DoesNotWarn(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(prev)
+
+	button.NewButton(core.ButtonActionApi, "", url.NewUrl("/x"), core.ColorPrimary,
+		core.ButtonTypeIcon, "Bearbeiten", "edit", false, nil, false, "_self", nil)
+
+	if buf.Len() != 0 {
+		t.Errorf("expected no warning, got %q", buf.String())
+	}
+}
+
+// A text-bearing button needs no hint — its label is visible.
+func TestButton_TextTypeWithoutHint_DoesNotWarn(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(prev)
+
+	button.NewSimpleApiButton("Speichern", url.NewUrl("/x"), core.ColorPrimary)
+
+	if buf.Len() != 0 {
+		t.Errorf("expected no warning, got %q", buf.String())
 	}
 }

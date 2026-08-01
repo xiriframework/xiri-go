@@ -135,6 +135,21 @@ Ein `XiriNavigationField` ist entweder ein **Link** (`link`), ein **externer Lin
 
 `menu`-Knoten brauchen kein `link` — der Klick togglet nur das Auf-/Zuklappen (`showSubmenu` wird vom Frontend verwaltet, nicht setzen). Alle URLs in `link` bleiben **ohne** API-Prefix, auf jeder Ebene.
 
+### Einträge weglassen (`hide`)
+
+Soll ein Nutzer eine Route nicht sehen, setzt der Sidebar-Endpoint `"hide": true` — das Frontend
+rendert den Eintrag dann **gar nicht** (kein `routerLink` im DOM), auf allen drei Ebenen. Ein
+verstecktes Kind aktiviert und öffnet auch seinen Parent nicht.
+
+```json
+{ "name": "Admin", "link": "/portal/admin", "icon": "shield", "hide": true }
+```
+
+**Kein Berechtigungs-Contract.** Client-Filtern ist keine Autorisierung — der Server muss die
+Routes ohnehin absichern. `hide` erspart nur den Klick ins Leere. Genauso gut (und einfacher):
+den Eintrag serverseitig weglassen. `hide` ist dann sinnvoll, wenn dieselbe Struktur für alle
+gebaut und pro Nutzer nur maskiert wird.
+
 ## Active-State Matching
 
 Wenn die Sidebar eine bestimmte Section hervorheben soll, bei mehreren URL-Varianten (`/devices`, `/devices/edit/42`, `/devices/add`), kann man im `XiriNavigationField.path` ein Regex setzen — das funktioniert auf **jeder** Ebene (auch auf einem verschachtelten `menu`-Knoten) und ist reine Frontend-Sache in der JSON-Response des Sidebar-Endpoints.

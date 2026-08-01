@@ -121,6 +121,18 @@ const (
 // Field Configuration Enums
 // ============================================================================
 
+// Density controls the row height of a table.
+//
+// The frontend accepts these three values; the older SetDense(true) is only a
+// legacy alias for DensityCompact and cannot express DensityRelaxed.
+type Density string
+
+const (
+	DensityCompact Density = "compact"
+	DensityRegular Density = "regular"
+	DensityRelaxed Density = "relaxed"
+)
+
 // FieldAlign represents field text alignment
 type FieldAlign string
 

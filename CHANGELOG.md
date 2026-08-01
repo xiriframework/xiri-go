@@ -7,7 +7,28 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-Noch keine Änderungen seit `v0.3.2`.
+### Added
+
+- **`TableBuilder.SetDensity()` — die vollständige Zeilenhöhen-API.** Bisher gab es nur
+  `SetDense(bool)`, das im Frontend als Alias für `compact` gilt — `relaxed` war von Go aus gar
+  nicht erreichbar. Neu ist der Typ `Density` mit `DensityCompact`, `DensityRegular` und
+  `DensityRelaxed`; gesetzt landet der Wert als `options["density"]` im JSON. `SetDense` bleibt als
+  Legacy-Setter unverändert funktionsfähig und emittiert weiter `options["dense"]`; sind beide
+  gesetzt, gewinnt im Frontend `density` (der Alias greift nur, wenn keine explizite Density
+  ankommt). Braucht ein Frontend, das `density` versteht — das ist seit `xiri-ng` v0.2.49 der Fall.
+
+- **Warnung bei Icon-Buttons ohne `hint`.** `Print()` emittiert für `ButtonTypeIcon`, `Fab` und
+  `MiniFab` **kein** `text` — bei leerem Icon wandert `text` sogar in das `icon`-Feld. Für diese
+  Typen ist `hint` damit die einzige Quelle, aus der das Frontend einen Accessible Name bauen kann;
+  ohne `hint` melden Screenreader einen Button ohne Namen. `NewButton` meldet das jetzt per
+  `slog.Warn`, an der Stelle wo es entsteht.
+
+### Documentation
+
+- **`xiri-go-expert` skill**: `SetDensity` in der Options-Liste (`tables.md`), Hinweis dass
+  `SetDense` legacy ist, und ein neuer Abschnitt zu `hide` in `XiriNavigationField`
+  (`url-routing.md`) — inklusive der ausdrücklichen Klarstellung, dass das **kein**
+  Berechtigungs-Contract ist und der Server die Routes trotzdem absichern muss.
 
 ## [0.3.2] - 2026-07-31
 

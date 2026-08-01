@@ -53,6 +53,7 @@ type TableOptions struct {
 	ButtonsTop    []*button.TableButton
 	Reload        *bool
 	Dense         *bool
+	Density       *Density
 	Pagination    *bool
 	Search        *bool
 	MinWidth      *string
@@ -461,6 +462,9 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 	}
 	if opts.Dense != nil {
 		options["dense"] = *opts.Dense
+	}
+	if opts.Density != nil {
+		options["density"] = string(*opts.Density)
 	}
 	if opts.Pagination != nil {
 		options["pagination"] = *opts.Pagination
