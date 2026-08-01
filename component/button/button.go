@@ -25,6 +25,7 @@ type Button struct {
 	options    map[string]any
 	data       map[string]any
 	autoLoad   bool
+	hide       bool
 	warnedHint bool
 }
 
@@ -60,6 +61,12 @@ func (tb *TableButton) WithAutoLoad(autoLoad bool) *TableButton {
 // WithTarget sets the link target on the underlying Button. See Button.WithTarget.
 func (tb *TableButton) WithTarget(target string) *TableButton {
 	tb.button.WithTarget(target)
+	return tb
+}
+
+// WithHide hides the underlying Button. See Button.WithHide.
+func (tb *TableButton) WithHide(hide bool) *TableButton {
+	tb.button.WithHide(hide)
 	return tb
 }
 
@@ -474,6 +481,17 @@ func (b *Button) WithData(payload map[string]any) *Button {
 	return b
 }
 
+// WithHide keeps the button out of the rendered output.
+//
+// The frontend drops a hidden button from the DOM entirely and does not run its
+// action (not even with autoLoad). Meant for a backend that decides per user
+// what to offer — note that this is not authorization: the endpoint behind the
+// button must be secured regardless.
+func (b *Button) WithHide(hide bool) *Button {
+	b.hide = hide
+	return b
+}
+
 // WithAutoLoad makes the frontend trigger this button's action automatically
 // once on load, as soon as the button becomes enabled (i.e. the filter is
 // valid/present). Intended for data-loading actions (e.g. api/download) used in
@@ -549,6 +567,11 @@ func (b *Button) Print(ctx *core.UiContext) map[string]any {
 	// overrides any options["data"] set via legacy WithOption("data", …).
 	if len(b.data) > 0 {
 		data["data"] = b.data
+	}
+
+	// Emit hide only when set (keeps existing JSON backward-compatible).
+	if b.hide {
+		data["hide"] = true
 	}
 
 	// Emit autoLoad only when enabled (keeps existing JSON backward-compatible).

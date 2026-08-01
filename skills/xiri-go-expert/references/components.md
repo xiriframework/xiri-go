@@ -830,11 +830,39 @@ btn.WithDisabled(true)
 btn.WithData(map[string]any{"_csv": true})  // Custom-Payload an Frontend (siehe unten)
 btn.WithAutoLoad(true)                       // Aktion einmalig automatisch beim Laden auslösen (siehe unten)
 btn.WithTarget("_blank")                     // bei ButtonActionDownload: im Tab anzeigen (siehe oben)
+btn.WithHide(true)                           // Button gar nicht rendern (siehe unten)
 // … siehe button.go für weitere Optionen (WithIcon, etc.)
 ```
 
-`*TableButton` reicht `WithData`, `WithAutoLoad` und `WithTarget` an den darunterliegenden
-`*Button` durch; alles andere via `GetButton()`.
+`*TableButton` reicht `WithData`, `WithAutoLoad`, `WithTarget` und `WithHide` an den
+darunterliegenden `*Button` durch; alles andere via `GetButton()`.
+
+### Button ausblenden via `WithHide`
+
+`WithHide(true)` lässt den Button im Frontend **gar nicht** rendern — er landet nicht im DOM und
+führt seine Aktion auch nicht aus (auch nicht per `WithAutoLoad`). Gedacht für ein Backend, das je
+Nutzer entscheidet, was angeboten wird:
+
+```go
+btn := button.NewSimpleApiButton("Löschen", u, core.ColorError).
+    WithHide(!user.MayDelete)
+```
+
+**Kein Berechtigungs-Contract.** Das ist reine Darstellung; der Endpoint hinter dem Button muss
+ohnehin abgesichert sein. Genauso gut ist es, den Button serverseitig gar nicht erst zu bauen —
+`WithHide` lohnt, wenn dieselbe Struktur für alle gebaut und pro Nutzer nur maskiert wird.
+
+### Accessible Name bei Icon-Buttons: `hint` ist Pflicht
+
+Für `ButtonTypeIcon`, `ButtonTypeFab` und `ButtonTypeMiniFab` emittiert `Print()` **kein** `text`
+(bei leerem Icon wandert `text` sogar in das `icon`-Feld). Das Frontend kann den Accessible Name
+dieser Buttons also nur aus `hint` bauen — ohne `hint` meldet ein Screenreader einen Button ohne
+Namen. `Print()` warnt in dem Fall per `slog.Warn` (einmal pro Button).
+
+```go
+button.NewTableButton(core.ButtonActionDialog, "edit", u, "Bearbeiten", core.ColorPrimary, false, nil)
+//                                                        ^^^^^^^^^^^^ hint — nicht weglassen
+```
 
 ### Custom-Payload via `WithData`
 

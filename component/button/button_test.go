@@ -269,3 +269,37 @@ func TestButton_TextTypeWithoutHint_DoesNotWarn(t *testing.T) {
 		t.Errorf("expected no warning, got %q", buf.String())
 	}
 }
+
+// hide is part of the XiriButton contract the frontend honours; without a
+// setter it would only be reachable through the deprecated WithOption escape
+// hatch.
+func TestButton_WithHide_AddsHideKey(t *testing.T) {
+	btn := button.NewSimpleApiButton("Go", url.NewUrl("/x"), core.ColorPrimary).WithHide(true)
+
+	out := btn.Print(nil)
+
+	if out["hide"] != true {
+		t.Errorf("out[\"hide\"] = %v, want true", out["hide"])
+	}
+}
+
+func TestButton_NoHide_OmitsHideKey(t *testing.T) {
+	btn := button.NewSimpleApiButton("Go", url.NewUrl("/x"), core.ColorPrimary)
+
+	out := btn.Print(nil)
+
+	if v, ok := out["hide"]; ok {
+		t.Errorf("expected no \"hide\" key by default, got %v", v)
+	}
+}
+
+func TestTableButton_WithHide_PassesThroughToButton(t *testing.T) {
+	tb := button.NewTableButton(core.ButtonActionApi, "delete", url.NewUrl("/x"), "Löschen",
+		core.ColorWarning, false, nil).WithHide(true)
+
+	out := tb.Print(nil)
+
+	if out["hide"] != true {
+		t.Errorf("out[\"hide\"] = %v, want true", out["hide"])
+	}
+}

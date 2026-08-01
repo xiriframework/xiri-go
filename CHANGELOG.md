@@ -17,6 +17,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   gesetzt, gewinnt im Frontend `density` (der Alias greift nur, wenn keine explizite Density
   ankommt). Braucht ein Frontend, das `density` versteht — das ist seit `xiri-ng` v0.2.49 der Fall.
 
+- **`Button.WithHide()` / `TableButton.WithHide()`.** Das Frontend wertet `XiriButton.hide` seit
+  der zugehörigen `xiri-ng`-Version in allen Renderpfaden aus — von Go aus war das Feld bisher nur
+  über den deprecateten `WithOption("hide", …)`-Umweg erreichbar. Ein versteckter Button landet
+  nicht im DOM und führt seine Aktion auch nicht aus (auch nicht per `WithAutoLoad`). Kein
+  Berechtigungs-Contract: der Endpoint hinter dem Button muss ohnehin abgesichert sein.
+
 - **Warnung bei Icon-Buttons ohne `hint`.** `Print()` emittiert für `ButtonTypeIcon`, `Fab` und
   `MiniFab` **kein** `text` — bei leerem Icon wandert `text` sogar in das `icon`-Feld. Für diese
   Typen ist `hint` damit die einzige Quelle, aus der das Frontend einen Accessible Name bauen kann;
@@ -30,7 +36,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **`xiri-go-expert` skill**: `SetDensity` in der Options-Liste (`tables.md`), Hinweis dass
   `SetDense` legacy ist, und ein neuer Abschnitt zu `hide` in `XiriNavigationField`
   (`url-routing.md`) — inklusive der ausdrücklichen Klarstellung, dass das **kein**
-  Berechtigungs-Contract ist und der Server die Routes trotzdem absichern muss.
+  Berechtigungs-Contract ist und der Server die Routes trotzdem absichern muss. Dazu in
+  `components.md` je ein Abschnitt zu `WithHide` und dazu, dass `hint` bei Icon-Button-Typen
+  Pflicht ist, weil `Print()` für sie kein `text` emittiert.
 
 ## [0.3.2] - 2026-07-31
 
