@@ -7,6 +7,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+Noch keine Änderungen seit `v0.3.3`.
+
+## [0.3.3] - 2026-08-01
+
 ### Added
 
 - **`TableBuilder.SetDensity()` — die vollständige Zeilenhöhen-API.** Bisher gab es nur
