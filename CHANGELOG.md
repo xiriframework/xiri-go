@@ -7,7 +7,27 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-Noch keine Änderungen seit `v0.3.3`.
+### Documentation
+
+- **Falsche Konstruktor-Signaturen in der Skill-Doku korrigiert.** `NewTextField`, `NewIntField`,
+  `NewBoolField` und `NewTimeField` nehmen ihren Default als **Wert** (`string`, `int32`, `bool`,
+  `int64`) — die Doku zeigte an 17 Stellen `nil` bzw. `&entity.Feld`, was nie kompilierte.
+  Besonders irreführend bei `NewTimeField`: das dokumentierte `defaultValue (*int64)` legte ein
+  „kein Default = nil" nahe, das die Library so nicht anbietet — real ist `0` ein echter Timestamp
+  (1970-01-01) und `Parse(nil)` liefert `0`, nicht `nil`. Betrifft alle Versionen bis `v0.3.3`.
+
+- **`NewDeviceListField` aus der Doku entfernt** — dieser Konstruktor existiert nicht. Korrekt ist
+  `NewModelListField(id, name, required, "device", ids)`.
+
+- **TimeField-Subtype-Default korrigiert.** Ein leerer `Subtype` exportiert `type: "datetime"`,
+  nicht `"date"`; `"yearmonth"` fehlte in der Liste der gültigen Subtypes.
+
+- **Neuer Guard-Test `form/field/skilldoc_test.go`.** Prüft die ausgelieferte Skill-Doku künftig
+  automatisch gegen die echten Signaturen dieses Packages: jeder dokumentierte `field.New…` muss
+  existieren, und `nil`/`&x` darf nicht an einen Wert-Parameter übergeben werden. Die Regel wird
+  per `go/parser` aus den tatsächlichen Signaturen abgeleitet, nicht aus einer gepflegten Liste —
+  `nil` bleibt daher bei Slice/Map-Defaults (`NewModelListField`, `NewArrayField`, `NewJsonField`)
+  korrekt zulässig. Läuft in `go test ./...` und damit in `./release.sh` mit.
 
 ## [0.3.3] - 2026-08-01
 

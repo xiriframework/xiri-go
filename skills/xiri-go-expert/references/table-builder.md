@@ -293,7 +293,7 @@ b.SetButtonsTop([]*button.Button{
 ```go
 // Filter mit FormGroup
 filterFields := []field.FormField{
-    field.NewTextField("search", "filter.search", false, nil),
+    field.NewTextField("search", "filter.search", false, ""),
     field.NewSelectField("status", "filter.status", false, statusOptions),
 }
 filterGroup := group.NewFormGroup(filterFields)

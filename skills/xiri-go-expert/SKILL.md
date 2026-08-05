@@ -102,11 +102,14 @@ return wc.Data(tbl)
 
 ### Form-Field Konstruktoren (id, name, required, default)
 
+Der Default ist ein **Wert**, kein Pointer — `nil` kompiliert nicht. Ohne Default den Nullwert
+übergeben (`""`, `0`, `false`). `Value` ist nach `BindAndValidate` dagegen ein Pointer:
+
 ```go
 field.NewTextField    (id, name, required, "")         // Value: *string
-field.NewIntField     (id, name, required, nil)        // Value: *int32
-field.NewBoolField    (id, name, required, nil)        // Value: *bool
-field.NewTimeField    (id, name, required, nil)        // Value: *int64 (Unix)
+field.NewIntField     (id, name, required, 0)          // Value: *int32
+field.NewBoolField    (id, name, required, false)      // Value: *bool
+field.NewTimeField    (id, name, required, 0)          // Value: *int64 (Unix)
 field.NewSelectField  (id, name, required, opts)       // Value: int32
 field.NewSelectField  (id, name, required, opts).SetMultiple(true)  // Values: []int32
 field.NewModelField   (id, name, required, "group", 0) // Value: int32
@@ -167,6 +170,10 @@ core.ButtonTypeRaised | Basic | Stroked | Flat | Fab | MiniFab | Icon | IconText
 
 - **Kein** `NewTextareaField` — `NewTextField` mit `.Subtype = "textarea"`.
 - **Kein** `NewMultiSelectField` — `NewSelectField(...).SetMultiple(true)`.
+- **Kein** `NewDeviceListField` — `NewModelListField(id, name, required, "device", ids)`.
+- **Kein `nil` als Default-Argument** bei Text/Int/Bool/Time — das sind Wert-Parameter, nicht
+  Pointer. Nullwert übergeben (`""`, `0`, `false`). `nil` ist nur bei Slice/Map-Defaults erlaubt
+  (`NewModelListField`, `NewArrayField`, `NewJsonField`).
 - **Keine** URL-Strings konkatenieren — `*xurl.Url` via Controller-Helper.
 - **`LoadPaginationParams` NACH `LoadFilterData`** (liest aus gespeicherten Filtern). Nur bei **Server-Side-Pagination** nötig — client-seitig (xiri-ng default) weglassen.
 - **`ButtonsField`-Keys sind Strings** (`"0"`, `"1"`), nicht Ints.

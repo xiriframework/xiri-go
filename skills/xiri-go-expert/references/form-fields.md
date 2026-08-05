@@ -43,8 +43,8 @@ f.ShowWhen = []field.Condition{
 Freitext-Eingabe. Value: `*string`
 
 ```go
-f := field.NewTextField("name", "vehicle.name", true, nil)
-// Parameter: id, translationKey, required, currentValue (*string)
+f := field.NewTextField("name", "vehicle.name", true, "")
+// Parameter: id, translationKey, required, currentValue (string — Wert, nicht *string)
 
 // Optionale Konfiguration:
 f.Subtype = "textarea"  // text (default), textarea, html, email, url, tel, password
@@ -93,8 +93,8 @@ gewrappt. Gleiches gilt für Model-IDs (`ModelField`, `ModelListField`) und `Sel
 Checkbox. Value: `*bool`
 
 ```go
-f := field.NewBoolField("active", "device.active", false, nil)
-// Parameter: id, translationKey, required, currentValue (*bool)
+f := field.NewBoolField("active", "device.active", false, false)
+// Parameter: id, translationKey, required, currentValue (bool — Wert, nicht *bool)
 
 // Nach BindAndValidate:
 active := *f.Value  // bool
@@ -158,9 +158,7 @@ Mehrfach-Modell-Auswahl. Value: `ModelListValue` (= `[]int32`)
 ```go
 f := field.NewModelListField("device_ids", "route.devices", true, "device", currentIDs)
 // Parameter: id, translationKey, required, modelType, currentValue ([]int32)
-
-// Spezial-Konstruktoren:
-f := field.NewDeviceListField("device_ids", "route.devices", true, currentIDs)
+// nil als currentValue ist hier erlaubt und wird zu []int32{} normalisiert.
 
 f.MinItems = intPtr(1)
 f.MaxItems = intPtr(10)
@@ -177,10 +175,12 @@ deviceIDs := f.Value  // []int32
 Datum/Zeit-Auswahl. Value: `*int64` (Unix-Timestamp in Sekunden)
 
 ```go
-f := field.NewTimeField("start", "event.start", true, nil)
-// Parameter: id, translationKey, required, defaultValue (*int64)
+f := field.NewTimeField("start", "event.start", true, 0)
+// Parameter: id, translationKey, required, defaultValue (int64 Unix-Sekunden — Wert, nicht *int64)
+// Kein Default → 0 übergeben. Achtung: 0 ist ein echter Timestamp (1970-01-01), kein "leer" —
+// das Feld kommt damit vorbelegt im Frontend an und Parse(nil) liefert 0, nicht nil.
 
-f.Subtype = "datetime"  // date (default), datetime, time
+f.Subtype = "datetime"  // datetime (default), date, time, yearmonth
 
 // Tag-Offsets für Min/Max (z.B. -30 Tage bis +365 Tage):
 f.Min = int64Ptr(-30)
@@ -374,7 +374,7 @@ critField.BaseField.
 ```go
 fb := formbuilder.NewFormBuilder(uc)
 
-active := field.NewBoolField("active", "Aktiv", false, nil)
+active := field.NewBoolField("active", "Aktiv", false, false)
 reason := field.NewTextField("reason", "Abschalt-Grund", false, "")
 reason.BaseField.SetShowWhen("active", field.CondEquals, false)
 

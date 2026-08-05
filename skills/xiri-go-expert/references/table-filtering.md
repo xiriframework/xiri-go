@@ -37,8 +37,8 @@ func (c *Controller) buildFilterGroup(ctx *core.UiContext) *group.FormGroup {
 
     // Single-Value Filter
     fb.AddField(field.NewTextField("name", "Name", false, ""))
-    fb.AddField(field.NewIntField("minCount", "Anzahl ≥", false, nil))
-    fb.AddField(field.NewTimeField("from", "Von", false, nil))
+    fb.AddField(field.NewIntField("minCount", "Anzahl ≥", false, 0))
+    fb.AddField(field.NewTimeField("from", "Von", false, 0))
     fb.AddField(field.NewSelectField("status", "Status", false, statusOptions))
 
     // Multi-Value Filter: SetMultiple(true)

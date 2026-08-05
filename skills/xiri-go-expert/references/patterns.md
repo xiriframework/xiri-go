@@ -143,7 +143,7 @@ func buildFormFields(d *entities.Device) (*field.TextField, *field.BoolField) {
     var active bool
     if d != nil { name = d.Name; active = d.Active }
     return field.NewTextField("name", "Name", true, name),
-           field.NewBoolField("active", "Aktiv", false, &active)
+           field.NewBoolField("active", "Aktiv", false, active)
 }
 ```
 
@@ -227,7 +227,7 @@ func (c *Controller) WizardPage(ctx echo.Context) error {
     fb2 := formbuilder.NewFormBuilder(uc).
         AddField(field.NewTextField("street", "Straße", true, ""))
     fb3 := formbuilder.NewFormBuilder(uc).
-        AddField(field.NewBoolField("tosAccepted", "AGB akzeptiert", true, nil))
+        AddField(field.NewBoolField("tosAccepted", "AGB akzeptiert", true, false))
 
     step1Fields, _ := fb1.BuildAddForDisplay()
     step2Fields, _ := fb2.BuildAddForDisplay()

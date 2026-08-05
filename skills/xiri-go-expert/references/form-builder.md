@@ -15,11 +15,13 @@ fb := builder.NewFormBuilder(ctx) // ctx = *core.UiContext
 ### Fields hinzufügen
 
 ```go
-fb.AddField(field.NewTextField("name", "vehicle.name", true, nil))
+fb.AddField(field.NewTextField("name", "vehicle.name", true, ""))
 fb.AddField(field.NewModelField("group_id", "vehicle.group", true, "group", 0))
-fb.AddField(field.NewTextField("plate", "vehicle.plate", false, nil))
-fb.AddField(field.NewBoolField("active", "vehicle.active", false, nil))
+fb.AddField(field.NewTextField("plate", "vehicle.plate", false, ""))
+fb.AddField(field.NewBoolField("active", "vehicle.active", false, false))
 ```
+
+Das letzte Argument ist der Default als **Wert**, nicht als Pointer — `nil` kompiliert nicht.
 
 ### Build-Methoden
 
@@ -36,8 +38,8 @@ fg, defaults, err := fb.BuildAdd()
 
 ```go
 // Zuerst Fields mit aktuellen Werten erstellen:
-fb.AddField(field.NewTextField("name", "vehicle.name", true, &vehicle.Name))
-fb.AddField(field.NewBoolField("active", "vehicle.active", false, &vehicle.Active))
+fb.AddField(field.NewTextField("name", "vehicle.name", true, vehicle.Name))
+fb.AddField(field.NewBoolField("active", "vehicle.active", false, vehicle.Active))
 
 fg, values, err := fb.BuildEdit()
 // fg: *FormGroup mit allen Fields
@@ -145,15 +147,14 @@ err := builder.BindFromMap(formData, fg)
 func vehicleFields(ctx *core.UiContext, v *Vehicle) *builder.FormBuilder {
     fb := builder.NewFormBuilder(ctx)
 
-    var name *string
+    var name, plate string
     var groupID int32
-    var plate *string
-    var active *bool
+    var active bool
     if v != nil {
-        name = &v.Name
+        name = v.Name
         groupID = v.GroupID
-        plate = &v.Plate
-        active = &v.Active
+        plate = v.Plate
+        active = v.Active
     }
 
     fb.AddField(field.NewTextField("name", "vehicle.name", true, name))
