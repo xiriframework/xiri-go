@@ -7,6 +7,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+Noch keine Änderungen seit `v0.3.4`.
+
+## [0.3.4] - 2026-08-05
+
 ### Documentation
 
 - **Falsche Konstruktor-Signaturen in der Skill-Doku korrigiert.** `NewTextField`, `NewIntField`,
