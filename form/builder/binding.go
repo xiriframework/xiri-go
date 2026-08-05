@@ -56,7 +56,19 @@ import (
 // Returns:
 //   - error: Validation error if any field fails validation
 func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
-	// Get only Form=true and non-disabled field IDs (excludes hidden and disabled fields from request extraction)
+	formData, err := extractFormData(c, fg)
+	if err != nil {
+		return err
+	}
+
+	return BindFromMap(formData, fg)
+}
+
+// extractFormData pulls the declared fields out of the request body.
+//
+// Only Form=true and non-disabled fields are read; any extra key sent by the client is
+// dropped, which is what prevents over-posting. Supports JSON and form-urlencoded/multipart.
+func extractFormData(c echo.Context, fg *group.FormGroup) (map[string]interface{}, error) {
 	allFields := fg.GetFields()
 	fieldIDs := make([]string, 0, len(allFields))
 	for _, f := range allFields {
@@ -75,7 +87,7 @@ func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
 		// Handle JSON body
 		var rawData map[string]interface{}
 		if err := c.Bind(&rawData); err != nil {
-			return err
+			return nil, err
 		}
 
 		// Filter to declared fields only (prevents over-posting)
@@ -88,7 +100,7 @@ func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
 		// Handle form-urlencoded / multipart
 		// Parse form first
 		if err := c.Request().ParseForm(); err != nil {
-			return err
+			return nil, err
 		}
 
 		for _, fieldID := range fieldIDs {
@@ -108,7 +120,7 @@ func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
 		}
 	}
 
-	return BindFromMap(formData, fg)
+	return formData, nil
 }
 
 // BindFromMap binds values from an already-parsed map to field instances.
@@ -129,6 +141,51 @@ func BindFromMap(formData map[string]interface{}, fg *group.FormGroup) error {
 		}
 		if err := bindFieldValue(f, rawValue); err != nil {
 			return err
+		}
+	}
+	return nil
+}
+
+// BindReload binds a reload request to the field instances.
+//
+// A reload fires while the user is still editing, so an empty required field or a value the
+// user has not finished typing is normal input, not an error. Unlike BindAndValidate this
+// therefore never fails on a single field - only an unreadable request body is an error.
+//
+// Use this in the handler behind a field's SetReloadOn URL:
+//
+//	func (ctrl *Controller) FormReload(c echo.Context) error {
+//	    status, tags, fg := ctrl.buildThingForm(wc.UiContext())
+//	    if err := builder.BindReload(c, fg); err != nil {
+//	        return wc.BadRequest(err.Error())
+//	    }
+//	    tags.Options = ctrl.tagsForStatus(status.Value)
+//	    return c.JSON(http.StatusOK, response.NewReturnFields(fg.ExportPatch()))
+//	}
+func BindReload(c echo.Context, fg *group.FormGroup) error {
+	formData, err := extractFormData(c, fg)
+	if err != nil {
+		return err
+	}
+
+	return BindReloadFromMap(formData, fg)
+}
+
+// BindReloadFromMap is the lenient counterpart to BindFromMap.
+//
+// Every field is bound to its default first, so a field whose request value turns out to be
+// unusable still holds the default afterwards instead of a nil/zero value. A failure on one
+// field does not stop the remaining ones - any of them could be the trigger the server needs.
+func BindReloadFromMap(formData map[string]interface{}, fg *group.FormGroup) error {
+	for _, f := range fg.GetFields() {
+		// Default first: a later failure leaves the field on a usable value.
+		_ = bindFieldValue(f, f.GetDefault())
+
+		if !f.GetForm() || f.IsDisabled() {
+			continue
+		}
+		if rawValue, exists := formData[f.GetID()]; exists {
+			_ = bindFieldValue(f, rawValue)
 		}
 	}
 	return nil

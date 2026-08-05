@@ -1,5 +1,36 @@
 package group
 
+// ReloadDependent is implemented by fields whose content depends on other field values.
+// Optional interface - fields opt in by embedding BaseField and calling SetReloadOn.
+type ReloadDependent interface {
+	GetReloadOn() []string
+}
+
+// ExportPatch exports only the fields that declare a reload dependency, keyed by field ID.
+//
+// This is the response body for a reload request: the frontend merges each entry into the
+// matching field definition. Value resolution matches ExportForFrontendWithValues(nil) -
+// the frontend keeps its own control value and only prunes what the new option list no
+// longer contains.
+func (fg *FormGroup) ExportPatch() map[string]interface{} {
+	result := make(map[string]interface{})
+
+	for _, f := range fg.fields {
+		if !f.GetForm() {
+			continue
+		}
+
+		dep, ok := f.(ReloadDependent)
+		if !ok || len(dep.GetReloadOn()) == 0 {
+			continue
+		}
+
+		result[f.GetID()] = f.ExportForFrontend(fg.ctx, f.GetDefault())
+	}
+
+	return result
+}
+
 // ExportForFrontend exports field definitions in frontend-compatible format
 // with translated names and locale-specific formatting
 func (fg *FormGroup) ExportForFrontend() []map[string]interface{} {

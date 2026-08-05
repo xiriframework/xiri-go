@@ -60,6 +60,12 @@ tbl.SetFilter(filterFg)   // aktiviert ParseAndValidate in LoadFilterData
 
 Oder direkt via `NewQueryWithFormGroup` (siehe unten), das passt die Filter automatisch in die `LoadFilterData`-Pipeline.
 
+Weil Filter dieselben Fields wie Forms rendern, erben sie auch **abhängige Felder**: ein Filter kann
+per `SetReloadOn(...)` seine Optionen nachladen, sobald ein anderer Filter sich ändert (Details in
+`form-fields.md`, Abschnitt „Abhängige Felder"). Verwirft der Reload einen ungültig gewordenen
+Filterwert, läuft die Filter-Pipeline damit ein weiteres Mal — der Handler braucht dafür nichts
+Besonderes.
+
 ## `LoadFilterData` — was drin landet
 
 Quelle: `component/table/table.go`.

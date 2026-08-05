@@ -7,7 +7,33 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-Noch keine Änderungen seit `v0.3.4`.
+### Added
+
+- **Abhängige Felder: Optionen vom Server nachladen (`SetReloadOn`).** Bisher konnte ein Feld per
+  `SetShowWhen` nur abhängig von einem anderen Wert ein- und ausgeblendet werden; sein **Inhalt**
+  war statisch, sobald das Formular gerendert war. `BaseField.SetReloadOn(reloadURL, fields...)`
+  markiert ein Feld jetzt als inhaltlich abhängig: ändert sich einer der genannten Feldwerte,
+  postet das Frontend die Trigger-Werte an die URL und merged den zurückgelieferten Feld-Patch.
+  Der klassische Fall ist ein Select `status` auf „aktiv" und ein Multiselect, das danach nur noch
+  die für „aktiv" gültigen Einträge anbieten darf — eine Liste, die nur der Server kennt.
+
+  Neu dazu: `FormGroup.ExportPatch()` exportiert genau die Felder mit `ReloadOn` (gekeyed nach
+  Feld-ID, `Form=false` übersprungen), `builder.BindReload()` bindet den Reload-Request nachsichtig
+  — ein Reload passiert mitten im Ausfüllen, ein leeres Pflichtfeld ist dort normal und kein Fehler
+  — und `response.NewReturnFields()` liefert die Antwort als `{"fields": {...}}`. `BindReload`
+  bindet jedes Feld zuerst auf seinen Default, damit ein unbrauchbarer Request-Wert nicht einen
+  nil-Wert hinterlässt, wo die Business-Logik den Default erwartet; der Overposting-Schutz von
+  `BindAndValidate` gilt unverändert, die Extraktion teilen sich beide.
+
+  Beide Richtungen bleiben abwärtskompatibel: ein älteres Frontend ignoriert die unbekannten Keys
+  `reloadOn`/`reloadUrl`, und ein Formular ohne `SetReloadOn` verhält sich exakt wie bisher. Das
+  Nachladen selbst braucht `@xiriframework/xiri-ng` in einer Version mit `reloadOn`-Unterstützung.
+  Filter erben das Verhalten, weil sie dieselben Fields rendern.
+
+  Dokumentiert in `skills/xiri-go-expert/references/form-fields.md` (Abschnitt „Abhängige Felder"),
+  inklusive der bewusst gezogenen Grenzen: es gehen nur die Trigger-Werte an den Server, abhängige
+  Treeselects dürfen kein eigenes `URL` setzen, und Step-übergreifende Abhängigkeiten in
+  Multi-Step-Forms werden nicht unterstützt.
 
 ## [0.3.4] - 2026-08-05
 

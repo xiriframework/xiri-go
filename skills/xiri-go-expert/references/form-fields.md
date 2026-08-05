@@ -400,3 +400,100 @@ field.NewConditionNotEmpty("fieldId")
 ```
 
 Direkt `Condition`-Structs baust du nur dann, wenn du eine Liste von Bedingungen programmatisch zusammenstellst und dann `BaseField.ShowWhen = conditions` setzt.
+
+---
+
+## Abhängige Felder — `SetReloadOn` (Optionen vom Server nachladen)
+
+`SetShowWhen` blendet ein Feld abhängig von einem anderen Wert ein und aus. `SetReloadOn` geht
+einen Schritt weiter: es lädt den **Inhalt** eines Felds neu, wenn sich ein anderes Feld ändert.
+
+Typischer Fall: ein Select `status` steht auf „aktiv", und ein Multiselect darf danach nur noch
+die für „aktiv" gültigen Einträge anbieten. Diese Liste kennt nur der Server.
+
+```go
+func (f *BaseField) SetReloadOn(reloadURL *xurl.Url, fields ...string) *BaseField
+```
+
+Beide Angaben sind Pflicht. Ein `nil`-URL oder eine leere Feldliste ergibt eine Abhängigkeit,
+die das Frontend nicht auflösen kann — dann wird **nichts** exportiert und das Feld verhält sich
+wie ein normales.
+
+### Ablauf
+
+1. Das abhängige Feld exportiert `reloadOn` (Feld-IDs) und `reloadUrl`.
+2. Ändert sich einer dieser Werte, postet das Frontend **nur die Trigger-Werte** an die URL
+   (200 ms entprellt, ein Request pro URL, der neueste gewinnt).
+3. Der Handler baut dieselbe `FormGroup` auf, bindet nachsichtig, setzt die neuen Optionen und
+   antwortet mit `ExportPatch()`.
+4. Das Frontend merged den Patch und verwirft Werte, die die neue Liste nicht mehr anbietet.
+
+Ein Reload läuft **immer auch einmal direkt nach dem Aufbau des Formulars**. Die Listen im
+ersten Render sind damit optional — sie verhindern nur, dass die Felder kurz leer aussehen.
+
+### Feld deklarieren
+
+```go
+status := field.NewSelectField("status", "STATUS", true, statusOptions())
+tags := field.NewModelListField("tags", "TAGS", false, "Tag", nil)
+tags.BaseField.SetReloadOn(xurl.NewUrlPrefix("/Portal/Thing/FormReload", "/api"), "status")
+```
+
+Wie bei allen API-Zielen: `SetReloadOn` exportiert die URL über `PrintPrefix()`.
+
+### Handler
+
+```go
+func (ctrl *Controller) FormReload(c echo.Context) error {
+    wc := webcontext.GetWebContext(c)
+
+    status, tags, fg := ctrl.buildThingForm(wc.UiContext())
+
+    // Nachsichtig binden: mitten im Ausfüllen ist ein leeres Pflichtfeld normal.
+    if err := builder.BindReload(c, fg); err != nil {
+        return wc.BadRequest(err.Error())
+    }
+
+    tags.Options = ctrl.tagsForStatus(status.Value)
+
+    return c.JSON(http.StatusOK, response.NewReturnFields(fg.ExportPatch()))
+}
+```
+
+`buildThingForm` muss **dieselbe** Funktion sein, die auch die normale Form-Action benutzt, und
+die typisierten Feld-Pointer mit zurückgeben — sonst laufen Formular und Reload auseinander.
+
+- `builder.BindReload(c, fg)` — wie `BindAndValidate`, aber ohne Validierungsfehler. Jedes Feld
+  wird zuerst auf seinen Default gebunden; scheitert der Request-Wert, bleibt der Default stehen.
+  Nur ein unlesbarer Request-Body ist ein Fehler. Der Overposting-Schutz gilt unverändert.
+- `fg.ExportPatch()` — exportiert genau die Felder mit `ReloadOn`, gekeyed nach Feld-ID.
+  `Form=false`-Felder werden übersprungen.
+- `response.NewReturnFields(...)` — `{"fields": {...}}`, bewusst ohne `done`. Mit
+  `.WithMessage(text, response.MessageInfo)` gibt es zusätzlich eine Snackbar.
+
+### Was das Frontend übernimmt — und was nicht
+
+Übernommen werden nur bekannte Properties mit passendem Typ: `list`, `name`, `hint`, `class`,
+`required`, `disabled`, `hide`, `search`, `min`, `max`, `params`.
+
+Bewusst **nicht** übernommen:
+
+| Property | Grund |
+| --- | --- |
+| `value` | Den Wert behält der Client. Er verwirft nur, was die neue `list` nicht mehr enthält. |
+| `type`, `subtype`, `id` | Werden beim Aufbau der Controls einmalig normalisiert. |
+| `url` | Ob ein Select Server-Suche macht, entscheidet sich beim Aufbau — eine Änderung käme nie an. |
+| `showWhen` | Wird ohnehin clientseitig aus den aktuellen Werten ausgewertet. |
+
+Ein Patch für ein Feld ohne `ReloadOn` oder mit einer anderen `reloadUrl` wird ignoriert.
+
+### Grenzen
+
+- **Nur die Trigger-Werte gehen an den Server**, nicht das ganze Formular. Alles Weitere (Parent-ID
+  o. ä.) gehört in die `reloadUrl`.
+- **Abhängige `ModelListField`/Treeselects dürfen kein `URL` setzen.** Mit gesetzter URL lädt das
+  Frontend den Baum selbst per GET und ignoriert die gepatchte Liste.
+- **Keine Step-übergreifenden Abhängigkeiten:** in einem Multi-Step-Form kann ein Feld in Schritt 2
+  nicht auf ein Feld aus Schritt 1 reagieren.
+- **Ketten funktionieren, Zyklen laufen leer.** Hängt C an B und wird B durch einen Patch geleert,
+  lädt C nach. Das terminiert, weil ein Patch nur Werte verwirft.

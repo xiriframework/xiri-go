@@ -2,6 +2,7 @@ package field
 
 import (
 	"github.com/xiriframework/xiri-go/component/core"
+	"github.com/xiriframework/xiri-go/component/url"
 )
 
 // FieldType represents the type of form field
@@ -95,6 +96,11 @@ type BaseField struct {
 	// Conditional visibility
 	ShowWhen []Condition // Conditions that must all be true for the field to be visible
 
+	// Server-driven options: when one of the ReloadOn fields changes, the frontend posts the
+	// trigger values to ReloadURL and applies the returned field patch. Set via SetReloadOn.
+	ReloadOn  []string
+	ReloadURL string
+
 	// Advanced options
 	Access   []string // Access control permissions (nil = no restriction)
 	Scenario []string // Which scenarios this field applies to (nil = all scenarios)
@@ -164,6 +170,13 @@ func (f *BaseField) GetBaseExport(ctx *core.UiContext, value interface{}) map[st
 		}
 	}
 
+	// Add reload dependency if complete (both keys or neither - a half-declared
+	// dependency is one the frontend cannot resolve)
+	if len(f.ReloadOn) > 0 && f.ReloadURL != "" {
+		result["reloadOn"] = f.ReloadOn
+		result["reloadUrl"] = f.ReloadURL
+	}
+
 	return result
 }
 
@@ -229,4 +242,31 @@ func (f *BaseField) SetShowWhen(field string, operator ConditionOperator, value 
 func (f *BaseField) SetShowWhenNotEmpty(field string) *BaseField {
 	f.ShowWhen = append(f.ShowWhen, NewConditionNotEmpty(field))
 	return f
+}
+
+// SetReloadOn marks this field as depending on the values of other fields.
+//
+// When one of the named fields changes, the frontend posts the current trigger values to
+// reloadURL (exported via PrintPrefix) and applies the returned field patch - typically a
+// fresh option list that is only valid for the current selection.
+//
+// Both arguments are required: a nil/empty URL or an empty field list declares a dependency
+// the frontend cannot resolve, and is ignored.
+//
+// Example:
+//
+//	tags := field.NewModelListField("tags", "TAGS", false, "Tag", nil)
+//	tags.BaseField.SetReloadOn(url.NewUrlPrefix("/Portal/Thing/FormReload", "/api"), "status")
+func (f *BaseField) SetReloadOn(reloadURL *url.Url, fields ...string) *BaseField {
+	if reloadURL == nil || len(fields) == 0 || reloadURL.PrintPrefix() == "" {
+		return f
+	}
+	f.ReloadOn = fields
+	f.ReloadURL = reloadURL.PrintPrefix()
+	return f
+}
+
+// GetReloadOn returns the field IDs this field depends on (empty = no dependency)
+func (f *BaseField) GetReloadOn() []string {
+	return f.ReloadOn
 }

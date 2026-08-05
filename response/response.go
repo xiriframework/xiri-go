@@ -89,6 +89,30 @@ func (r ReturnRefreshPage) WithMessage(text string, msgType MessageType) ReturnR
 	return r
 }
 
+// ReturnFields represents a field patch response for a form reload.
+//
+// JSON output: {"fields": {"tags": {"list": [...], "required": true}}}
+// With message: {"fields": {...}, "message": "Liste aktualisiert", "messageType": "info"}
+//
+// Use case: a field declared SetReloadOn(...) and one of its trigger values changed. The
+// frontend merges each entry into the matching field definition. Deliberately carries no
+// "done" key - a patch is not a completed action.
+//
+// Build the map with FormGroup.ExportPatch().
+type ReturnFields struct {
+	Fields map[string]interface{} `json:"fields"`
+	Message
+}
+
+func (r ReturnFields) isSuccessResponse() {}
+
+// WithMessage returns a copy with the given message and type.
+func (r ReturnFields) WithMessage(text string, msgType MessageType) ReturnFields {
+	r.MessageText = text
+	r.MessageType = msgType
+	return r
+}
+
 // ReturnRefreshTable represents a refresh table response.
 //
 // JSON output: {"done": true, "refresh": "table"}
@@ -290,6 +314,13 @@ func (r ReturnPoll) WithText(text string) ReturnPoll {
 // Returns: {"done": true, "refresh": "page"}
 func NewReturnRefreshPage() ReturnRefreshPage {
 	return ReturnRefreshPage{Done: true, Refresh: "page"}
+}
+
+// NewReturnFields creates a field patch response for a form reload.
+//
+// Returns: {"fields": {"<fieldID>": {...}}}
+func NewReturnFields(fields map[string]interface{}) ReturnFields {
+	return ReturnFields{Fields: fields}
 }
 
 // NewReturnRefreshTable creates a refresh table response.

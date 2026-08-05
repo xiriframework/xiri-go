@@ -1,6 +1,6 @@
 ---
 name: xiri-go-expert
-description: Experte für die xiri-go Go-Library. Verwende diesen Skill IMMER wenn Go-Code geschrieben wird der xiri-go importiert (github.com/xiriframework/xiri-go), oder wenn der User nach Komponenten, Formularen, Tabellen, Filter-Parsing, URL-Prefixes/Sidebar-Routing, Dialogen, Responses, UiContext, Inline-Edit, Bulk-Actions/MassEdit/MassDelete oder dem Builder-Pattern der xiri-go Library fragt.
+description: Experte für die xiri-go Go-Library. Verwende diesen Skill IMMER wenn Go-Code geschrieben wird der xiri-go importiert (github.com/xiriframework/xiri-go), oder wenn der User nach Komponenten, Formularen, Tabellen, Filter-Parsing, URL-Prefixes/Sidebar-Routing, Dialogen, Responses, UiContext, Inline-Edit, abhängigen Formularfeldern (SetReloadOn/ExportPatch), Bulk-Actions/MassEdit/MassDelete oder dem Builder-Pattern der xiri-go Library fragt.
 ---
 
 # xiri-go Expert
@@ -48,6 +48,7 @@ u.PrintPrefix()  // mit Prefix   — API-Calls, form/table Submit-URLs
 | **Eine Tabelle** (Spalten, Row/Top/Bulk-Buttons)         | `references/tables.md`                      |
 | **Einen Dialog** (Delete, Form, Table, Waiting, Component) | `references/dialogs.md`                     |
 | **Ein Formular** (Felder, showWhen, Validierung)         | `references/form-fields.md` + `form-builder.md` |
+| **Abhängige Felder** (Optionen vom Server nachladen)     | `references/form-fields.md` (Abschnitt „Abhängige Felder“) |
 | **Filter + Pagination** mit GORM                         | `references/table-filtering.md`             |
 | **End-to-End Pattern** (CRUD, MassEdit, MassDelete, Stepper, Inline-Edit, Dashboard) | `references/patterns.md`                    |
 | **Response-Typen** (Refresh, Goto, DataResult, DataResponse) | `references/responses.md`                   |
@@ -116,6 +117,26 @@ field.NewModelField   (id, name, required, "group", 0) // Value: int32
 // Subtypes auf TextField: "email" | "tel" | "url" | "password" | "textarea"
 ```
 
+### Abhängige Felder (Optionen vom Server nachladen)
+
+`SetShowWhen` blendet ein Feld ein/aus, `SetReloadOn` lädt seinen **Inhalt** neu:
+
+```go
+reloadURL := xurl.NewUrlPrefix("/Portal/Thing/FormReload", "/api")
+tags.BaseField.SetReloadOn(reloadURL, "status")   // beides Pflicht, sonst wird nichts exportiert
+
+// Handler hinter reloadURL:
+status, tags, fg := ctrl.buildThingForm(wc.UiContext())
+if err := builder.BindReload(c, fg); err != nil {   // nachsichtig: leeres Pflichtfeld ist ok
+    return wc.BadRequest(err.Error())
+}
+tags.Options = ctrl.tagsForStatus(status.Value)
+return c.JSON(http.StatusOK, response.NewReturnFields(fg.ExportPatch()))
+```
+
+Das Frontend postet **nur die Trigger-Werte**, behält Werte die es in der neuen Liste noch gibt und
+verwirft den Rest. Filter erben das. Details + Grenzen in `references/form-fields.md`.
+
 ### FormBuilder
 
 ```go
@@ -179,3 +200,9 @@ core.ButtonTypeRaised | Basic | Stroked | Flat | Fab | MiniFab | Icon | IconText
 - **`ButtonsField`-Keys sind Strings** (`"0"`, `"1"`), nicht Ints.
 - **Chips in Tabellen-Zellen**: `b.ChipsField(id, name, accessor)` (pure Display, accessor → `[]table.Chip`). Für editierbare Multi-Select-Chips siehe `WithEditableChipOptions(...)` (anderer Mechanismus).
 - **Filter-Guards**: `if v, ok := filters[k].(string); ok && v != ""` — leere Werte erzeugen sonst falsche WHERE-Clauses.
+- **`SetReloadOn` braucht URL *und* Feld-IDs.** Fehlt eines, wird gar nichts exportiert und das Feld
+  verhält sich wie ein normales — kein Fehler, nur wirkungslos.
+- **Im Reload-Handler `BindReload`, nicht `BindAndValidate`.** Letzteres scheitert an leeren
+  Pflichtfeldern, die mitten im Ausfüllen völlig normal sind.
+- **Abhängige `ModelListField`/Treeselects ohne `URL` bauen.** Mit URL lädt das Frontend den Baum
+  selbst und ignoriert die gepatchte Liste.
