@@ -9,6 +9,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Added
 
+- **Filter einklappen auch bei automatisch gewrappten Tabellen (`SetFilterCollapsed`).**
+  `Query.Collapsed(bool)` gab es schon, erreichbar war es aber nur, wenn man die Query von Hand
+  mit `query.NewQueryWithFormGroup(...)` gebaut hat. Wer die Tabelle über `SetFilter` ihre Query
+  selbst erzeugen ließ, kam an das Expansion-Panel nicht heran — `saveStateId`, `Display` und
+  `extraData` wurden durchgereicht, `collapsed` nicht.
+
+  `TableBuilder.SetFilterCollapsed(bool)` schließt die Lücke und behält die Tri-State-Semantik:
+  nicht gesetzt = kein Panel (Filter immer offen, unverändertes JSON), `false` = Panel aufgeklappt,
+  `true` = Panel eingeklappt.
+
+  ```go
+  builder.SetFilter(fg).SetFilterCollapsed(true)
+  ```
+
 - **Abhängige Felder: Optionen vom Server nachladen (`SetReloadOn`).** Bisher konnte ein Feld per
   `SetShowWhen` nur abhängig von einem anderen Wert ein- und ausgeblendet werden; sein **Inhalt**
   war statisch, sobald das Formular gerendert war. `BaseField.SetReloadOn(reloadURL, fields...)`

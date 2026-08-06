@@ -225,6 +225,27 @@ func (c *Controller) Page(ctx echo.Context) error {
 
 Die Data-Route (`apiUrl("data")`) bleibt **gleich** wie bei nicht-filtered Tabellen — `LoadFilterData` parst automatisch die Filter-Fields.
 
+### Filter einklappen
+
+`Collapsed` steuert das Expansion-Panel um den Filter — drei Zustände:
+
+| Aufruf | Ergebnis |
+|---|---|
+| gar nicht gesetzt | kein Panel, Filter immer offen (Default) |
+| `Collapsed(false)` | Panel, aufgeklappt |
+| `Collapsed(true)` | Panel, eingeklappt |
+
+Wer keine eigene Query baut, sondern die Tabelle über `SetFilter` **automatisch** wrappen lässt,
+setzt dasselbe am TableBuilder:
+
+```go
+builder.SetFilter(fg).SetFilterCollapsed(true)
+```
+
+Klappt der User das Panel selbst auf oder zu, merkt sich das Frontend den Zustand unter demselben
+`saveStateId` wie die Filterwerte (Session-Storage, 1 h) — beim nächsten Laden gewinnt der
+gemerkte Zustand über den hier gesetzten Wert. Ohne `saveStateId` wird nichts gemerkt.
+
 ### Automatisches Laden beim Seitenaufruf
 
 Es gibt zwei Wege, die Daten schon beim Laden (ohne Klick) zu zeigen:

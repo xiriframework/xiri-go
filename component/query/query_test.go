@@ -34,6 +34,19 @@ func TestQuery_DefaultsOmitVisibilityFlags(t *testing.T) {
 	if _, ok := data["showResultCount"]; ok {
 		t.Errorf("did not expect showResultCount key by default")
 	}
+	if _, ok := data["collapsed"]; ok {
+		t.Errorf("did not expect collapsed key by default")
+	}
+}
+
+// collapsed drives the expansion panel: true = collapsed, false = expanded, absent = no panel.
+func TestQuery_Collapsed(t *testing.T) {
+	q := NewQuery(nil, nil, nil).Collapsed(true)
+	data := queryData(t, q)
+
+	if data["collapsed"] != true {
+		t.Errorf("collapsed=%v want true", data["collapsed"])
+	}
 }
 
 func TestQuery_ShowActiveFilters(t *testing.T) {

@@ -257,6 +257,7 @@ b.SetFooter(true)
 b.SetServerSide(true)
 b.SetSaveState(true)
 b.SetSaveStateId("devices-table")
+b.SetFilterCollapsed(true)  // Filter aus SetFilter im Expansion-Panel, eingeklappt starten
 b.SetItemsPerPage(25)
 b.SetPageSizes([]int{10, 25, 50, 100})
 b.SetClass("custom-class")

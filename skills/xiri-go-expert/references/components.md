@@ -712,9 +712,13 @@ Filter-Bereich für Tabellen.
 
 ```go
 q := query.NewQueryWithFormGroup(filterGroup, filterValues, "/api/devices/table", nil, "devices-filter", nil)
-q.Collapsed(true)
+q.Collapsed(true) // Expansion-Panel, eingeklappt; ohne Aufruf gar kein Panel
 q.Print(ctx)
 ```
+
+Lässt die Tabelle ihre Query selbst erzeugen (`SetFilter`), setzt man dasselbe am Builder:
+`builder.SetFilter(fg).SetFilterCollapsed(true)`. Mit `saveStateId` merkt sich das Frontend den
+vom User geklappten Zustand — Details in `table-filtering.md`.
 
 ## Stepper (`component/stepper`)
 

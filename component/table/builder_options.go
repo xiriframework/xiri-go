@@ -57,6 +57,14 @@ func (b *TableBuilder[T]) SetQuery(query bool) *TableBuilder[T] {
 	return b
 }
 
+// SetFilterCollapsed renders the filter set via SetFilter inside an expansion panel —
+// true starts collapsed, false starts expanded. Without this call there is no panel and
+// the filter is always open.
+func (b *TableBuilder[T]) SetFilterCollapsed(collapsed bool) *TableBuilder[T] {
+	b.table.options.FilterCollapsed = &collapsed
+	return b
+}
+
 // SetCsv enables/disables CSV export functionality
 func (b *TableBuilder[T]) SetCsv(csv bool) *TableBuilder[T] {
 	b.table.options.Csv = &csv

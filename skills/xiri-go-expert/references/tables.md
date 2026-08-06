@@ -446,6 +446,8 @@ b.SetDense(true)            // Legacy: Alias für DensityCompact, kann kein "rel
 b.SetPagination(true)
 b.SetSearch(true)
 b.SetQuery(false)           // Filter-Panel oben automatisch
+b.SetFilterCollapsed(true)  // wrappt SetFilter in ein Expansion-Panel; true = eingeklappt starten,
+                            // false = aufgeklappt, gar nicht gesetzt = kein Panel (siehe table-filtering.md)
 b.SetCsv(true)              // CSV-Export-Button verfügbar
 b.SetExcel(true)            // Excel-Export
 b.SetSaveState(true)        // Filter/Sort/Page persistieren im LocalStorage

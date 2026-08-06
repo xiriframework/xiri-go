@@ -44,30 +44,33 @@ type Table[T any] struct {
 // TableOptions contains all table configuration options.
 // These map directly to component.Table options for JSON compatibility.
 type TableOptions struct {
-	Class         *string
-	Title         *string
-	TextNoData    *string
-	EmptyState    *emptystate.EmptyState
-	ItemsPerPage  *int
-	PageSizes     []int
-	ButtonsTop    []*button.TableButton
-	Reload        *bool
-	Dense         *bool
-	Density       *Density
-	Pagination    *bool
-	Search        *bool
-	MinWidth      *string
-	Query         *bool
-	Csv           *bool
-	Excel         *bool
-	SaveState     *bool
-	SaveStateId   *string
-	SaveInput     *string
-	SaveInputUrl  *string
-	Borders       *bool
-	BordersHeader *bool
-	Select        *bool
-	SelectButtons []*button.TableButton
+	Class        *string
+	Title        *string
+	TextNoData   *string
+	EmptyState   *emptystate.EmptyState
+	ItemsPerPage *int
+	PageSizes    []int
+	ButtonsTop   []*button.TableButton
+	Reload       *bool
+	Dense        *bool
+	Density      *Density
+	Pagination   *bool
+	Search       *bool
+	MinWidth     *string
+	Query        *bool
+	// FilterCollapsed controls the expansion panel around the filter set via SetFilter.
+	// nil = no panel at all (filter always open); see SetFilterCollapsed.
+	FilterCollapsed *bool
+	Csv             *bool
+	Excel           *bool
+	SaveState       *bool
+	SaveStateId     *string
+	SaveInput       *string
+	SaveInputUrl    *string
+	Borders         *bool
+	BordersHeader   *bool
+	Select          *bool
+	SelectButtons   []*button.TableButton
 	// UX-007 Bulk actions (additive). BulkActions, when non-empty, makes the frontend show a
 	// selection column and a sticky context bar with these actions. SelectAllResults offers
 	// "select all results" (whole filter, not just the page); StickyBulkBar pins the bar.
@@ -75,11 +78,11 @@ type TableOptions struct {
 	SelectAllResults *bool
 	StickyBulkBar    *bool
 	Display          *string
-	Footer        *bool
-	ServerSide    *bool       // Enable server-side pagination (data fetched page-by-page)
-	ScrollHeight  *string     // Custom scroll height for the table container (e.g., "400px", "80vh")
-	EditUrl       *string     // URL for inline edit save requests (POST { id, field, value })
-	Tree          *TreeConfig // Opt-in tree mode (indent + expand/collapse per row); nil = flat table
+	Footer           *bool
+	ServerSide       *bool       // Enable server-side pagination (data fetched page-by-page)
+	ScrollHeight     *string     // Custom scroll height for the table container (e.g., "400px", "80vh")
+	EditUrl          *string     // URL for inline edit save requests (POST { id, field, value })
+	Tree             *TreeConfig // Opt-in tree mode (indent + expand/collapse per row); nil = flat table
 }
 
 // TreeConfig configures the opt-in tree mode of a table.
@@ -622,6 +625,10 @@ func (tc *tableCore) printComponent(ctx *core.UiContext, staticData []map[string
 
 		saveStateId := tc.options.SaveStateId
 		q := query.NewQuery(filterForm, saveStateId, tc.options.Display)
+
+		if tc.options.FilterCollapsed != nil {
+			q.Collapsed(*tc.options.FilterCollapsed)
+		}
 
 		if len(extraData) > 0 {
 			q.SetExtraData(extraData)
