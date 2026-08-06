@@ -9,6 +9,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Added
 
+- **`FieldMeta` liefert jetzt `Header` und `HeaderSpan`.**
+  `GetFieldMetas()` ist die einzige Sicht, die externe Renderer (PDF, Excel, eigene Exporte) auf die
+  Felder haben — `WithHeader(...)` / `WithHeaderSpan(...)` landeten bisher nur im JSON-Export. Damit
+  ließen sich gruppierte Spaltenköpfe außerhalb des Frontends nicht nachbauen.
+
+  Beide Werte sind `nil`, wenn am Field nichts gesetzt wurde. Rein additiv — bestehende Consumer
+  bleiben unverändert.
+
 - **Filter einklappen auch bei automatisch gewrappten Tabellen (`SetFilterCollapsed`).**
   `Query.Collapsed(bool)` gab es schon, erreichbar war es aber nur, wenn man die Query von Hand
   mit `query.NewQueryWithFormGroup(...)` gebaut hat. Wer die Tabelle über `SetFilter` ihre Query

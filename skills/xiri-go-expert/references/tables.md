@@ -672,6 +672,44 @@ default:
 
 Für Exports macht man typischerweise **keine** Pagination (alle Zeilen) — die App muss selbst entscheiden, ob das erlaubt ist oder ob ein Limit nötig ist.
 
+## Eigene Renderer — `GetFieldMetas()`
+
+Wer selbst rendert (PDF, eigenes Excel-Layout, Report-Generator), kommt an `field[T]` nicht heran — das ist package-private und generisch. `tbl.GetFieldMetas()` gibt stattdessen eine nicht-generische Metadaten-Liste in Spaltenreihenfolge zurück:
+
+```go
+type FieldMeta struct {
+    ID         string
+    Name       string       // Translation-Key, noch nicht übersetzt
+    Type       string       // table.FieldMetaTypeText, ...Number, ...Buttons, ...
+    Hidden     bool         // Hide() gesetzt
+    Align      *FieldAlign
+    CSV        bool         // im CSV-Export enthalten
+    Header     *string      // WithHeader(...)   — nil wenn nicht gesetzt
+    HeaderSpan *int         // WithHeaderSpan(N) — nil wenn nicht gesetzt
+}
+```
+
+Die Zeilen dazu kommen aus `tbl.GetData(ctx, table.OutputPDF)` (`map[string]any` pro Zeile, Key = `FieldMeta.ID`).
+
+```go
+for _, m := range tbl.GetFieldMetas() {
+    if m.Hidden {
+        continue
+    }
+    label := m.Name
+    if m.Header != nil {
+        label = *m.Header      // Header überschreibt den Feldnamen
+    }
+    span := 1
+    if m.HeaderSpan != nil {
+        span = *m.HeaderSpan   // gruppierter Kopf über N Spalten
+    }
+    renderHeaderCell(t(label), span)
+}
+```
+
+`Header`/`HeaderSpan` sind genau das, was `WithHeader` / `WithHeaderSpan` im Builder setzen (siehe `table-builder.md`) — für mehrstufige Köpfe: eine Zeile aus den `Header`-Werten mit ihren Spans, darunter die normale Zeile aus `Name`.
+
 ## Row-Typ mit FK-Auflösung (Lookup-Maps)
 
 Wenn die Tabelle FKs anzeigt, lohnt sich ein separater Row-Typ **mit** aufgelösten Namen statt lazy-Loading pro Zeile:

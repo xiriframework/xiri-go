@@ -9,6 +9,9 @@ type FieldMeta struct {
 	Hidden bool
 	Align  *FieldAlign
 	CSV    bool // Whether field is included in CSV export
+
+	Header     *string // Custom header text override (grouped headers)
+	HeaderSpan *int    // Header column span for grouped headers
 }
 
 // FieldMeta type constants for use by renderers.

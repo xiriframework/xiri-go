@@ -757,6 +757,9 @@ func (tc *tableCore) GetFieldMetas() []FieldMeta {
 			Hidden: f.hide,
 			Align:  f.align,
 			CSV:    f.csv,
+
+			Header:     f.header,
+			HeaderSpan: f.headerSpan,
 		}
 	}
 	return metas
