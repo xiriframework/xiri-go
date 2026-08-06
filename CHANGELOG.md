@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.3.6] - 2026-08-06
+
 ### Added
 
 - **`FieldMeta` liefert jetzt `Header` und `HeaderSpan`.**
@@ -16,6 +18,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
   Beide Werte sind `nil`, wenn am Field nichts gesetzt wurde. Rein additiv — bestehende Consumer
   bleiben unverändert.
+
+### Security
+
+- **Transitive Abhängigkeiten angehoben:** `golang.org/x/crypto`, `golang.org/x/net`,
+  `golang.org/x/sys`, `golang.org/x/text` und `go-isatty`.
+
+## [0.3.5] - 2026-08-06
+
+### Added
 
 - **Filter einklappen auch bei automatisch gewrappten Tabellen (`SetFilterCollapsed`).**
   `Query.Collapsed(bool)` gab es schon, erreichbar war es aber nur, wenn man die Query von Hand
@@ -252,7 +263,12 @@ falsche Ergebnisse geliefert haben. Migration jeweils unter dem Eintrag.
 - **`component/stat`**: `Stat.Link(u)` — macht den Wert zu einem SPA-Navigations-Link (mit Query-Parametern); getrennt von `SetURL` (AJAX-Datenquelle). Wirkt u. a. pro Zahl in `multistat`.
 - **`form/field`**: `radio`-Feldtyp — Single-Select über `SelectField` mit `type=radio`, für kleine Optionsmengen.
 
-[Unreleased]: https://github.com/xiriframework/xiri-go/compare/v0.3.1...HEAD
+[Unreleased]: https://github.com/xiriframework/xiri-go/compare/v0.3.6...HEAD
+[0.3.6]: https://github.com/xiriframework/xiri-go/compare/v0.3.5...v0.3.6
+[0.3.5]: https://github.com/xiriframework/xiri-go/compare/v0.3.4...v0.3.5
+[0.3.4]: https://github.com/xiriframework/xiri-go/compare/v0.3.3...v0.3.4
+[0.3.3]: https://github.com/xiriframework/xiri-go/compare/v0.3.2...v0.3.3
+[0.3.2]: https://github.com/xiriframework/xiri-go/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/xiriframework/xiri-go/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/xiriframework/xiri-go/compare/v0.2.31...v0.3.0
 [0.2.31]: https://github.com/xiriframework/xiri-go/compare/v0.2.30...v0.2.31
