@@ -7,8 +7,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
-## [0.3.6] - 2026-08-06
-
+## [0.3.6]
 ### Added
 
 - **`FieldMeta` liefert jetzt `Header` und `HeaderSpan`.**
@@ -24,8 +23,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **Transitive Abhängigkeiten angehoben:** `golang.org/x/crypto`, `golang.org/x/net`,
   `golang.org/x/sys`, `golang.org/x/text` und `go-isatty`.
 
-## [0.3.5] - 2026-08-06
-
+## [0.3.5]
 ### Added
 
 - **Filter einklappen auch bei automatisch gewrappten Tabellen (`SetFilterCollapsed`).**
@@ -68,8 +66,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   Treeselects dürfen kein eigenes `URL` setzen, und Step-übergreifende Abhängigkeiten in
   Multi-Step-Forms werden nicht unterstützt.
 
-## [0.3.4] - 2026-08-05
-
+## [0.3.4]
 ### Documentation
 
 - **Falsche Konstruktor-Signaturen in der Skill-Doku korrigiert.** `NewTextField`, `NewIntField`,
@@ -92,8 +89,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   `nil` bleibt daher bei Slice/Map-Defaults (`NewModelListField`, `NewArrayField`, `NewJsonField`)
   korrekt zulässig. Läuft in `go test ./...` und damit in `./release.sh` mit.
 
-## [0.3.3] - 2026-08-01
-
+## [0.3.3]
 ### Added
 
 - **`TableBuilder.SetDensity()` — die vollständige Zeilenhöhen-API.** Bisher gab es nur
@@ -127,8 +123,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   `components.md` je ein Abschnitt zu `WithHide` und dazu, dass `hint` bei Icon-Button-Typen
   Pflicht ist, weil `Print()` für sie kein `text` emittiert.
 
-## [0.3.2] - 2026-07-31
-
+## [0.3.2]
 ### Added
 
 - **Download-Buttons können die Datei im Tab anzeigen lassen statt sie zu speichern.**
@@ -158,8 +153,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   `WithTarget` in der Chain-Methoden-Liste ergänzt, samt Hinweis welche Methoden `*TableButton`
   durchreicht.
 
-## [0.3.1] - 2026-07-25
-
+## [0.3.1]
 ### Security
 
 - **Dependencies aktualisiert, 15 Dependabot-Alerts geschlossen.** Beide direkten Dependencies
@@ -171,8 +165,7 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   mitkompilierter, von dieser Library nicht erreichter Code; für Consumer, die dieselben Module
   selbst nutzen, war die Exposition dennoch real.
 
-## [0.3.0] - 2026-07-25
-
+## [0.3.0]
 Aufarbeitung eines Sicherheits- und Korrektheits-Audits: 13 bestätigte Findings behoben.
 Enthält **vier Breaking Changes** — alle sind Verhaltensänderungen an Stellen, die vorher still
 falsche Ergebnisse geliefert haben. Migration jeweils unter dem Eintrag.
@@ -252,8 +245,7 @@ falsche Ergebnisse geliefert haben. Migration jeweils unter dem Eintrag.
   (konsistent mit `SafeLocale` → `locale.De`); veralteter `uicontext/`-Verweis in `README.md`
   korrigiert — `UiContext` liegt in `component/core/context.go`.
 
-## [0.2.31] - 2026-07-18
-
+## [0.2.31]
 ### Added
 
 - **`component/progress`**: `Progress` — einzelne determinate Fortschrittsanzeige („current of total"), inkl. `Indeterminate()`-Modus. Für Share-of-Sum weiterhin `MultiProgress`.

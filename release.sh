@@ -44,9 +44,34 @@ if git rev-parse "$VERSION" >/dev/null 2>&1; then
   exit 1
 fi
 
+# CHANGELOG-Prüfung vor den Tests, damit ein Abbruch nichts angefasst hinterlässt.
+if ! grep -q '^## \[Unreleased\]' CHANGELOG.md; then
+  echo "Error: '## [Unreleased]' not found in CHANGELOG.md — refuse to release."
+  exit 1
+fi
+
+# Leerer Abschnitt heisst: für dieses Release ist nichts dokumentiert.
+if [[ -z "$(awk '/^## \[Unreleased\]/{f=1;next} /^## \[/{f=0} f' CHANGELOG.md | tr -d '[:space:]')" ]]; then
+  echo "Error: '## [Unreleased]' in CHANGELOG.md is empty — nothing documented for $VERSION."
+  exit 1
+fi
+
 # Run tests
 echo "Running tests..."
 go test ./...
+
+# [Unreleased] in einen Versionsabschnitt drehen und ein leeres [Unreleased] darüber stehen
+# lassen. Ohne das sammeln sich die Einträge mehrerer Releases dort an. Erst nach den Tests,
+# damit ein Fehlschlag den Baum unberührt lässt -- die Prüfung auf uncommittete Änderungen
+# weiter oben ist da schon durch, der Commit hier ist also der einzige.
+echo "Rotating CHANGELOG section to $VERSION..."
+awk -v ver="${VERSION#v}" '
+  /^## \[Unreleased\]$/ && !done { print; print ""; print "## [" ver "]"; done = 1; next }
+  { print }
+' CHANGELOG.md > CHANGELOG.md.tmp && mv CHANGELOG.md.tmp CHANGELOG.md
+
+git add CHANGELOG.md
+git commit -m "chore(release): CHANGELOG-Abschnitt für $VERSION"
 
 # Push current branch first
 echo "Pushing current branch to origin..."
