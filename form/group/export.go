@@ -4,6 +4,7 @@ package group
 // Optional interface - fields opt in by embedding BaseField and calling SetReloadOn.
 type ReloadDependent interface {
 	GetReloadOn() []string
+	GetReloadURL() string
 }
 
 // ExportPatch exports only the fields that declare a reload dependency, keyed by field ID.
@@ -20,8 +21,10 @@ func (fg *FormGroup) ExportPatch() map[string]interface{} {
 			continue
 		}
 
+		// Beide Angaben, wie beim normalen Export: ein halb deklariertes Feld exportiert dort
+		// keine Reload-Keys, das Frontend würde einen Patch für es also gar nicht anwenden.
 		dep, ok := f.(ReloadDependent)
-		if !ok || len(dep.GetReloadOn()) == 0 {
+		if !ok || len(dep.GetReloadOn()) == 0 || dep.GetReloadURL() == "" {
 			continue
 		}
 

@@ -88,3 +88,19 @@ func TestExportPatch_MultipleDependentFields(t *testing.T) {
 		}
 	}
 }
+
+// Ein Feld, dem die URL fehlt, exportiert im normalen Rendern keine Reload-Keys - dann darf es
+// auch nicht im Patch landen. Erreichbar nur, wenn jemand ReloadOn direkt setzt statt SetReloadOn.
+func TestExportPatch_SkipsFieldWithoutReloadURL(t *testing.T) {
+	half := field.NewSelectField("tags", "Tags", false, reloadTestOptions())
+	half.BaseField.ReloadOn = []string{"status"}
+
+	fg := NewFormGroup([]field.FormField{
+		field.NewSelectField("status", "Status", false, reloadTestOptions()),
+		half,
+	})
+
+	if patch := fg.ExportPatch(); len(patch) != 0 {
+		t.Errorf("patch=%v want empty", patch)
+	}
+}

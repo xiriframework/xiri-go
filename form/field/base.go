@@ -270,3 +270,8 @@ func (f *BaseField) SetReloadOn(reloadURL *url.Url, fields ...string) *BaseField
 func (f *BaseField) GetReloadOn() []string {
 	return f.ReloadOn
 }
+
+// GetReloadURL returns the endpoint the frontend posts the trigger values to (empty = none)
+func (f *BaseField) GetReloadURL() string {
+	return f.ReloadURL
+}

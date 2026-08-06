@@ -466,8 +466,13 @@ die typisierten Feld-Pointer mit zurückgeben — sonst laufen Formular und Relo
 - `builder.BindReload(c, fg)` — wie `BindAndValidate`, aber ohne Validierungsfehler. Jedes Feld
   wird zuerst auf seinen Default gebunden; scheitert der Request-Wert, bleibt der Default stehen.
   Nur ein unlesbarer Request-Body ist ein Fehler. Der Overposting-Schutz gilt unverändert.
-- `fg.ExportPatch()` — exportiert genau die Felder mit `ReloadOn`, gekeyed nach Feld-ID.
-  `Form=false`-Felder werden übersprungen.
+
+  Zwei Feinheiten: Das gilt, weil alle mitgelieferten Felder in `BindValue` erst validieren und
+  dann zuweisen — ein eigenes Feld, das umgekehrt vorgeht, ließe den ungültigen Request-Wert
+  stehen. Und ein Default, der selbst die Validierung nicht besteht (z. B. ein required
+  Multi-Select ohne Vorauswahl), wird auch nicht gesetzt; dort bleibt der Nullwert.
+- `fg.ExportPatch()` — exportiert genau die Felder mit `ReloadOn` **und** `ReloadURL`, gekeyed nach
+  Feld-ID. `Form=false`-Felder werden übersprungen.
 - `response.NewReturnFields(...)` — `{"fields": {...}}`, bewusst ohne `done`. Mit
   `.WithMessage(text, response.MessageInfo)` gibt es zusätzlich eine Snackbar.
 
@@ -475,6 +480,12 @@ die typisierten Feld-Pointer mit zurückgeben — sonst laufen Formular und Relo
 
 Übernommen werden nur bekannte Properties mit passendem Typ: `list`, `name`, `hint`, `class`,
 `required`, `disabled`, `hide`, `search`, `min`, `max`, `params`.
+
+Was davon aus xiri-go tatsächlich ankommt, hängt am Feldexport: `disabled` steht **nicht** im
+Basis-Export, ein Go-Backend kann es also nicht patchen. Und ein Patch ist additiv — eine Property,
+die gar nicht im Patch steht, bleibt unverändert. Zurücksetzen geht nur, wo der Export einen
+expliziten Leerwert kennt: `hint` wird als `null` exportiert und räumt den Hinweis damit ab,
+`min`/`max` haben keinen solchen Leerwert.
 
 Bewusst **nicht** übernommen:
 
@@ -489,8 +500,9 @@ Ein Patch für ein Feld ohne `ReloadOn` oder mit einer anderen `reloadUrl` wird 
 
 ### Grenzen
 
-- **Nur die Trigger-Werte gehen an den Server**, nicht das ganze Formular. Alles Weitere (Parent-ID
-  o. ä.) gehört in die `reloadUrl`.
+- **Nur die Trigger-Werte gehen an den Server**, nicht das ganze Formular — und pro URL nur die,
+  von denen deren eigene Felder abhängen. Alles Weitere (Parent-ID o. ä.) gehört in die `reloadUrl`.
+  Bei mehreren URLs wird trotzdem bei jeder Trigger-Änderung jede URL angefragt.
 - **Abhängige `ModelListField`/Treeselects dürfen kein `URL` setzen.** Mit gesetzter URL lädt das
   Frontend den Baum selbst per GET und ignoriert die gepatchte Liste.
 - **Keine Step-übergreifenden Abhängigkeiten:** in einem Multi-Step-Form kann ein Feld in Schritt 2
