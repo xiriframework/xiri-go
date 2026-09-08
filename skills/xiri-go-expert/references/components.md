@@ -217,7 +217,7 @@ tab1 := tabs.NewTab("tab.overview").WithIcon("info")
 tab1.AddContent(overviewComponent)
 t.AddTab(tab1)
 
-tab2 := tabs.NewTab("tab.details").WithLazy(true)   // Content on-demand
+tab2 := tabs.NewTab("tab.details").WithLazy(true).WithNoPadding(true)   // Content on-demand, randloser Body
 tab2.AddContent(detailComponent)
 t.AddTab(tab2)
 
@@ -235,7 +235,7 @@ t.WithDisplay("xcol-md-12")
 t.Print(ctx)
 ```
 
-Tab-Chain-Methoden: `.WithIcon(string)`, `.WithDisabled(bool)`, `.WithLazy(bool)` (override), `.WithUnload(bool)` (override), `.AddContent(core.Component)`.
+Tab-Chain-Methoden: `.WithIcon(string)`, `.WithDisabled(bool)`, `.WithLazy(bool)` (override), `.WithUnload(bool)` (override), `.WithNoPadding(bool)` (Default false; entfernt nur das Padding des eigenen Tab-Bodys, nicht das umgebender Cards oder verschachtelter Tabs; für bündige Inhalte wie Tabellen — Cards brauchen das Padding, sonst werden ihre Schatten abgeschnitten; braucht xiri-ng >= 0.4.7), `.AddContent(core.Component)`.
 
 ## Expansion (`component/expansion`)
 

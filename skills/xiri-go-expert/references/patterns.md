@@ -428,12 +428,15 @@ tab1 := tabs.NewTab("Übersicht").WithIcon("info")
 tab1.AddContent(overviewComponent)
 t.AddTab(tab1)
 
-tab2 := tabs.NewTab("Historie").WithIcon("history")
+tab2 := tabs.NewTab("Historie").WithIcon("history").WithNoPadding(true) // Tabelle bündig im Tab-Body
 tab2.AddContent(historyTable)
 t.AddTab(tab2)
 
 p.Add(t)
 ```
+
+`WithNoPadding(true)` nur für bündige Inhalte (Tabellen, Listen). Cards behalten das Standard-Padding,
+sonst schneidet der Tab-Body ihre Schatten ab. Braucht xiri-ng >= 0.4.7.
 
 ## 8. Delete-Dialog + Custom-Message
 

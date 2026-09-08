@@ -6,6 +6,17 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Added
+
+- **`Tab.WithNoPadding(bool)` rendert einen Tab ohne Innenabstand.**
+  Das Frontend gibt jedem Tab-Body 16px Padding; für randlose Inhalte wie Tabellen ließ sich das aus
+  Go bisher nicht abschalten. `WithNoPadding(true)` setzt das Feld `noPadding` im Tab-JSON; nur das
+  Padding des eigenen Tab-Bodys entfällt, umgebende Cards und verschachtelte Tabs bleiben unverändert.
+  Gedacht für bündige Inhalte wie Tabellen; Cards mit Elevation brauchen das Padding, weil der
+  Tab-Body ihre Schatten sonst abschneidet.
+
+  Wirkung erst mit `@xiriframework/xiri-ng >= 0.4.7`; ältere Frontends ignorieren das Feld stillschweigend.
+
 
 ## [0.3.6]
 ### Added

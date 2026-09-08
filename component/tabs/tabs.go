@@ -6,12 +6,13 @@ import "github.com/xiriframework/xiri-go/component/core"
 // Tab represents an individual tab within a Tabs component
 // Angular: XiriTabSettings interface
 type Tab struct {
-	label    string
-	icon     *string
-	disabled *bool
-	lazy     *bool
-	unload   *bool
-	data     []core.Component
+	label     string
+	icon      *string
+	disabled  *bool
+	lazy      *bool
+	unload    *bool
+	noPadding *bool
+	data      []core.Component
 }
 
 // NewTab creates a new Tab with the given label
@@ -49,6 +50,13 @@ func (t *Tab) WithUnload(unload bool) *Tab {
 	return t
 }
 
+// WithNoPadding removes the inner padding of the tab body.
+// Does not affect surrounding cards or nested tabs.
+func (t *Tab) WithNoPadding(noPadding bool) *Tab {
+	t.noPadding = &noPadding
+	return t
+}
+
 // AddContent adds a component to be rendered in the tab content
 func (t *Tab) AddContent(component core.Component) *Tab {
 	t.data = append(t.data, component)
@@ -72,6 +80,9 @@ func (t *Tab) Print(ctx *core.UiContext) map[string]any {
 	}
 	if t.unload != nil {
 		result["unload"] = *t.unload
+	}
+	if t.noPadding != nil {
+		result["noPadding"] = *t.noPadding
 	}
 
 	// Convert content components to data array

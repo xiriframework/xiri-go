@@ -129,6 +129,17 @@
         "Uses builder.IdField for the ID column"
       ],
       "files": ["rest/verwaltung/controllers/benutzerrollen/table.go"]
+    },
+    {
+      "id": 8,
+      "prompt": "Erstelle mit xiri-go ein Tabs-Component mit zwei Tabs: 'Positionen' enthält eine Tabelle, die bündig ohne Innenabstand im Tab sitzen soll, 'Historie' eine Timeline mit Standard-Padding.",
+      "expected_output": "tabs.NewTabs() with two tabs.NewTab(...); the table tab chains .WithNoPadding(true) and AddContent(table), the timeline tab has no WithNoPadding call.",
+      "assertions": [
+        {"name": "uses_with_no_padding", "type": "contains_pattern", "description": "Ruft .WithNoPadding(true) auf dem Tabellen-Tab auf (Methode von *tabs.Tab)"},
+        {"name": "no_padding_only_on_table_tab", "type": "code_check", "description": "Der Timeline-Tab ruft WithNoPadding nicht auf — Standard-Padding bleibt"},
+        {"name": "adds_tabs_to_container", "type": "code_check", "description": "Beide Tabs werden per t.AddTab(...) registriert, Content per AddContent(...)"},
+        {"name": "no_invented_api", "type": "code_check", "description": "Keine erfundene Methode wie WithPadding(0) oder WithDense — nur WithNoPadding(bool)"}
+      ]
     }
   ]
 }
