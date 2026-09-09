@@ -95,6 +95,13 @@ func (b *TableBuilder[T]) SetBordersHeader(bordersHeader bool) *TableBuilder[T] 
 	return b
 }
 
+// SetFlat renders the table without its own elevation, background and bottom margin.
+// For tables embedded in a container that already provides the frame (expansion panel, card).
+func (b *TableBuilder[T]) SetFlat(flat bool) *TableBuilder[T] {
+	b.table.options.Flat = &flat
+	return b
+}
+
 // SetSelect enables/disables row selection in the table
 func (b *TableBuilder[T]) SetSelect(selectEnabled bool) *TableBuilder[T] {
 	b.table.options.Select = &selectEnabled

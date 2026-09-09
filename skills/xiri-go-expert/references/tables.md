@@ -454,6 +454,9 @@ b.SetSaveState(true)        // Filter/Sort/Page persistieren im LocalStorage
 b.SetSaveStateId("device-table")
 b.SetBorders(true)
 b.SetBordersHeader(true)
+b.SetFlat(true)             // ohne Elevation/Hintergrund/Außen-Margin — für Tabellen im
+                            // Expansion-Panel oder in einer Card; das Panel halbiert dann seinen
+                            // Seitenabstand (wie bei card.WithFlat)
 b.SetSelect(true)           // Row-Checkboxen (SetSelectButtons macht das auto)
 
 // Zeilenhöhe — die vollständige 3-Werte-API des Frontends

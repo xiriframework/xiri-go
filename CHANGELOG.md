@@ -6,6 +6,15 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Added
+
+- **`TableBuilder.SetFlat(bool)` rendert eine Tabelle rahmenlos.** Setzt `flat` in den Table-Options.
+  Das Frontend lässt Elevation, Hintergrund, Radius und das untere Außen-Margin weg. Gedacht für
+  Tabellen, die als Inhalt in einem Expansion-Panel oder in einer Card liegen — bisher stand dort
+  ein Rahmen im Rahmen. Pendant zu `Card.WithFlat(bool)`.
+
+  Wirkung erst mit `@xiriframework/xiri-ng >= 0.4.9`; ältere Frontends ignorieren das Feld stillschweigend.
+
 
 ## [0.3.8]
 ### Added

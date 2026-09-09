@@ -69,8 +69,11 @@ type TableOptions struct {
 	SaveInputUrl    *string
 	Borders         *bool
 	BordersHeader   *bool
-	Select          *bool
-	SelectButtons   []*button.TableButton
+	// Flat renders the table without its own elevation/background/bottom-margin — for tables
+	// embedded in another container (expansion panel, card) that already provides the frame.
+	Flat          *bool
+	Select        *bool
+	SelectButtons []*button.TableButton
 	// UX-007 Bulk actions (additive). BulkActions, when non-empty, makes the frontend show a
 	// selection column and a sticky context bar with these actions. SelectAllResults offers
 	// "select all results" (whole filter, not just the page); StickyBulkBar pins the bar.
@@ -499,6 +502,9 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 	}
 	if opts.BordersHeader != nil {
 		options["bordersHeader"] = *opts.BordersHeader
+	}
+	if opts.Flat != nil {
+		options["flat"] = *opts.Flat
 	}
 	if opts.Select != nil {
 		options["select"] = *opts.Select
