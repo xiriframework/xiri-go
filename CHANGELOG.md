@@ -6,6 +6,8 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+
+## [0.3.9]
 ### Added
 
 - **`TableBuilder.SetFlat(bool)` rendert eine Tabelle rahmenlos.** Setzt `flat` in den Table-Options.
