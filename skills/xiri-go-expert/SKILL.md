@@ -55,7 +55,7 @@ u.PrintPrefix()  // mit Prefix   — API-Calls, form/table Submit-URLs
 | **Locale-Formatter** (Datum, Zahlen, Distanz, Pressure)  | `references/formatter.md`                   |
 | **UiContext / Translator / Locale-Setup**                | `references/uicontext.md`                   |
 | Eine nicht-tabellen Komponente (Tabs, Timeline, BarChart …) | `references/components.md`                  |
-| Accordion/Expansion-Panel mit Buttons im Header, Card ohne Schatten (`WithFlat`) | `references/components.md` (Expansion, Card) |
+| Accordion/Expansion-Panel mit Buttons im Header, Card oder Tabelle ohne Schatten (`WithFlat` / `SetFlat`) | `references/components.md` (Expansion, Card), `references/tables.md` |
 | TachoTime (Fahrtenschreiber)                             | `references/tachotime.md`                   |
 | Enum-Werte                                               | `references/enums.md`                       |
 | Field-Methoden-Details (Table-Builder-Chain)             | `references/table-builder.md`               |

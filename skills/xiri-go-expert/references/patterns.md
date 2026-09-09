@@ -465,6 +465,24 @@ p.Add(e)
 
 Braucht xiri-ng >= 0.4.8 und xiri-go >= 0.3.8. Details zu `Buttons`/`WithFlat`: `components.md`.
 
+Ist der Panel-Inhalt keine Key/Value-Liste sondern eine **Tabelle**, gilt dasselbe mit
+`TableBuilder.SetFlat(true)` statt `Card.WithFlat(true)` — und dort ohne `WithDisplay`, Tabellen sind
+im Dyncomponent ohnehin volle Breite:
+
+```go
+tb := table.NewBuilder[Device]()
+tb.TextField("name", "device.name", func(d Device) string { return d.Name })
+tb.SetFlat(true)
+tb.SetPagination(false)
+tb.SetSearch(false)              // ohne Titel/Suche/Buttons bleibt die Header-Leiste ganz weg
+tbl := tb.Build()
+tbl.SetData(devicesOf(loc))
+
+e.AddPanel(expansion.NewPanel(loc.Name).WithIcon("place").AddContent(tbl))
+```
+
+Braucht xiri-ng >= 0.4.9 und xiri-go >= 0.3.9. Details: `tables.md`, Abschnitt „Rahmenlose Tabelle".
+
 ## 8. Delete-Dialog + Custom-Message
 
 Der Standard-DeleteDialog via `wc.DeleteDialog(name)` reicht meistens. Wenn du mehr Kontrolle brauchst:

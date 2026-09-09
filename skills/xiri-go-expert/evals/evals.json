@@ -153,6 +153,19 @@
         {"name": "no_invented_api", "type": "code_check", "description": "Keine erfundene Methode wie WithButtons, AddHeaderButton oder WithShadow(false)"}
       ],
       "files": []
+    },
+    {
+      "id": 10,
+      "prompt": "Baue mit xiri-go ein Accordion, das pro Standort ein Panel hat (Titel = Standortname, Icon 'place', Beschreibung = Anzahl Geräte). Panel-Inhalt ist eine Tabelle mit den Geräten (Name, IMEI, Status), ohne Pagination und ohne Suche. Es soll immer nur ein Standort offen sein und die Tabelle beim Schließen aus dem DOM verschwinden. Kein Rahmen im Rahmen.",
+      "expected_output": "expansion.NewExpansion().WithMulti(false).WithUnload(true) with one expansion.NewPanel(loc.Name).WithIcon(\"place\").WithDescription(...).AddContent(tbl) per location; the table builder chains SetFlat(true), SetPagination(false) and SetSearch(false). No card wrapped around the table, no WithDisplay on the table.",
+      "assertions": [
+        {"name": "uses_set_flat", "type": "contains_pattern", "description": "Der TableBuilder ruft SetFlat(true) auf, damit die Tabelle im Panel keine eigene Elevation und keinen eigenen Hintergrund hat"},
+        {"name": "multi_false_and_unload", "type": "code_check", "description": "Expansion setzt WithMulti(false) (genau ein Panel offen) und WithUnload(true) (Inhalt bei Close zerstören)"},
+        {"name": "table_directly_as_content", "type": "code_check", "description": "Die Tabelle wird direkt per AddContent(tbl) ins Panel gelegt — nicht in eine Card gewrappt"},
+        {"name": "no_with_display_on_table", "type": "code_check", "description": "Kein WithDisplay mit xcol-md-12 an der Tabelle — Tabellen rendert xiri-dyncomponent ohnehin volle Breite"},
+        {"name": "no_invented_api", "type": "code_check", "description": "Keine erfundene Methode wie SetElevation(0), WithFlat auf dem TableBuilder oder SetNoCard — nur SetFlat(bool)"}
+      ],
+      "files": []
     }
   ]
 }

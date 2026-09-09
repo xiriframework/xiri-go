@@ -454,9 +454,8 @@ b.SetSaveState(true)        // Filter/Sort/Page persistieren im LocalStorage
 b.SetSaveStateId("device-table")
 b.SetBorders(true)
 b.SetBordersHeader(true)
-b.SetFlat(true)             // ohne Elevation/Hintergrund/Außen-Margin — für Tabellen im
-                            // Expansion-Panel oder in einer Card; das Panel halbiert dann seinen
-                            // Seitenabstand (wie bei card.WithFlat)
+b.SetFlat(true)             // ohne Elevation/Hintergrund/Radius/Außen-Margin — für Tabellen im
+                            // Expansion-Panel oder in einer Card, siehe unten
 b.SetSelect(true)           // Row-Checkboxen (SetSelectButtons macht das auto)
 
 // Zeilenhöhe — die vollständige 3-Werte-API des Frontends
@@ -477,6 +476,31 @@ b.SetEditUrl("/api/devices/inline-edit")
 b.SetSaveInput("note")      // zusätzliches Input-Feld in der Toolbar
 b.SetSaveInputUrl("/api/devices/note")
 ```
+
+### Rahmenlose Tabelle (`SetFlat`) — Tabelle als Panel- oder Card-Inhalt
+
+Eine Tabelle bringt eine eigene mat-card mit Schatten und unterem Außen-Margin mit. Liegt sie in einem
+Expansion-Panel oder als Sub-Component in einer Card, ist das ein Rahmen im Rahmen. `SetFlat(true)`
+lässt Elevation, Hintergrund, Radius und das Margin weg; ein Expansion-Panel mit flachem Inhalt
+halbiert zusätzlich seinen Seitenabstand. Pendant zu `card.Card.WithFlat`. Braucht xiri-ng >= 0.4.9,
+ältere Frontends ignorieren das Feld stillschweigend.
+
+```go
+tb := table.NewBuilder[Device]()
+tb.TextField("name", "device.name", func(d Device) string { return d.Name })
+tb.SetFlat(true)
+tb.SetDensity(table.DensityCompact)
+tb.SetPagination(false)
+tb.SetSearch(false)
+```
+
+**Die Header-Leiste verschwindet, wenn sie leer ist.** Der graue Streifen über der Kopfzeile trägt
+Titel, Suche, Top-Buttons, Reload-Button, Tree-Aktionen und die „Stand HH:mm"-Anzeige. Ist nichts davon
+gesetzt, rendert das Frontend ihn gar nicht mehr (ab xiri-ng 0.4.9; davor stand dort ein leerer 51px-Balken).
+Zu beachten: `search` ist im Frontend **default true** — für eine nackte Tabelle also `SetSearch(false)`
+setzen. Bei einer Tabelle mit `SetURL` bleibt die Leiste wegen der Stand-Anzeige immer sichtbar.
+
+Beispiel mit Panel drumherum: `references/components.md`, Abschnitt „Tabelle als Panel-Inhalt".
 
 Fast alle Setter geben `*TableBuilder[T]` zurück, d.h. man kann alles in einer Chain hängen:
 

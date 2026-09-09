@@ -139,7 +139,8 @@ Folgende Components zeichnen *standardmäßig* eine eigene mat-card. Im Multi-Co
 | `progress.MultiProgress` | `mp.Compact()` |
 
 Umgekehrt — eine **Card selbst** als flacher Inhalt in einem anderen Container (Expansion-Panel, Tab) —
-ist `Card.WithFlat(true)`, siehe oben.
+ist `Card.WithFlat(true)`, siehe oben. Für eine **Tabelle** an derselben Stelle: `TableBuilder.SetFlat(true)`,
+siehe `references/tables.md`.
 
 ## Stat (`component/stat`)
 
@@ -321,6 +322,36 @@ e := expansion.NewExpansion().WithMulti(true).AddPanel(p)
 Klick, Enter und Space auf einem Header-Button führen nur die Button-Aktion aus, das Panel klappt nicht
 um. `WithDisabled(true)` am Panel sperrt nur den Toggle, nicht die Buttons — die sperrt man am Button.
 Header-Buttons sind auch bei geschlossenem Panel sichtbar; `WithAutoLoad` feuert deshalb sofort.
+
+### Tabelle als Panel-Inhalt (`SetFlat`)
+
+Eine Tabelle bringt normalerweise ihre eigene mat-card mit Schatten mit — im Panel ist das ein Rahmen im
+Rahmen. `TableBuilder.SetFlat(true)` nimmt Elevation, Hintergrund, Radius und das untere Außen-Margin weg;
+das Panel halbiert dann zusätzlich seinen Seitenabstand. Braucht xiri-ng >= 0.4.9.
+
+```go
+tb := table.NewBuilder[Device]()
+tb.TextField("name", "device.name", func(d Device) string { return d.Name })
+tb.TextField("imei", "device.imei", func(d Device) string { return d.IMEI })
+tb.SetFlat(true)                      // kein eigener Rahmen — das Panel liefert ihn
+tb.SetDensity(table.DensityCompact)
+tb.SetPagination(false)
+tb.SetSearch(false)                   // ohne Titel/Suche/Buttons bleibt die Header-Leiste ganz weg
+
+tbl := tb.Build()
+tbl.SetData(devices)
+
+e := expansion.NewExpansion().
+    WithMulti(false).
+    WithUnload(true).                 // Tabelle beim Schließen aus dem DOM nehmen
+    AddPanel(expansion.NewPanel("Standort Wien").
+        WithIcon("place").
+        WithDescription("3 Geräte").
+        AddContent(tbl))
+```
+
+Anders als bei der Card braucht die Tabelle **kein** `WithDisplay("xcol-md-12")` — `xiri-dyncomponent`
+rendert Tabellen ohnehin volle Breite.
 
 ## Section (`component/section`)
 
