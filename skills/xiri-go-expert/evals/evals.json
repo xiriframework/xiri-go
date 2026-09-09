@@ -140,6 +140,19 @@
         {"name": "adds_tabs_to_container", "type": "code_check", "description": "Beide Tabs werden per t.AddTab(...) registriert, Content per AddContent(...)"},
         {"name": "no_invented_api", "type": "code_check", "description": "Keine erfundene Methode wie WithPadding(0) oder WithDense — nur WithNoPadding(bool)"}
       ]
+    },
+    {
+      "id": 9,
+      "prompt": "Baue mit xiri-go ein Accordion mit einem Panel 'GPS-Einbau', das rechts im Panel-Header einen Icon-Button 'Karte' (Dialog) hat. Inhalt ist eine Key/Value-Liste (IMEI, Eingebaut). Kein doppelter Titel, kein Card-Schatten im Panel.",
+      "expected_output": "expansion.NewPanel(...).Buttons(button.NewButtonLine(...).Add(...)) for the header button; content via AddContent(card.NewCardList(\"\", content).WithFlat(true).WithDisplay(\"xcol xcol-md-12\")). No card with ButtonTop nested in the panel, no buttonline in the panel body.",
+      "assertions": [
+        {"name": "uses_panel_buttons", "type": "contains_pattern", "description": "Ruft .Buttons(*button.ButtonLine) auf dem *expansion.Panel auf"},
+        {"name": "uses_with_flat", "type": "contains_pattern", "description": "Die eingebettete Card ruft .WithFlat(true) auf und hat keinen Header-Text"},
+        {"name": "full_width_card", "type": "code_check", "description": "Card bekommt WithDisplay mit xcol-md-12, damit sie die Panel-Breite nutzt"},
+        {"name": "no_card_in_panel_workaround", "type": "code_check", "description": "Keine Card mit ButtonTop als Panel-Inhalt und keine ButtonLine als erste Content-Zeile — der Button sitzt im Panel-Header"},
+        {"name": "no_invented_api", "type": "code_check", "description": "Keine erfundene Methode wie WithButtons, AddHeaderButton oder WithShadow(false)"}
+      ],
+      "files": []
     }
   ]
 }

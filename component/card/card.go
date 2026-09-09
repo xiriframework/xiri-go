@@ -29,6 +29,7 @@ type Card struct {
 	collapsed       *bool
 	maxHeight       *string
 	padding         *string
+	flat            *bool
 }
 
 // NewCard creates a new card component with full control over all parameters.
@@ -186,6 +187,14 @@ func (c *Card) WithPadding(value string) *Card {
 	return c
 }
 
+// WithFlat renders the card without shadow, background and border radius, e.g.
+// when it is embedded in an expansion panel. The header is only rendered if it
+// has content (title, icon, buttons, collapse or reload).
+func (c *Card) WithFlat(flat bool) *Card {
+	c.flat = &flat
+	return c
+}
+
 // Print returns the JSON representation of the card
 func (c *Card) Print(ctx *core.UiContext) map[string]any {
 	var data map[string]any
@@ -264,6 +273,9 @@ func (c *Card) printHeader(ctx *core.UiContext) map[string]any {
 	}
 	if c.padding != nil {
 		data["padding"] = *c.padding
+	}
+	if c.flat != nil {
+		data["flat"] = *c.flat
 	}
 
 	return data

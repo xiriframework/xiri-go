@@ -438,6 +438,33 @@ p.Add(t)
 `WithNoPadding(true)` nur für bündige Inhalte (Tabellen, Listen). Cards behalten das Standard-Padding,
 sonst schneidet der Tab-Body ihre Schatten ab. Braucht xiri-ng >= 0.4.7.
 
+## 7b. Expansion-Panel mit Header-Buttons + flacher Card
+
+Akkordeon, dessen Panels eigene Aktionen im Header haben. Kein Card-in-Panel: Buttons ans Panel, Inhalt
+als rahmenlose Card ohne eigenen Titel.
+
+```go
+e := expansion.NewExpansion().WithMulti(true)
+
+for _, dev := range devices {
+    content := card.NewCardListContent([]card.CardListContentLine{
+        {Name: "IMEI", Content: dev.IMEI},
+        {Name: "Eingebaut", Content: dev.Installed},
+    })
+    p := expansion.NewPanel(dev.Name).
+        WithIcon("gps_fixed").
+        Buttons(button.NewButtonLine("small", nil).
+            Add(button.NewDialogButton("map", c.pageUrl("gps", dev.ID, "map"), core.ColorPrimary,
+                core.ButtonTypeIcon, "Karte", false, nil, nil)).            // Icon-Button, hint = Pflicht
+            Add(button.NewSimpleLinkButton("Bearbeiten", c.pageUrl("gps", dev.ID, "edit"), core.ColorPrimary))).
+        AddContent(card.NewCardList("", content).WithFlat(true).WithDisplay("xcol xcol-md-12"))
+    e.AddPanel(p)
+}
+p.Add(e)
+```
+
+Braucht xiri-ng >= 0.4.8 und xiri-go >= 0.3.8. Details zu `Buttons`/`WithFlat`: `components.md`.
+
 ## 8. Delete-Dialog + Custom-Message
 
 Der Standard-DeleteDialog via `wc.DeleteDialog(name)` reicht meistens. Wenn du mehr Kontrolle brauchst:

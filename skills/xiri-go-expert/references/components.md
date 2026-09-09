@@ -38,9 +38,10 @@ Karte mit Header, Content und Buttons.
 ```go
 // Table-Card
 c := card.NewCard(core.CardTypeTable, tableComponent, "devices.list", "", "", "", true, false, "")
-c.ButtonTop(addButton)
+c.ButtonTop(addButton)                   // Icon-Buttons rechts im Card-Header
 c.WithCollapsible(true)
 c.WithMaxHeight("400px")
+c.WithFlat(true)                          // rahmenlos: kein Schatten/Hintergrund/Radius (s. u.)
 c.Print(ctx)
 
 // List-Card
@@ -59,6 +60,25 @@ c.Print(ctx)
 ```go
 c := card.NewCardList("Übersicht", content).WithTableHeader()
 ```
+
+### Rahmenlose Card (`WithFlat`) — Card als Inhalt eines Expansion-Panels
+
+`WithFlat(true)` entfernt Schatten, Hintergrund und Radius, auch am Card-Header. Der Header wird nur
+gerendert, wenn er Inhalt hat (Titel, Untertitel, Icon, `ButtonTop`, Collapsible, Reload) — für eine
+Card ohne eigenen Titel also einfach `""` als Header übergeben. Typischer Einsatz: Key/Value-Liste als
+Inhalt eines Expansion-Panels, dessen Titel und Buttons schon im Panel-Header stehen (siehe
+[Expansion](#expansion-componentexpansion)). Wirkt auch im AJAX-Pfad (`SetURL`). Braucht xiri-ng >= 0.4.8.
+
+```go
+content := card.NewCardListContent([]card.CardListContentLine{
+    {Name: "IMEI", Content: "862272080384789"},
+    {Name: "Eingebaut", Content: "seit 15.04.2026"},
+})
+inner := card.NewCardList("", content).WithFlat(true).WithDisplay("xcol xcol-md-12")
+```
+
+`WithDisplay("xcol xcol-md-12")` ist nötig, weil `xiri-dyncomponent` Cards sonst nur `xcol-md-6 xcol-xl-4`
+breit rendert — im Panel wäre die Tabelle dann ein Drittel breit.
 
 ### CardListContent
 
@@ -117,6 +137,9 @@ Folgende Components zeichnen *standardmäßig* eine eigene mat-card. Im Multi-Co
 | `info.InfoPoint` | `ip.Compact()` |
 | `links.Links` | `l.Compact()` |
 | `progress.MultiProgress` | `mp.Compact()` |
+
+Umgekehrt — eine **Card selbst** als flacher Inhalt in einem anderen Container (Expansion-Panel, Tab) —
+ist `Card.WithFlat(true)`, siehe oben.
 
 ## Stat (`component/stat`)
 
@@ -247,7 +270,10 @@ e := expansion.NewExpansion()
 panel := expansion.NewPanel("section.general").
     WithIcon("settings").
     WithDescription("Allgemeine Einstellungen").
-    WithExpanded(true)                                       // Initial offen
+    WithExpanded(true).                                      // Initial offen
+    Buttons(button.NewButtonLine("small", nil).              // Aktions-Buttons rechts im Panel-Header
+        Add(button.NewDialogButton("map", xurl.NewUrl("/gps/map"), core.ColorPrimary,
+            core.ButtonTypeIcon, "Karte", false, nil, nil))) // Icon-Button: text = Icon-Name, hint = Pflicht
 panel.AddContent(formComponent)
 e.AddPanel(panel)
 
@@ -263,7 +289,38 @@ e.WithDisplay("xcol-md-12")
 e.Print(ctx)
 ```
 
-Panel-Chain-Methoden: `.WithDescription(string)`, `.WithIcon(string)`, `.WithDisabled(bool)`, `.WithExpanded(bool)`, `.WithLazy(bool)` (override), `.WithUnload(bool)` (override), `.AddContent(core.Component)`.
+Panel-Chain-Methoden: `.WithDescription(string)`, `.WithIcon(string)`, `.WithDisabled(bool)`, `.WithExpanded(bool)`, `.WithLazy(bool)` (override), `.WithUnload(bool)` (override), `.Buttons(*button.ButtonLine)` (Header-Buttons, wie `Section.Buttons`; braucht xiri-ng >= 0.4.8), `.AddContent(core.Component)`.
+
+### Panel mit Header-Buttons + rahmenloser Card (statt Card-in-Panel)
+
+**Nicht** eine Card mit `ButtonTop` in ein Panel legen — das ergibt doppelten Titel und Card-Schatten im
+Panel. Stattdessen: Buttons an das Panel, Inhalt als `WithFlat(true)`-Card ohne Header.
+
+```go
+content := card.NewCardListContent([]card.CardListContentLine{
+    {Name: "IMEI", Content: "862272080384789"},
+    {Name: "Eingebaut", Content: "seit 15.04.2026"},
+    {Name: "Box-Status", Content: "Ja (Status 1)"},
+})
+
+p := expansion.NewPanel("GPS-Einbau").
+    WithIcon("gps_fixed").
+    WithExpanded(true).
+    Buttons(button.NewButtonLine("small", nil).
+        // Icon-Button: bei ButtonTypeIcon ist "text" der Icon-Name, "hint" der Accessible Name (Pflicht);
+        // die letzten drei Parameter sind disabled, tabIndex (*int), options (map[string]any)
+        Add(button.NewDialogButton("map", xurl.NewUrl("/gps/map"), core.ColorPrimary,
+            core.ButtonTypeIcon, "Karte", false, nil, nil)).
+        // Text-Button geht genauso:
+        Add(button.NewSimpleLinkButton("Bearbeiten", xurl.NewUrl("/gps/edit"), core.ColorPrimary))).
+    AddContent(card.NewCardList("", content).WithFlat(true).WithDisplay("xcol xcol-md-12"))
+
+e := expansion.NewExpansion().WithMulti(true).AddPanel(p)
+```
+
+Klick, Enter und Space auf einem Header-Button führen nur die Button-Aktion aus, das Panel klappt nicht
+um. `WithDisabled(true)` am Panel sperrt nur den Toggle, nicht die Buttons — die sperrt man am Button.
+Header-Buttons sind auch bei geschlossenem Panel sichtbar; `WithAutoLoad` feuert deshalb sofort.
 
 ## Section (`component/section`)
 

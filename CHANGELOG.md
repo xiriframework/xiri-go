@@ -6,6 +6,23 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Added
+
+- **`Panel.Buttons(*button.ButtonLine)` setzt Aktions-Buttons in den Header eines Expansion-Panels.**
+  Gleiches Modell wie `Section.Buttons` und `PageHeader.Buttons`; das Feld `buttons` im Panel-JSON
+  enthält `{class, buttons}`. Das Frontend rendert sie rechtsbündig im Panel-Header, Klick und Tastatur
+  lösen nur die Button-Aktion aus und klappen das Panel nicht um. Bisher brauchte man dafür eine
+  eigene Card mit `ButtonTop` im Panel, mit doppeltem Titel und Card-Schatten.
+
+  Wirkung erst mit `@xiriframework/xiri-ng >= 0.4.8`; ältere Frontends ignorieren das Feld stillschweigend.
+
+- **`Card.WithFlat(bool)` rendert eine Card rahmenlos.** Setzt das Feld `flat` im Card-JSON (auch im
+  AJAX-Pfad mit `SetURL`). Das Frontend lässt Schatten, Hintergrund und Radius weg und rendert den Header
+  nur, wenn er Inhalt hat. Gedacht für Cards, die als Inhalt in einem Expansion-Panel liegen; wer dort
+  keinen Doppeltitel will, setzt einfach keinen Header.
+
+  Wirkung erst mit `@xiriframework/xiri-ng >= 0.4.8`.
+
 
 ## [0.3.7]
 ### Added

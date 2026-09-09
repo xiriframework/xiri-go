@@ -6,6 +6,7 @@ import (
 	"github.com/xiriframework/xiri-go/component/barchart"
 	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/component/stat"
+	"github.com/xiriframework/xiri-go/component/url"
 )
 
 func cardCtx() *core.UiContext {
@@ -85,5 +86,33 @@ func TestCard_StatCompactDefaultFalse(t *testing.T) {
 	data := out["data"].(map[string]any)
 	if _, has := data["compact"]; has {
 		t.Errorf("expected 'compact' to be absent on default stat")
+	}
+}
+
+// TestCard_Flat verifies WithFlat is emitted on the static path, the AJAX
+// (SetURL) path and PrintData, and distinguishes false from unset.
+func TestCard_Flat(t *testing.T) {
+	static := NewCard(core.CardTypeTable, nil, "H", nil, nil, nil, false, false, nil).WithFlat(true)
+	if got := static.Print(cardCtx())["data"].(map[string]any)["flat"]; got != true {
+		t.Errorf("static flat=%v want true", got)
+	}
+	if got := static.PrintData(cardCtx())["flat"]; got != true {
+		t.Errorf("PrintData flat=%v want true", got)
+	}
+
+	ajax := NewCard(core.CardTypeTable, nil, "H", nil, nil, nil, false, false, nil).
+		SetURL(url.NewUrl("/api/card")).WithFlat(true)
+	if got := ajax.Print(cardCtx())["data"].(map[string]any)["flat"]; got != true {
+		t.Errorf("ajax flat=%v want true", got)
+	}
+
+	off := NewCard(core.CardTypeTable, nil, "H", nil, nil, nil, false, false, nil).WithFlat(false)
+	if got := off.Print(cardCtx())["data"].(map[string]any)["flat"]; got != false {
+		t.Errorf("flat(false)=%v want false", got)
+	}
+
+	unset := NewCard(core.CardTypeTable, nil, "H", nil, nil, nil, false, false, nil)
+	if _, has := unset.Print(cardCtx())["data"].(map[string]any)["flat"]; has {
+		t.Errorf("expected no 'flat' key when unset")
 	}
 }

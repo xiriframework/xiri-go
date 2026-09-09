@@ -1,7 +1,10 @@
 // Package expansion provides accordion/expansion panel components for the Angular frontend.
 package expansion
 
-import "github.com/xiriframework/xiri-go/component/core"
+import (
+	"github.com/xiriframework/xiri-go/component/button"
+	"github.com/xiriframework/xiri-go/component/core"
+)
 
 // Panel represents an individual panel within an Expansion component
 // Angular: XiriExpansionPanelSettings interface
@@ -13,6 +16,7 @@ type Panel struct {
 	expanded    *bool
 	lazy        *bool
 	unload      *bool
+	buttons     *button.ButtonLine
 	data        []core.Component
 }
 
@@ -63,6 +67,13 @@ func (p *Panel) WithUnload(unload bool) *Panel {
 	return p
 }
 
+// Buttons sets action buttons rendered in the panel header (right-aligned).
+// Clicks on them do not toggle the panel.
+func (p *Panel) Buttons(b *button.ButtonLine) *Panel {
+	p.buttons = b
+	return p
+}
+
 // AddContent adds a component to be rendered in the panel content
 func (p *Panel) AddContent(component core.Component) *Panel {
 	p.data = append(p.data, component)
@@ -92,6 +103,9 @@ func (p *Panel) Print(ctx *core.UiContext) map[string]any {
 	}
 	if p.unload != nil {
 		result["unload"] = *p.unload
+	}
+	if p.buttons != nil {
+		result["buttons"] = p.buttons.PrintData(ctx)
 	}
 
 	// Convert content components to data array
