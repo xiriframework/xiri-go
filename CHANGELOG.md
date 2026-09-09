@@ -6,6 +6,8 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+
+## [0.3.8]
 ### Added
 
 - **`Panel.Buttons(*button.ButtonLine)` setzt Aktions-Buttons in den Header eines Expansion-Panels.**
