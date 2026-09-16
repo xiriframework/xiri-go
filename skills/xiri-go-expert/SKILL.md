@@ -56,6 +56,7 @@ u.PrintPrefix()  // mit Prefix   — API-Calls, form/table Submit-URLs
 | **UiContext / Translator / Locale-Setup**                | `references/uicontext.md`                   |
 | Eine nicht-tabellen Komponente (Tabs, Timeline, BarChart …) | `references/components.md`                  |
 | Accordion/Expansion-Panel mit Buttons im Header, Card oder Tabelle ohne Schatten (`WithFlat` / `SetFlat`) | `references/components.md` (Expansion, Card), `references/tables.md` |
+| **Nachladbares Panel** — Card oder Expansion-Panel mit eigener URL (`SetURL` + `DataResponse`), Aktion lädt nur dieses Panel neu (`NewReturnRefreshPanel`) | `references/patterns.md` §6b/§7c, `references/responses.md` (ReturnRefreshPanel) |
 | TachoTime (Fahrtenschreiber)                             | `references/tachotime.md`                   |
 | Enum-Werte                                               | `references/enums.md`                       |
 | Field-Methoden-Details (Table-Builder-Chain)             | `references/table-builder.md`               |
