@@ -297,7 +297,10 @@ e.WithDisplay("xcol-md-12")
 e.Print(ctx)
 ```
 
-Panel-Chain-Methoden: `.WithDescription(string)`, `.WithIcon(string)`, `.WithDisabled(bool)`, `.WithExpanded(bool)`, `.WithLazy(bool)` (override), `.WithUnload(bool)` (override), `.Buttons(*button.ButtonLine)` (Header-Buttons, wie `Section.Buttons`; braucht xiri-ng >= 0.4.8), `.AddContent(core.Component)`, `.SetURL(*url.Url)` (nachladbares Panel, s. u.; braucht xiri-ng >= 0.4.10).
+Panel-Chain-Methoden: `.WithDescription(string)`, `.WithIcon(string)`, `.WithDisabled(bool)`, `.WithExpanded(bool)`,
+`.WithLazy(bool)` (override), `.WithUnload(bool)` (override), `.Buttons(*button.ButtonLine)` (Header-Buttons, wie
+`Section.Buttons`; braucht xiri-ng >= 0.4.8), `.AddContent(core.Component)`, `.SetURL(*url.Url)` (nachladbares Panel,
+s. u.; braucht xiri-ng >= 0.4.10).
 
 ### Nachladbares Panel (`SetURL`) — Panel mit eigener URL und `RefreshPanel`
 
