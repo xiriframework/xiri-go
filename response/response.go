@@ -7,7 +7,7 @@ package response
 // Example:
 //
 //	func HandleRequest(response SuccessResponse) {
-//	    // Accepts: ReturnRefreshTable, ReturnRefreshPage, ReturnGoto, ReturnDone, ReturnMessage
+//	    // Accepts: ReturnRefreshTable, ReturnRefreshPanel, ReturnRefreshPage, ReturnGoto, ReturnDone, ReturnMessage
 //	}
 type SuccessResponse interface {
 	isSuccessResponse()
@@ -129,6 +129,34 @@ func (r ReturnRefreshTable) isSuccessResponse() {}
 
 // WithMessage returns a copy with the given message and type.
 func (r ReturnRefreshTable) WithMessage(text string, msgType MessageType) ReturnRefreshTable {
+	r.MessageText = text
+	r.MessageType = msgType
+	return r
+}
+
+// ReturnRefreshPanel represents a refresh panel response.
+//
+// JSON output: {"done": true, "refresh": "panel"}
+// With message: {"done": true, "refresh": "panel", "message": "Saved", "messageType": "success"}
+//
+// Use case: Operation completed inside a card that loads via Card.SetURL. The frontend
+// re-fetches that card's URL and replaces title, buttons and content of exactly this card;
+// the rest of the page stays untouched. The trigger may be a button (api result, dialog
+// result, last poll tick) or a table action anywhere inside the card; the frontend resolves
+// the nearest enclosing card with a URL. A card without URL falls back to a page reload.
+//
+// Do not combine with an autoLoad button whose action returns this response: the reload
+// re-creates the button, which auto-loads again — an endless loop (same as refresh "page").
+type ReturnRefreshPanel struct {
+	Done    bool   `json:"done"`    // Always true
+	Refresh string `json:"refresh"` // Always "panel"
+	Message
+}
+
+func (r ReturnRefreshPanel) isSuccessResponse() {}
+
+// WithMessage returns a copy with the given message and type.
+func (r ReturnRefreshPanel) WithMessage(text string, msgType MessageType) ReturnRefreshPanel {
 	r.MessageText = text
 	r.MessageType = msgType
 	return r
@@ -328,6 +356,13 @@ func NewReturnFields(fields map[string]interface{}) ReturnFields {
 // Returns: {"done": true, "refresh": "table"}
 func NewReturnRefreshTable() ReturnRefreshTable {
 	return ReturnRefreshTable{Done: true, Refresh: "table"}
+}
+
+// NewReturnRefreshPanel creates a refresh panel response.
+//
+// Returns: {"done": true, "refresh": "panel"}
+func NewReturnRefreshPanel() ReturnRefreshPanel {
+	return ReturnRefreshPanel{Done: true, Refresh: "panel"}
 }
 
 // NewReturnPoll creates a poll response that asks the frontend to keep polling pollUrl

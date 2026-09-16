@@ -139,7 +139,11 @@ func (c *Card) WithDisplay(display string) *Card {
 	return c
 }
 
-// SetURL sets the AJAX data URL. When set, static content is cleared and the frontend loads data dynamically.
+// SetURL sets the AJAX data URL. When set, static content is cleared and the frontend loads the
+// card from this URL (POST, body null). Return DataResponse(ctx) of a fully built card from that
+// endpoint: the frontend then replaces title, buttons, fields, content and sub-components, so a
+// response.NewReturnRefreshPanel() from any button inside the card re-renders the whole panel.
+// Legacy endpoints may still return plain rows via response.NewDataResponse(rows).
 func (c *Card) SetURL(url *url.Url) *Card {
 	c.url = url
 	c.content = nil
@@ -222,9 +226,12 @@ func (c *Card) PrintData(ctx *core.UiContext) map[string]any {
 	return c.printData(ctx)
 }
 
-// DataResponse returns a DataResult wrapping the card data in {"data": ...} envelope.
+// DataResponse returns the complete card data (header, buttons, content) in the
+// {"card": ...} envelope. Use it as the handler for the URL passed to SetURL: the frontend
+// takes title, buttons, fields, content and sub-components from it. The envelope differs from
+// NewJSONDataResult's {"data": ...} on purpose — {"data": rows} keeps meaning "plain rows".
 func (c *Card) DataResponse(ctx *core.UiContext) response.DataResult {
-	return response.NewJSONDataResult(c.PrintData(ctx))
+	return response.DataResult{Type: response.ResponseJSON, Body: map[string]any{"card": c.PrintData(ctx)}}
 }
 
 // printHeader builds the header/buttons/type map shared by both URL and static paths.

@@ -7,6 +7,7 @@ import (
 	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/component/stat"
 	"github.com/xiriframework/xiri-go/component/url"
+	"github.com/xiriframework/xiri-go/response"
 )
 
 func cardCtx() *core.UiContext {
@@ -114,5 +115,26 @@ func TestCard_Flat(t *testing.T) {
 	unset := NewCard(core.CardTypeTable, nil, "H", nil, nil, nil, false, false, nil)
 	if _, has := unset.Print(cardCtx())["data"].(map[string]any)["flat"]; has {
 		t.Errorf("expected no 'flat' key when unset")
+	}
+}
+
+// TestCard_DataResponseEnvelope: the URL endpoint answers with {"card": <PrintData>} so the
+// frontend can tell a complete card from plain row data ({"data": rows}).
+func TestCard_DataResponseEnvelope(t *testing.T) {
+	c := NewCard(core.CardTypeTable, nil, "Versicherung", nil, nil, nil, false, false, nil)
+	res := c.DataResponse(cardCtx())
+	if res.Type != response.ResponseJSON {
+		t.Fatalf("type=%v want JSON", res.Type)
+	}
+	body := res.Body.(map[string]any)
+	if _, has := body["data"]; has {
+		t.Errorf("expected no top-level 'data' key, got %v", body)
+	}
+	card, ok := body["card"].(map[string]any)
+	if !ok {
+		t.Fatalf("expected 'card' map, got %T", body["card"])
+	}
+	if card["header"] != "Versicherung" || card["type"] != "table" {
+		t.Errorf("card=%v", card)
 	}
 }

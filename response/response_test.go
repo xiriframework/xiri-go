@@ -33,6 +33,34 @@ func TestNewReturnRefreshTable(t *testing.T) {
 	}
 }
 
+func TestNewReturnRefreshPanel(t *testing.T) {
+	r := NewReturnRefreshPanel()
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"refresh":"panel"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnRefreshPanelWithMessage(t *testing.T) {
+	r := NewReturnRefreshPanel().WithMessage("Gespeichert", MessageSuccess)
+
+	data, err := json.Marshal(r)
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+
+	expected := `{"done":true,"refresh":"panel","message":"Gespeichert","messageType":"success"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
 func TestNewReturnGoto(t *testing.T) {
 	r := NewReturnGoto("/Portal/User/Page/7")
 
