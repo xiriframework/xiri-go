@@ -318,6 +318,13 @@ dialog.NewDialogWaitingDone(url, blocked) // {"done": true, "url": ..., "blocked
 dialog.NewDialogWaitingError(message)     // {"done": true, "error": ...}
 ```
 
+> **Achtung — `url` ist kein Navigationsziel.** Bei `done: true` schließt xiri-ng den Dialog und öffnet
+> `apiBaseUrl + url` per `window.open(…, '_blank')` in einem neuen Tab (Download/Report).
+> Die URL muss also eine **API-URL** sein (wie `c.apiUrl(…).Print()`), keine Angular-Route wie
+> `c.pageUrl()` — die würde als `/api/…` aufgerufen. Blockt der Browser das Popup, zeigt der Dialog
+> stattdessen einen „Download"-Button. Soll nach dem Job nur die Seite neu geladen werden, ist der
+> Waiting-Dialog das falsche Werkzeug. `blocked` wird von xiri-ng derzeit nicht ausgewertet.
+
 ### Flow
 
 ```
@@ -327,7 +334,8 @@ dialog.NewDialogWaitingError(message)     // {"done": true, "error": ...}
 
 2. Polling → Controller.ImportStatus
       - Solange noch nicht fertig:  returns NewDialogWaitingNotDone()
-      - Fertig:                     returns NewDialogWaitingDone("/devices", "")
+      - Fertig:                     returns NewDialogWaitingDone(c.apiUrl("import", "result", jobID).Print(), "")
+                                    → Frontend öffnet apiBaseUrl + url in neuem Tab
       - Fehler:                     returns NewDialogWaitingError("Import fehlgeschlagen: ...")
 ```
 
@@ -366,7 +374,7 @@ func (c *Controller) ImportStatus(ctx echo.Context) error {
         return wc.Component(dialog.NewDialogWaitingError(job.ErrorMessage))
     }
     return wc.Component(dialog.NewDialogWaitingDone(
-        c.pageUrl().Print(),  // Ziel nach Completion
+        c.apiUrl("import", "result", jobID).Print(), // API-URL (z.B. Report-Download), wird per window.open geöffnet
         "",
     ))
 }

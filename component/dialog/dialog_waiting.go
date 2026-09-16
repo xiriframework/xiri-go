@@ -93,13 +93,15 @@ func NewDialogWaitingNotDone() Dialog {
 	}
 }
 
-// NewDialogWaitingDone creates a "done" polling response with redirect
+// NewDialogWaitingDone creates a "done" polling response
 //
 // Parameters:
-//   - u: URL to navigate to after completion
-//   - blocked: Optional identifier for blocked/disabled UI element
+//   - u: API URL (relative to apiBaseUrl, e.g. a report download) that the frontend
+//     opens via window.open(apiBaseUrl+u, "_blank") — NOT an Angular route.
+//   - blocked: Optional identifier for blocked/disabled UI element (currently unused by xiri-ng)
 //
-// Frontend stops polling and navigates to the provided URL.
+// Frontend stops polling, closes the dialog and opens the URL in a new tab.
+// If the popup is blocked, the dialog shows a "Download" button instead.
 func NewDialogWaitingDone(u string, blocked string) Dialog {
 	return &DialogWaiting{
 		dialogImpl:     newDialog(core.DialogTypeWaiting, "Done", nil, []*button.Button{}, nil, nil),
