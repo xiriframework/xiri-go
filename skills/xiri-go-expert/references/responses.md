@@ -29,6 +29,48 @@ resp := response.NewReturnRefreshTable()
 resp := response.NewReturnRefreshTable().WithMessage("Gelöscht", response.MessageSuccess)
 ```
 
+### ReturnRefreshPanel
+
+Genau eine Card neu laden (Titel, Buttons, Inhalt), z. B. nach „Versicherung bearbeiten“ auf einer
+Detailseite. Voraussetzung: die Card hat `SetURL(...)`, und der Endpoint dahinter liefert
+`card.DataResponse(ctx)` einer fertig gebauten Card. Der Auslöser darf ein Button im Header, unten
+oder in einer verschachtelten Komponente sein, ebenso eine Tabellenaktion in der Card — das Frontend
+findet die nächstgelegene Card mit URL. Eine Card ohne URL reicht an die nächste äußere Card weiter
+und lädt ohne solche die Seite neu.
+
+Nicht mit einem `autoLoad`-Button kombinieren, dessen Aktion diese Antwort liefert — das ist eine
+Endlosschleife (wie `refresh: "page"` + `autoLoad`).
+
+```go
+resp := response.NewReturnRefreshPanel()
+// → {"done": true, "refresh": "panel"}
+
+resp := response.NewReturnRefreshPanel().WithMessage("Gespeichert", response.MessageSuccess)
+```
+
+Beispiel — Panel „Versicherung“ einer Fahrzeug-Detailseite:
+
+```go
+// Page: Card als Shell mit eigener URL
+panel := card.NewCard(core.CardTypeTable, nil, "Versicherung", nil, nil, nil, false, false, nil)
+panel.SetURL(c.apiUrl("Vehicle", id, "Panel", "Insurance"))
+
+// Panel-Endpoint: komplette Card bauen, DataResponse → {"card": {...}}
+func (c *Controller) InsurancePanel(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    ins := c.svc.Insurance(id)
+    p := card.NewCardList("Versicherung", card.NewCardListContent([]card.CardListContentLine{
+        {Name: "Versicherer", Content: ins.Company},
+        {Name: "Prämie", Content: ins.Premium},
+    }))
+    p.ButtonTop(button.NewSimpleDialogButton("Bearbeiten", c.apiUrl("Vehicle", id, "Insurance", "Edit"), core.ColorPrimary))
+    return wc.Data(p)   // wc.Data serialisiert DataResult.Body; c.JSON(…, DataResult) gäbe {"Type":0,"Body":…}
+}
+
+// Dialog-Submit: nur das Panel neu laden
+return wc.Component(response.NewReturnRefreshPanel().WithMessage("Gespeichert", response.MessageSuccess))
+```
+
 ### ReturnGoto
 
 Weiterleitung zu anderer URL.
@@ -160,7 +202,7 @@ Unterstützt:
 
 | Komponente        | Methode                                  | Typischer Use-Case                       |
 | ----------------- | ---------------------------------------- | ---------------------------------------- |
-| `Card`            | `card.DataResponse(ctx)`                 | AJAX-Card lädt neue Inhalte              |
+| `Card`            | `card.DataResponse(ctx)`                 | AJAX-Card lädt komplette Card neu — Envelope `{"card": …}`, nicht `{"data": …}` |
 | `Stat`            | `stat.DataResponse(ctx)`                 | Polling-KPI                              |
 | `StatGrid`        | `statgrid.DataResponse(ctx)`             | Polling-Dashboard                        |
 | `MultiStat`       | `multistat.DataResponse(ctx)`            | Polling-KPI-Karte (mehrere Zahlen)       |
@@ -177,7 +219,7 @@ card := card.NewCard(core.CardTypeTable, nil, "Live-Status", "", "", "", true, f
 card.SetURL(c.apiUrl("card", "status"))
 card.WithReload(true)   // Frontend pollt
 
-// AJAX-Endpoint liefert nur die Daten (ohne type-Wrapper)
+// AJAX-Endpoint liefert die komplette Card als {"card": {...}}
 func (c *Controller) CardStatus(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
     content := card.NewCardListContent([]card.CardListContentLine{
@@ -185,7 +227,7 @@ func (c *Controller) CardStatus(ctx echo.Context) error {
         {Name: "Offline", Content: strconv.Itoa(c.svc.CountOffline())},
     })
     inner := card.NewCardList("Live-Status", content)
-    return c.JSON(http.StatusOK, inner.DataResponse(wc.UiContext()))
+    return wc.Data(inner)
 }
 ```
 

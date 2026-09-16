@@ -22,7 +22,7 @@ FormGroup/Builder → *.Print(ctx *core.UiContext) → map[string]any → JSON �
   - Dialoge: `DeleteDialog(name)`
   - Context: `UiContext()`
   - Errors: `BadRequest`, `Unauthorized`, `Forbidden`, `NotFound`, `InternalServerError`, `ServiceUnavailable` — alle `(msg)`.
-- **Ohne Wrapper** direkt über xiri-go: `response.NewReturnDone()`, `response.NewReturnGoto(url)`, `response.NewReturnRefreshPage()`, `response.NewReturnRefreshTable()`, `response.NewDataResponse(data)`, `response.NewErrorResponse(msg)`. Siehe `references/responses.md`.
+- **Ohne Wrapper** direkt über xiri-go: `response.NewReturnDone()`, `response.NewReturnGoto(url)`, `response.NewReturnRefreshPage()`, `response.NewReturnRefreshTable()`, `response.NewReturnRefreshPanel()`, `response.NewDataResponse(data)`, `response.NewErrorResponse(msg)`. Siehe `references/responses.md`.
 
 ## URL-Handling — die wichtigste Regel
 

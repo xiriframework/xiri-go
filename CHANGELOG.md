@@ -6,6 +6,20 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Added
+
+- **`response.NewReturnRefreshPanel()` lädt genau eine Card neu.** Liefert `{"done": true, "refresh": "panel"}`
+  (mit `WithMessage` wie die anderen Return-Typen). Das Frontend lädt die URL der nächstgelegenen Card
+  (`Card.SetURL`) erneut und übernimmt Titel, Buttons und Inhalt aus `card.DataResponse(ctx)` — die
+  restliche Seite bleibt stehen. Gedacht für Panels auf Detailseiten (Versicherung, Leasing, Preise …),
+  deren Aktionen bisher `NewReturnRefreshPage()` zurückgeben mussten. Frontend: `xiri-ng >= 0.4.10`.
+
+### Changed
+
+- **`Card.DataResponse(ctx)` antwortet mit `{"card": {…}}` statt `{"data": {…}}`.** Das Frontend konnte
+  die bisherige Form nie sinnvoll darstellen (die Header-Felder landeten als Key/Value-Zeilen im Inhalt);
+  das eigene Envelope macht eine komplette Card eindeutig von Zeilen-Antworten (`response.NewDataResponse(rows)`)
+  unterscheidbar. Endpoints, die Zeilen liefern, sind nicht betroffen.
 
 ## [0.3.9]
 ### Added
