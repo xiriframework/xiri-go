@@ -114,3 +114,22 @@ func TestSelectFieldParse_NoFloatTruncation(t *testing.T) {
 		}
 	})
 }
+
+func TestSelectField_Multi_SelectAll_Exported(t *testing.T) {
+	f := NewSelectField("status", "Status", false, selectTestOptions()).SetMultiple(true).SetSelectAll(true)
+	out := f.ExportForFrontend(nil, nil)
+	if v, ok := out["selectAll"].(bool); !ok || !v {
+		t.Errorf("expected selectAll=true in export, got %v", out["selectAll"])
+	}
+}
+
+func TestSelectField_SelectAll_NotExported_WhenSingleOrUnset(t *testing.T) {
+	unset := NewSelectField("status", "Status", false, selectTestOptions()).SetMultiple(true)
+	if _, present := unset.ExportForFrontend(nil, nil)["selectAll"]; present {
+		t.Error("expected no selectAll key when SetSelectAll was not called")
+	}
+	single := NewSelectField("status", "Status", false, selectTestOptions()).SetSelectAll(true)
+	if _, present := single.ExportForFrontend(nil, int32(1))["selectAll"]; present {
+		t.Error("expected no selectAll key in single-select export")
+	}
+}

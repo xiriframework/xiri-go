@@ -8,6 +8,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 ### Added
 
+- **`SelectField.SetSelectAll(bool)` blendet im Multi-Select einen „Alle / Keine“-Toggle ein.** Exportiert
+  `selectAll: true`, aber nur zusammen mit `SetMultiple(true)`. Das Frontend zeigt dann über der Optionsliste
+  eine Checkbox, die alle aktuell sichtbaren — also bei aktiver Suche nur die gefilterten — Optionen auswählt
+  bzw. abwählt; deaktivierte Optionen bleiben unangetastet.
+
+  Wirkung erst mit `@xiriframework/xiri-ng >= 0.4.10`; ältere Frontends ignorieren das Feld stillschweigend.
+
+### Added
+
 - **`response.NewReturnRefreshPanel()` lädt genau eine Card neu.** Liefert `{"done": true, "refresh": "panel"}`
   (mit `WithMessage` wie die anderen Return-Typen). Das Frontend lädt die URL der nächstgelegenen Card
   (`Card.SetURL`) erneut und übernimmt Titel, Buttons und Inhalt aus `card.DataResponse(ctx)` — die

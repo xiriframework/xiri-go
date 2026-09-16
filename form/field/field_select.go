@@ -9,12 +9,13 @@ import (
 // SelectField represents a dropdown/select field with predefined options
 type SelectField struct {
 	*BaseField
-	Options  []SelectOption
-	Subtype  string         // Select subtype (e.g., "select", "radio", "checkbox")
-	Search   *bool          // Enable search filter (nil = auto based on option count, true/false = force)
-	Multiple bool           // If true, field allows selecting multiple options (uses Values instead of Value)
-	Value    int32          // Parsed and validated value (single-select mode)
-	Values   []int32        // Parsed and validated values (multi-select mode)
+	Options   []SelectOption
+	Subtype   string  // Select subtype (e.g., "select", "radio", "checkbox")
+	Search    *bool   // Enable search filter (nil = auto based on option count, true/false = force)
+	Multiple  bool    // If true, field allows selecting multiple options (uses Values instead of Value)
+	SelectAll bool    // If true (and Multiple), the frontend shows a "select all / none" toggle
+	Value     int32   // Parsed and validated value (single-select mode)
+	Values    []int32 // Parsed and validated values (multi-select mode)
 }
 
 // SelectOption represents a single option in a select field
@@ -226,6 +227,9 @@ func (f *SelectField) ExportForFrontend(ctx *core.UiContext, value interface{}) 
 
 	if f.Multiple {
 		result["multiple"] = true
+		if f.SelectAll {
+			result["selectAll"] = true
+		}
 	}
 
 	// Export options as array of {id, name} maps
@@ -304,5 +308,13 @@ func (f *SelectField) SetMultiple(multiple bool) *SelectField {
 	if multiple {
 		f.Default = ModelListValue{}
 	}
+	return f
+}
+
+// SetSelectAll shows a "select all / none" toggle in the frontend. Only
+// exported in multi-select mode; the toggle affects the currently visible
+// (filtered) options.
+func (f *SelectField) SetSelectAll(selectAll bool) *SelectField {
+	f.SelectAll = selectAll
 	return f
 }
