@@ -4,6 +4,8 @@ package expansion
 import (
 	"github.com/xiriframework/xiri-go/component/button"
 	"github.com/xiriframework/xiri-go/component/core"
+	"github.com/xiriframework/xiri-go/component/url"
+	"github.com/xiriframework/xiri-go/response"
 )
 
 // Panel represents an individual panel within an Expansion component
@@ -18,6 +20,7 @@ type Panel struct {
 	unload      *bool
 	buttons     *button.ButtonLine
 	data        []core.Component
+	url         *url.Url
 }
 
 // NewPanel creates a new Panel with the given title
@@ -81,7 +84,44 @@ func (p *Panel) AddContent(component core.Component) *Panel {
 }
 
 // Print serializes the Panel to a map for JSON output
+// SetURL sets the AJAX URL of the panel. When set, Print emits only the header (title, description,
+// icon, buttons, …) plus "url" and an empty "data" array; the frontend loads the panel from this URL
+// (POST, body null). Return DataResponse(ctx) of a fully built panel from that endpoint: the frontend
+// then replaces title, description, icon, buttons and content, so a response.NewReturnRefreshPanel()
+// from a header button, a button in the content or a table action inside the panel re-renders exactly
+// this panel. Static content added via AddContent is not printed in URL mode.
+func (p *Panel) SetURL(u *url.Url) *Panel {
+	p.url = u
+	return p
+}
+
+// Print returns the JSON representation of the panel. In URL mode (SetURL) it is the shell:
+// header fields, "url" and an empty "data" array.
 func (p *Panel) Print(ctx *core.UiContext) map[string]any {
+	if p.url != nil {
+		result := p.printHeader(ctx)
+		result["url"] = p.url.PrintPrefix()
+		result["data"] = []map[string]any{}
+		return result
+	}
+	return p.printData(ctx)
+}
+
+// PrintData returns the complete panel (header + content), regardless of SetURL. Use it for the
+// panel endpoint, usually via DataResponse.
+func (p *Panel) PrintData(ctx *core.UiContext) map[string]any {
+	return p.printData(ctx)
+}
+
+// DataResponse returns the complete panel in the {"panel": ...} envelope. Use it as the handler for
+// the URL passed to SetURL (return wc.Data(panel)). The envelope differs from NewJSONDataResult's
+// {"data": ...} and from Card's {"card": ...} on purpose, so the frontend knows what it received.
+func (p *Panel) DataResponse(ctx *core.UiContext) response.DataResult {
+	return response.DataResult{Type: response.ResponseJSON, Body: map[string]any{"panel": p.PrintData(ctx)}}
+}
+
+// printHeader builds title, description, icon, flags and buttons — shared by Print and PrintData.
+func (p *Panel) printHeader(ctx *core.UiContext) map[string]any {
 	result := map[string]any{
 		"title": core.Translate(ctx, p.title),
 	}
@@ -107,6 +147,13 @@ func (p *Panel) Print(ctx *core.UiContext) map[string]any {
 	if p.buttons != nil {
 		result["buttons"] = p.buttons.PrintData(ctx)
 	}
+
+	return result
+}
+
+// printData builds the complete panel: header plus content components under "data".
+func (p *Panel) printData(ctx *core.UiContext) map[string]any {
+	result := p.printHeader(ctx)
 
 	// Convert content components to data array
 	if len(p.data) > 0 {
