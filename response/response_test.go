@@ -401,3 +401,14 @@ func TestReturnDone_WithoutCreatedHasNoKey(t *testing.T) {
 		t.Errorf("expected {\"done\":true}, got %s", string(data))
 	}
 }
+
+func TestReturnDone_WithCreated_StringIDAndChaining(t *testing.T) {
+	data, err := json.Marshal(NewReturnDone().WithCreated("abc", "Neu").WithMessage("Angelegt", MessageSuccess))
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+	expected := `{"done":true,"created":{"id":"abc","name":"Neu"},"message":"Angelegt","messageType":"success"}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}

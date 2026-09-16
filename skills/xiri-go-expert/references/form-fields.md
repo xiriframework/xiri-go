@@ -563,9 +563,10 @@ Regeln und Grenzen:
 
 - **`id` muss denselben JSON-Typ haben wie die vorhandenen Options-IDs** (Zahl bei `ModelListField`,
   `ModelField`, `ChipsField`). Chips lösen Labels nur für numerische IDs auf.
-- **Das Hauptformular validiert beim Submit gegen seine eigene Optionsliste.** Die neue Entität muss
-  dort enthalten sein — bei aus der DB geladenen Listen ist das automatisch der Fall, bei statischen
-  `SelectOption`-Listen nicht.
+- **`SelectField` und `ChipsField` (numerische IDs) validieren beim Submit gegen ihre Optionsliste.**
+  Die neue Entität muss dort enthalten sein — bei aus der DB geladenen Listen automatisch, bei
+  statischen `SelectOption`-Listen nicht. **`ModelField`/`ModelListField` prüfen nur Typ bzw. Anzahl**,
+  keine Listenmitgliedschaft; fremde IDs müssen dort wie bisher anwendungsseitig geprüft werden.
 - `ModelListField` mit `URL` lädt den Baum nach dem Anlegen selbst neu; der Server muss die Entität
   dann sofort liefern.
 - Ein späterer `SetReloadOn`-Patch ersetzt die Liste; liefert der Server die neue Option nicht mit,
