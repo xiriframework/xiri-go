@@ -1,6 +1,6 @@
 ---
 name: xiri-go-expert
-description: Experte für die xiri-go Go-Library. Verwende diesen Skill IMMER wenn Go-Code geschrieben wird der xiri-go importiert (github.com/xiriframework/xiri-go), oder wenn der User nach Komponenten, Formularen, Tabellen, Filter-Parsing, URL-Prefixes/Sidebar-Routing, Dialogen, Responses, UiContext, Inline-Edit, abhängigen Formularfeldern (SetReloadOn/ExportPatch), Bulk-Actions/MassEdit/MassDelete oder dem Builder-Pattern der xiri-go Library fragt.
+description: Experte für die xiri-go Go-Library. Verwende diesen Skill IMMER wenn Go-Code geschrieben wird der xiri-go importiert (github.com/xiriframework/xiri-go), oder wenn der User nach Komponenten, Formularen, Tabellen, Filter-Parsing, URL-Prefixes/Sidebar-Routing, Dialogen, Responses, UiContext, Inline-Edit, abhängigen Formularfeldern (SetReloadOn/ExportPatch), „Neu anlegen“-Button an Select-Feldern (SetAddURL/WithCreated), Bulk-Actions/MassEdit/MassDelete oder dem Builder-Pattern der xiri-go Library fragt.
 ---
 
 # xiri-go Expert
@@ -140,6 +140,22 @@ return c.JSON(http.StatusOK, response.NewReturnFields(fg.ExportPatch()))
 Das Frontend postet **nur die Trigger-Werte**, behält Werte die es in der neuen Liste noch gibt und
 verwirft den Rest. Filter erben das. Details + Grenzen in `references/form-fields.md`.
 
+### Neue Option per Dialog anlegen („+“-Button)
+
+`SetAddURL` zeigt neben Select/ModelList/Model/Chips einen „+“-Button; GET liefert den Dialog, der
+POST meldet die neue Option zurück, das Feld übernimmt und selektiert sie:
+
+```go
+tags.BaseField.SetAddURL(xurl.NewUrlPrefix("/Portal/Tag/AddDialog", "/api"))
+
+// GET  → wc.Component(dialog.NewDialogForm(fields, addURL, &header, nil, nil, nil))
+// POST → nach BindAndValidate + Create:
+return wc.Component(response.NewReturnDone().WithCreated(tag.ID, tag.Name).WithMessage("Angelegt", response.MessageSuccess))
+```
+
+`id` muss den JSON-Typ der vorhandenen Options-IDs haben (Zahl bei ModelList/Model/Chips). Details in
+`references/form-fields.md` (Abschnitt `SetAddURL`).
+
 ### FormBuilder
 
 ```go
@@ -210,3 +226,5 @@ core.ButtonTypeRaised | Basic | Stroked | Flat | Fab | MiniFab | Icon | IconText
   Pflichtfeldern, die mitten im Ausfüllen völlig normal sind.
 - **Abhängige `ModelListField`/Treeselects ohne `URL` bauen.** Mit URL lädt das Frontend den Baum
   selbst und ignoriert die gepatchte Liste.
+- **Kein eigener „Neu anlegen“-Button neben einem Select** — `f.BaseField.SetAddURL(u)` und im
+  Dialog-POST `NewReturnDone().WithCreated(id, name)` statt `RefreshPage`/`RefreshTable`.
