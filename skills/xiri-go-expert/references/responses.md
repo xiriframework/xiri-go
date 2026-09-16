@@ -35,8 +35,10 @@ Genau ein Panel neu laden (Titel, Buttons, Inhalt), z. B. nach „Versicherung b
 Detailseite. Panel ist eine Card mit `SetURL(...)` (Endpoint liefert `card.DataResponse(ctx)`) oder ein
 `expansion.Panel` mit `SetURL(...)` (Endpoint liefert `panel.DataResponse(ctx)`). Der Auslöser darf ein
 Button im Header, unten oder in einer verschachtelten Komponente sein, ebenso eine Tabellenaktion im Panel —
-das Frontend findet den nächstgelegenen Host mit URL. Ein Host ohne URL reicht an den nächsten äußeren weiter
-und lädt ohne solchen die Seite neu.
+das Frontend findet den nächstgelegenen Host mit URL. Ein Host ohne URL reicht an den nächsten äußeren weiter;
+erst ohne weiteren Host lädt die Seite neu. Ab xiri-ng 0.4.11 auch dann, wenn der Auslöser in gar keinem Host liegt
+(0.4.10: nur Konsolenwarnung, nichts passiert) — derselbe Dialog kann also auf einer Übersichtsseite ohne Panel
+wiederverwendet werden.
 
 Nicht mit einem `autoLoad`-Button kombinieren, dessen Aktion diese Antwort liefert — das ist eine
 Endlosschleife (wie `refresh: "page"` + `autoLoad`).

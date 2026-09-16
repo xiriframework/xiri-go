@@ -143,7 +143,9 @@ func (r ReturnRefreshTable) WithMessage(text string, msgType MessageType) Return
 // re-fetches that card's URL and replaces title, buttons and content of exactly this card;
 // the rest of the page stays untouched. The trigger may be a button (api result, dialog
 // result, last poll tick) or a table action anywhere inside the card; the frontend resolves
-// the nearest enclosing card with a URL. A card without URL falls back to a page reload.
+// the nearest enclosing card with a URL. A card without URL delegates to the next outer card;
+// without any further card the page reloads. Since xiri-ng 0.4.11 the page also reloads when the
+// trigger sits in no card at all (0.4.10 only logged a console warning).
 //
 // Do not combine with an autoLoad button whose action returns this response: the reload
 // re-creates the button, which auto-loads again — an endless loop (same as refresh "page").

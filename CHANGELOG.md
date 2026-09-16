@@ -6,6 +6,11 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Changed
+
+- **Doku zu `NewReturnRefreshPanel()`:** Fallback-Kette präzisiert. Ohne umschließende Card lädt das Frontend ab
+  `xiri-ng >= 0.4.11` die Seite neu (0.4.10: nur Konsolenwarnung). Kein Code geändert.
+
 ### Added
 
 - **`BaseField.SetAddURL(u)` zeigt neben dem Feld einen „+“-Button, der eine neue Option per Dialog anlegt.**
