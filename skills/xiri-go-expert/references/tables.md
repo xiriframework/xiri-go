@@ -774,7 +774,7 @@ Table-Builder nutzt dann `TextField` für `GroupName` / `OwnerName` — keine In
 - **`ButtonsField`-Keys müssen Strings sein:** `"0"`, `"1"` — **nicht** `0`, `1`. Go's `map[string]string` ist zwingend.
 - **`SetURL` erwartet `*xurl.Url`, nicht `string`.** Für ein manuelles URL-Konstrukt: `xurl.NewUrlPrefix("/data", "/api/v1")`.
 - **Inline-Edit-URL:** `SetEditUrl` nimmt einen `string` (nicht `*xurl.Url`) — hier explizit `c.apiUrl("inline").PrintPrefix()` übergeben.
-- **Filter + Multi-Select:** `NewSelectField(..., options).SetMultiple(true)`. Es gibt **kein** `NewMultiSelectField`.
+- **Filter + Multi-Select:** `NewSelectField(..., options).SetMultiple(true)`. Es gibt **kein** `NewMultiSelectField`. Optional `.SetSelectAll(true)` für einen „Alle / Keine“-Toggle im Dropdown.
 - **SelectButtons aktivieren Select automatisch** — `SetSelect(true)` ist redundant nach `SetSelectButtons(...)`.
 - **`SetServerSide(true)` ohne `SetTotal` ergibt falsche Pagination.** Immer Total aus der DB-Query mitschicken.
 - **`WithEditableOptionsUrl` erwartet eine JSON-Response-Struktur** der Form `[{value, label, color?}]` — das Backend muss die Options als Liste liefern, nicht als Map.

@@ -114,6 +114,7 @@ field.NewBoolField    (id, name, required, false)      // Value: *bool
 field.NewTimeField    (id, name, required, 0)          // Value: *int64 (Unix)
 field.NewSelectField  (id, name, required, opts)       // Value: int32
 field.NewSelectField  (id, name, required, opts).SetMultiple(true)  // Values: []int32
+field.NewSelectField  (id, name, required, opts).SetMultiple(true).SetSelectAll(true)  // + „Alle / Keine“-Toggle
 field.NewModelField   (id, name, required, "group", 0) // Value: int32
 // Subtypes auf TextField: "email" | "tel" | "url" | "password" | "textarea"
 ```
@@ -192,6 +193,7 @@ core.ButtonTypeRaised | Basic | Stroked | Flat | Fab | MiniFab | Icon | IconText
 
 - **Kein** `NewTextareaField` — `NewTextField` mit `.Subtype = "textarea"`.
 - **Kein** `NewMultiSelectField` — `NewSelectField(...).SetMultiple(true)`.
+- **Kein eigener „Alle auswählen“-Button** neben einem Multi-Select — `SetSelectAll(true)` am `SelectField` (Frontend-Toggle über der Liste, wirkt auf die sichtbaren/gefilterten Optionen; nur mit `SetMultiple(true)`).
 - **Kein** `NewDeviceListField` — `NewModelListField(id, name, required, "device", ids)`.
 - **Kein `nil` als Default-Argument** bei Text/Int/Bool/Time — das sind Wert-Parameter, nicht
   Pointer. Nullwert übergeben (`""`, `0`, `false`). `nil` ist nur bei Slice/Map-Defaults erlaubt

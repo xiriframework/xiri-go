@@ -117,6 +117,13 @@ f.Search = boolPtr(true)  // Suchfeld aktivieren (auto bei 20+ Optionen)
 
 // Nach BindAndValidate:
 status := f.Value  // int32
+
+// Mehrfachauswahl: Option-Values müssen numerisch sein, Ergebnis in Values
+multi := field.NewSelectField("tags", "device.tags", false, options).
+    SetMultiple(true).
+    SetSelectAll(true)  // "Alle / Keine"-Toggle über der Liste (nur mit SetMultiple;
+                        // wirkt auf die aktuell sichtbaren, d. h. gefilterten Optionen)
+tags := multi.Values  // []int32
 ```
 
 ## ModelField

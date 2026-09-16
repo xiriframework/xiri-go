@@ -41,9 +41,10 @@ func (c *Controller) buildFilterGroup(ctx *core.UiContext) *group.FormGroup {
     fb.AddField(field.NewTimeField("from", "Von", false, 0))
     fb.AddField(field.NewSelectField("status", "Status", false, statusOptions))
 
-    // Multi-Value Filter: SetMultiple(true)
+    // Multi-Value Filter: SetMultiple(true); SetSelectAll(true) blendet im Dropdown
+    // einen "Alle / Keine"-Toggle ein (wirkt auf die sichtbaren, d. h. gefilterten Optionen)
     fb.AddField(field.NewSelectField("priority", "Priorität", false,
-        priorityOptions).SetMultiple(true))
+        priorityOptions).SetMultiple(true).SetSelectAll(true))
     fb.AddField(field.NewModelListField("tags", "Tags", false, "tag", nil))
 
     fg, _, _ := fb.BuildAdd()   // für Query-Komponente reicht BuildAdd
