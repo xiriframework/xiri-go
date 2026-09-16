@@ -533,6 +533,53 @@ e.AddPanel(expansion.NewPanel(loc.Name).WithIcon("place").AddContent(tbl))
 
 Braucht xiri-ng >= 0.4.9 und xiri-go >= 0.3.9. Details: `tables.md`, Abschnitt „Rahmenlose Tabelle".
 
+## 7c. Detailseite aus nachladbaren Expansion-Panels (`Panel.SetURL` + `RefreshPanel`)
+
+Dasselbe Akkordeon wie in 7b, aber jedes Panel hat eine eigene URL: Der Bearbeiten-Dialog aus dem Panel-Header
+gibt `RefreshPanel` zurück, und nur dieses Panel lädt Titel, Buttons und Inhalt neu — kein Page-Reload, die anderen
+Panels bleiben offen und stehen.
+
+```go
+// Page: Shells, je Panel eine URL
+func (c *Controller) Page(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    id := ctx.Param("id")
+    e := expansion.NewExpansion().WithMulti(true)
+    for _, name := range []string{"Insurance", "Leasing", "Prices"} {
+        e.AddPanel(expansion.NewPanel("").WithExpanded(true).SetURL(c.apiUrl("Vehicle", id, "Panel", name)))
+    }
+    return wc.Page(page.NewPage().Add(e))
+}
+
+// Panel-Endpoint: komplettes Panel inkl. Header-Buttons und flacher Card
+func (c *Controller) InsurancePanel(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    id := ctx.Param("id")
+    ins := c.svc.Insurance(id)
+    content := card.NewCardListContent([]card.CardListContentLine{
+        {Name: "Versicherer", Content: ins.Company},
+        {Name: "Prämie", Content: ins.Premium},
+    })
+    p := expansion.NewPanel("Versicherung").WithIcon("shield").
+        Buttons(button.NewButtonLine("small", nil).
+            Add(button.NewDialogButton("edit", c.apiUrl("Vehicle", id, "Insurance", "Edit"), core.ColorPrimary,
+                core.ButtonTypeIcon, "Bearbeiten", false, nil, nil))).
+        AddContent(card.NewCardList("", content).WithFlat(true).WithDisplay("xcol xcol-md-12"))
+    return wc.Data(p)   // → {"panel": {...}}
+}
+
+// Dialog-Submit: nur dieses Panel neu laden
+func (c *Controller) InsuranceEditSubmit(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    // ... parsen, speichern ...
+    return wc.Component(response.NewReturnRefreshPanel().WithMessage("Gespeichert", response.MessageSuccess))
+}
+```
+
+Der Auslöser darf auch ein Button im Panel-Inhalt oder eine Tabellenaktion im Panel sein. `expanded`,
+`disabled`, `lazy`, `unload` bleiben Sache der Page-Shell; ein Reload klappt nichts zu. Nicht mit `autoLoad`-Buttons
+kombinieren, deren Aktion `RefreshPanel` liefert (Endlosschleife). Braucht xiri-ng >= 0.4.10 und xiri-go >= 0.3.10.
+
 ## 8. Delete-Dialog + Custom-Message
 
 Der Standard-DeleteDialog via `wc.DeleteDialog(name)` reicht meistens. Wenn du mehr Kontrolle brauchst:

@@ -31,12 +31,12 @@ resp := response.NewReturnRefreshTable().WithMessage("Gelöscht", response.Messa
 
 ### ReturnRefreshPanel
 
-Genau eine Card neu laden (Titel, Buttons, Inhalt), z. B. nach „Versicherung bearbeiten“ auf einer
-Detailseite. Voraussetzung: die Card hat `SetURL(...)`, und der Endpoint dahinter liefert
-`card.DataResponse(ctx)` einer fertig gebauten Card. Der Auslöser darf ein Button im Header, unten
-oder in einer verschachtelten Komponente sein, ebenso eine Tabellenaktion in der Card — das Frontend
-findet die nächstgelegene Card mit URL. Eine Card ohne URL reicht an die nächste äußere Card weiter
-und lädt ohne solche die Seite neu.
+Genau ein Panel neu laden (Titel, Buttons, Inhalt), z. B. nach „Versicherung bearbeiten“ auf einer
+Detailseite. Panel ist eine Card mit `SetURL(...)` (Endpoint liefert `card.DataResponse(ctx)`) oder ein
+`expansion.Panel` mit `SetURL(...)` (Endpoint liefert `panel.DataResponse(ctx)`). Der Auslöser darf ein
+Button im Header, unten oder in einer verschachtelten Komponente sein, ebenso eine Tabellenaktion im Panel —
+das Frontend findet den nächstgelegenen Host mit URL. Ein Host ohne URL reicht an den nächsten äußeren weiter
+und lädt ohne solchen die Seite neu.
 
 Nicht mit einem `autoLoad`-Button kombinieren, dessen Aktion diese Antwort liefert — das ist eine
 Endlosschleife (wie `refresh: "page"` + `autoLoad`).
@@ -203,6 +203,7 @@ Unterstützt:
 | Komponente        | Methode                                  | Typischer Use-Case                       |
 | ----------------- | ---------------------------------------- | ---------------------------------------- |
 | `Card`            | `card.DataResponse(ctx)`                 | AJAX-Card lädt komplette Card neu — Envelope `{"card": …}`, nicht `{"data": …}` |
+| `expansion.Panel` | `panel.DataResponse(ctx)`                | Expansion-Panel lädt sich komplett neu — Envelope `{"panel": …}` |
 | `Stat`            | `stat.DataResponse(ctx)`                 | Polling-KPI                              |
 | `StatGrid`        | `statgrid.DataResponse(ctx)`             | Polling-Dashboard                        |
 | `MultiStat`       | `multistat.DataResponse(ctx)`            | Polling-KPI-Karte (mehrere Zahlen)       |

@@ -297,7 +297,37 @@ e.WithDisplay("xcol-md-12")
 e.Print(ctx)
 ```
 
-Panel-Chain-Methoden: `.WithDescription(string)`, `.WithIcon(string)`, `.WithDisabled(bool)`, `.WithExpanded(bool)`, `.WithLazy(bool)` (override), `.WithUnload(bool)` (override), `.Buttons(*button.ButtonLine)` (Header-Buttons, wie `Section.Buttons`; braucht xiri-ng >= 0.4.8), `.AddContent(core.Component)`.
+Panel-Chain-Methoden: `.WithDescription(string)`, `.WithIcon(string)`, `.WithDisabled(bool)`, `.WithExpanded(bool)`, `.WithLazy(bool)` (override), `.WithUnload(bool)` (override), `.Buttons(*button.ButtonLine)` (Header-Buttons, wie `Section.Buttons`; braucht xiri-ng >= 0.4.8), `.AddContent(core.Component)`, `.SetURL(*url.Url)` (nachladbares Panel, s. u.; braucht xiri-ng >= 0.4.10).
+
+### Nachladbares Panel (`SetURL`) — Panel mit eigener URL und `RefreshPanel`
+
+Ein Panel mit `SetURL` druckt nur seine Shell (Titel, Icon, Flags, `url`, leeres `data`); das Frontend lädt es
+per POST von dieser URL. Der Endpoint liefert `panel.DataResponse(ctx)` → `{"panel": {…}}` mit Titel,
+Beschreibung, Icon, **Header-Buttons** und Inhalt. Gibt ein Header-Button, ein Button im Inhalt oder eine
+Tabellenaktion im Panel `response.NewReturnRefreshPanel()` zurück, lädt genau dieses Panel neu — die anderen
+Panels und die Seite bleiben stehen. `expanded`/`disabled`/`lazy`/`unload` kommen weiterhin aus der Page-Shell.
+
+```go
+// Page: Shell
+p := expansion.NewPanel("Versicherung").WithIcon("shield").WithExpanded(true).
+    SetURL(c.apiUrl("Vehicle", id, "Panel", "Insurance"))
+e := expansion.NewExpansion().WithMulti(true).AddPanel(p)
+
+// Panel-Endpoint: komplettes Panel, wc.Data serialisiert DataResult.Body
+func (c *Controller) InsurancePanel(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    panel := expansion.NewPanel("Versicherung").WithIcon("shield").
+        Buttons(button.NewButtonLine("small", nil).
+            Add(button.NewSimpleDialogButton("Bearbeiten", c.apiUrl("Vehicle", id, "Insurance", "Edit"), core.ColorPrimary))).
+        AddContent(card.NewCardList("", content).WithFlat(true).WithDisplay("xcol xcol-md-12"))
+    return wc.Data(panel)
+}
+
+// Dialog-Submit
+return wc.Component(response.NewReturnRefreshPanel().WithMessage("Gespeichert", response.MessageSuccess))
+```
+
+Vollständiges Muster: `patterns.md` §7c. Für Cards gilt dasselbe mit `Card.SetURL` (`{"card": …}`).
 
 ### Panel mit Header-Buttons + rahmenloser Card (statt Card-in-Panel)
 

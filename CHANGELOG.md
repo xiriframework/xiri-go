@@ -23,6 +23,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   restliche Seite bleibt stehen. Gedacht für Panels auf Detailseiten (Versicherung, Leasing, Preise …),
   deren Aktionen bisher `NewReturnRefreshPage()` zurückgeben mussten. Frontend: `xiri-ng >= 0.4.10`.
 
+- **`expansion.Panel.SetURL(u)`, `PrintData(ctx)`, `DataResponse(ctx)` — nachladbare Expansion-Panels.** Mit
+  `SetURL` druckt `Print` nur die Shell (Header-Felder, `url`, leeres `data`); der Endpoint liefert
+  `panel.DataResponse(ctx)` als `{"panel": {…}}` mit Titel, Beschreibung, Icon, Buttons und Inhalt. Ein
+  `NewReturnRefreshPanel()` aus einem Header-Button des Panels, aus dem Inhalt oder einer Tabellenaktion lädt genau
+  dieses Panel neu. Frontend: `xiri-ng >= 0.4.10`.
+
 ### Changed
 
 - **`Card.DataResponse(ctx)` antwortet mit `{"card": {…}}` statt `{"data": {…}}`.** Das Frontend konnte
