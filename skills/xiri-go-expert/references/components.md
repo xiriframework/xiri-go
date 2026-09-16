@@ -48,12 +48,19 @@ c.Print(ctx)
 c := card.NewCardList("info.title", cardListContent)
 c.Print(ctx)
 
-// AJAX-Card (lädt Daten von URL)
+// AJAX-Card (lädt sich komplett von URL: Titel, Buttons, Inhalt)
 c := card.NewCard(core.CardTypeTable, nil, "devices.list", "", "", "", true, false, "")
 c.SetURL("/api/devices/table")
 c.WithReload(true)
 c.Print(ctx)
+// Endpoint: fertige Card bauen und wc.Data(card) liefern → {"card": {...}}
 ```
+
+**Nachladbares Panel (`refresh: "panel"`):** Eine Card mit `SetURL` ist ein Panel. Der Endpoint liefert
+`card.DataResponse(ctx)` (Envelope `{"card": …}`, ab xiri-go 0.3.10); gibt ein Button oder eine Tabellenaktion
+in der Card `response.NewReturnRefreshPanel()` zurück, lädt das Frontend nur diese Card neu — Titel, Buttons und
+Inhalt, die restliche Seite bleibt stehen. Buttons dürfen im Header, unten oder in verschachtelten Komponenten
+liegen. Muster: `patterns.md` §6b, Response: `responses.md` → ReturnRefreshPanel. Braucht xiri-ng >= 0.4.10.
 
 **Spalten-Header bei Tabellen-Cards** (`CardTypeTable`) standardmäßig aus. Opt-in via `.WithTableHeader()` — gleicher Name wie auf `Dialog`, no-op für Nicht-Tabellen-Cards:
 

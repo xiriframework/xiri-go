@@ -407,7 +407,7 @@ card := card.NewCard(core.CardTypeTable, nil, "Live-Status", "", "", "", true, f
 card.SetURL(c.apiUrl("card", "status")).WithReload(true)
 p.Add(card)
 
-// Endpoint — gibt nur den Card-Content zurück
+// Endpoint — liefert die komplette Card als {"card": {...}} (Titel, Buttons, Inhalt)
 func (c *Controller) CardStatus(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
     content := card.NewCardListContent([]card.CardListContentLine{
@@ -415,9 +415,59 @@ func (c *Controller) CardStatus(ctx echo.Context) error {
         {Name: "Offline", Content: strconv.Itoa(c.svc.CountOffline())},
     })
     inner := card.NewCardList("Live-Status", content)
-    return wc.Component(inner)
+    return wc.Data(inner)   // nicht wc.Component: das wäre das Page-JSON mit type-Wrapper
 }
 ```
+
+Braucht xiri-ng >= 0.4.10 und xiri-go >= 0.3.10 (Envelope `{"card": …}`). Ältere Endpoints, die nur Zeilen
+liefern (`response.NewDataResponse(rows)`), funktionieren weiter — dann bleibt der Header aus der Page.
+
+## 6b. Detailseiten-Panel mit eigener URL (`refresh: "panel"`)
+
+Detailseite mit mehreren Panels (Versicherung, Leasing, Preise). Jedes Panel ist eine AJAX-Card mit eigener
+URL; die Bearbeiten-Dialoge geben `RefreshPanel` zurück, dann lädt nur das betroffene Panel neu — kein
+Page-Reload, andere Panels flackern nicht.
+
+```go
+// Page: Panels als Shells, jede mit eigener URL
+func (c *Controller) Page(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    id := ctx.Param("id")
+    p := page.NewPage()
+    for _, name := range []string{"Insurance", "Leasing", "Prices"} {
+        shell := card.NewCard(core.CardTypeTable, nil, "", nil, nil, nil, false, false, nil)
+        shell.SetURL(c.apiUrl("Vehicle", id, "Panel", name)).WithDisplay("xcol xcol-md-6 xcol-xl-4")
+        p.Add(shell)
+    }
+    return wc.Page(p)
+}
+
+// Panel-Endpoint: fertige Card inkl. Titel und Buttons, wc.Data → {"card": {...}}
+func (c *Controller) InsurancePanel(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    id := ctx.Param("id")
+    ins := c.svc.Insurance(id)
+    panel := card.NewCardList("Versicherung", card.NewCardListContent([]card.CardListContentLine{
+        {Name: "Versicherer", Content: ins.Company},
+        {Name: "Prämie", Content: ins.Premium},
+    })).WithHeaderIcon("shield")
+    panel.ButtonTop(button.NewDialogButton("edit", c.apiUrl("Vehicle", id, "Insurance", "Edit"), core.ColorPrimary,
+        core.ButtonTypeIcon, "Bearbeiten", false, nil, nil))
+    return wc.Data(panel)
+}
+
+// Dialog-Submit: nur das Panel neu laden
+func (c *Controller) InsuranceEditSubmit(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    // ... parsen, speichern ...
+    return wc.Component(response.NewReturnRefreshPanel().WithMessage("Gespeichert", response.MessageSuccess))
+}
+```
+
+Der Button darf im Card-Header, unten oder in einer verschachtelten Komponente liegen, ebenso eine
+Tabellenaktion in der Card — das Frontend findet die nächstgelegene Card mit URL. Nicht mit `autoLoad`-Buttons
+kombinieren, deren Aktion `RefreshPanel` liefert (Endlosschleife, wie bei `RefreshPage`). Braucht xiri-ng >= 0.4.10
+und xiri-go >= 0.3.10.
 
 ## 7. Tabs mit Lazy-Loading
 
