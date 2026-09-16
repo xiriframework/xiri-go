@@ -176,9 +176,9 @@ func (r ReturnRefreshPanel) WithMessage(text string, msgType MessageType) Return
 // Use case: Inline edit completed — patch row fields, optionally trigger navigation/reload
 type ReturnInlineEdit struct {
 	Done    bool           `json:"done"`              // Always true
-	Updates map[string]any `json:"updates,omitempty"`  // Fields to patch in the row
-	Refresh string         `json:"refresh,omitempty"`  // "table" or "page"
-	Goto    string         `json:"goto,omitempty"`     // Redirect URL
+	Updates map[string]any `json:"updates,omitempty"` // Fields to patch in the row
+	Refresh string         `json:"refresh,omitempty"` // "table" or "page"
+	Goto    string         `json:"goto,omitempty"`    // Redirect URL
 	Message
 }
 
@@ -254,9 +254,16 @@ func (r ReturnGoto) WithMessage(text string, msgType MessageType) ReturnGoto {
 //
 // Use case: Operation completed, no further action needed
 type ReturnDone struct {
-	Done   bool         `json:"done"` // Always true
-	Button *ButtonPatch `json:"button,omitempty"`
+	Done    bool           `json:"done"` // Always true
+	Button  *ButtonPatch   `json:"button,omitempty"`
+	Created *CreatedOption `json:"created,omitempty"`
 	Message
+}
+
+// CreatedOption is the option a SetAddURL dialog created; the frontend appends and selects it.
+type CreatedOption struct {
+	ID   any    `json:"id"`
+	Name string `json:"name"`
 }
 
 func (r ReturnDone) isSuccessResponse() {}
@@ -265,6 +272,14 @@ func (r ReturnDone) isSuccessResponse() {}
 func (r ReturnDone) WithMessage(text string, msgType MessageType) ReturnDone {
 	r.MessageText = text
 	r.MessageType = msgType
+	return r
+}
+
+// WithCreated marks the response of a field.SetAddURL dialog: the field that opened the dialog
+// appends {id, name} to its option list and selects it. id must match the JSON type of the
+// field's existing option ids.
+func (r ReturnDone) WithCreated(id any, name string) ReturnDone {
+	r.Created = &CreatedOption{ID: id, Name: name}
 	return r
 }
 
@@ -304,8 +319,8 @@ func (r ReturnMessage) WithButton(button ButtonPatch) ReturnMessage {
 // shows a countdown in the button. When the worker finishes, return a normal response without
 // poll (e.g. ReturnRefreshTable/ReturnDone) to stop the polling.
 type ReturnPoll struct {
-	Done    bool   `json:"done"`              // Always true
-	Poll    int    `json:"poll"`              // Poll interval in milliseconds
+	Done    bool         `json:"done"`              // Always true
+	Poll    int          `json:"poll"`              // Poll interval in milliseconds
 	PollUrl string       `json:"pollUrl,omitempty"` // Status endpoint polled via GET (optional)
 	Text    string       `json:"text,omitempty"`    // Optional label shown inside the button while polling (e.g. "läuft… 50 %")
 	Button  *ButtonPatch `json:"button,omitempty"`  // Optional overrides applied to the initiating button

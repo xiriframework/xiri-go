@@ -383,3 +383,21 @@ func TestReturnPollWithButton(t *testing.T) {
 		t.Errorf("expected %s, got %s", expected, string(data))
 	}
 }
+
+func TestReturnDone_WithCreated(t *testing.T) {
+	data, err := json.Marshal(NewReturnDone().WithCreated(7, "Neu"))
+	if err != nil {
+		t.Fatalf("marshal error: %v", err)
+	}
+	expected := `{"done":true,"created":{"id":7,"name":"Neu"}}`
+	if string(data) != expected {
+		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+func TestReturnDone_WithoutCreatedHasNoKey(t *testing.T) {
+	data, _ := json.Marshal(NewReturnDone())
+	if string(data) != `{"done":true}` {
+		t.Errorf("expected {\"done\":true}, got %s", string(data))
+	}
+}

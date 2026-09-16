@@ -14,6 +14,7 @@ field.SetDisabled(true)          // Deaktiviert
 field.SetAccess([]string{"admin"}) // Rollen-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetScenario([]string{"add"}) // Szenario-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetForm(false)             // Nicht im Formular anzeigen
+field.BaseField.SetAddURL(xurl.NewUrlPrefix("/Portal/Tag/AddDialog", "/api")) // "+"-Button: neue Option per Dialog anlegen
 ```
 
 > ⚠️ **`SetAccess`/`SetScenario` erzwingen nichts.** Weder der Export noch das Binding werten sie
@@ -516,3 +517,56 @@ Ein Patch für ein Feld ohne `ReloadOn` oder mit einer anderen `reloadUrl` wird 
   nicht auf ein Feld aus Schritt 1 reagieren.
 - **Ketten funktionieren, Zyklen laufen leer.** Hängt C an B und wird B durch einen Patch geleert,
   lädt C nach. Das terminiert, weil ein Patch nur Werte verwirft.
+
+## Neue Option per Dialog anlegen — `SetAddURL`
+
+Zeigt neben einem `SelectField`, `ModelListField`, `ModelField` oder `ChipsField` einen „＋“-Button.
+Klick öffnet einen Formular-Dialog vom Server; nach dem Speichern hängt das Frontend die neue Option
+an die Liste und selektiert sie (bei Mehrfachwerten zusätzlich zu den bestehenden).
+
+```go
+tags := field.NewModelListField("tags", "Tags", false, "Tag", nil)
+tags.BaseField.SetAddURL(xurl.NewUrlPrefix("/Portal/Tag/AddDialog", "/api"))
+```
+
+Handler — GET liefert den Dialog, POST legt an und meldet die neue Option zurück:
+
+```go
+// GET
+func (c *Controller) TagAddDialog(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    nameF := field.NewTextField("name", "Name", true, "")
+    fields, err := formbuilder.NewFormBuilder(wc.UiContext()).AddField(nameF).BuildAddForDisplay()
+    if err != nil { return wc.InternalServerError(err.Error()) }
+    header := "Neuer Tag"
+    return wc.Component(dialog.NewDialogForm(fields, c.apiUrl("tag-add-dialog"), &header, nil, nil, nil))
+}
+
+// POST
+func (c *Controller) TagAddDialogSubmit(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    nameF := field.NewTextField("name", "Name", true, "")
+    fg, _, _ := formbuilder.NewFormBuilder(wc.UiContext()).AddField(nameF).BuildAdd()
+    if err := formbuilder.BindAndValidate(ctx, fg); err != nil { return wc.BadRequest(err.Error()) }
+
+    tag := &entities.Tag{Name: *nameF.Value}
+    if err := c.svc.DB.Tag.Create(ctx.Request().Context(), tag); err != nil {
+        return wc.InternalServerError(err.Error())
+    }
+    return wc.Component(response.NewReturnDone().
+        WithCreated(tag.ID, tag.Name).
+        WithMessage("Angelegt", response.MessageSuccess))
+}
+```
+
+Regeln und Grenzen:
+
+- **`id` muss denselben JSON-Typ haben wie die vorhandenen Options-IDs** (Zahl bei `ModelListField`,
+  `ModelField`, `ChipsField`). Chips lösen Labels nur für numerische IDs auf.
+- **Das Hauptformular validiert beim Submit gegen seine eigene Optionsliste.** Die neue Entität muss
+  dort enthalten sein — bei aus der DB geladenen Listen ist das automatisch der Fall, bei statischen
+  `SelectOption`-Listen nicht.
+- `ModelListField` mit `URL` lädt den Baum nach dem Anlegen selbst neu; der Server muss die Entität
+  dann sofort liefern.
+- Ein späterer `SetReloadOn`-Patch ersetzt die Liste; liefert der Server die neue Option nicht mit,
+  wird der Wert verworfen.

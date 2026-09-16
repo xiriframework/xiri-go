@@ -101,6 +101,9 @@ type BaseField struct {
 	ReloadOn  []string
 	ReloadURL string
 
+	// Dialog endpoint of the "+" button next to the field for creating a new option. Set via SetAddURL.
+	AddURL string
+
 	// Advanced options
 	Access   []string // Access control permissions (nil = no restriction)
 	Scenario []string // Which scenarios this field applies to (nil = all scenarios)
@@ -175,6 +178,10 @@ func (f *BaseField) GetBaseExport(ctx *core.UiContext, value interface{}) map[st
 	if len(f.ReloadOn) > 0 && f.ReloadURL != "" {
 		result["reloadOn"] = f.ReloadOn
 		result["reloadUrl"] = f.ReloadURL
+	}
+
+	if f.AddURL != "" {
+		result["addUrl"] = f.AddURL
 	}
 
 	return result
@@ -263,6 +270,26 @@ func (f *BaseField) SetReloadOn(reloadURL *url.Url, fields ...string) *BaseField
 	}
 	f.ReloadOn = fields
 	f.ReloadURL = reloadURL.PrintPrefix()
+	return f
+}
+
+// SetAddURL shows a "+" button next to the field (select, multiselect/treeselect, object/model, chips)
+// that opens a dialog for creating a new option.
+//
+// GET addURL must return a dialog.NewDialogForm; POST addURL must answer
+// response.NewReturnDone().WithCreated(id, name). The frontend appends {id, name} to the option
+// list and selects it (multi-value fields: in addition to the current values). The id must have
+// the same JSON type as the existing option ids (chips: numeric).
+//
+// Example:
+//
+//	tags := field.NewModelListField("tags", "TAGS", false, "Tag", nil)
+//	tags.BaseField.SetAddURL(url.NewUrlPrefix("/Portal/Tag/AddDialog", "/api"))
+func (f *BaseField) SetAddURL(addURL *url.Url) *BaseField {
+	if addURL == nil || addURL.PrintPrefix() == "" {
+		return f
+	}
+	f.AddURL = addURL.PrintPrefix()
 	return f
 }
 

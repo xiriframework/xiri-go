@@ -190,6 +190,13 @@ func (c *Controller) AddDialogSubmit(ctx echo.Context) error {
 
 Der `action: dialog`-Button in der Tabelle (oder PageHeader) zeigt auf `AddDialog`; der Dialog selbst POSTed an `AddDialogSubmit`.
 
+Wurde der Dialog über den „＋“-Button eines Formfelds geöffnet (`field.BaseField.SetAddURL`), antwortet
+der POST stattdessen mit der neuen Option, die das Feld übernimmt und selektiert:
+
+```go
+return wc.Component(response.NewReturnDone().WithCreated(d.ID, d.Name).WithMessage("Gespeichert", response.MessageSuccess))
+```
+
 ## Table-Dialog — Picker-Dialog oder Info-Anzeige
 
 ```go

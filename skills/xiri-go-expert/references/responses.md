@@ -91,6 +91,10 @@ resp := response.NewReturnDone()
 // → {"done": true}
 
 resp := response.NewReturnDone().WithMessage("OK", response.MessageInfo)
+
+// Antwort eines SetAddURL-Dialogs: das Feld hängt {id, name} an seine Liste und selektiert es
+resp := response.NewReturnDone().WithCreated(7, "Neu")
+// → {"done": true, "created": {"id": 7, "name": "Neu"}}
 ```
 
 ### ReturnMessage / NewReturnSuccess / NewReturnError

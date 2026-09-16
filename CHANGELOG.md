@@ -6,6 +6,14 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Added
+
+- **`BaseField.SetAddURL(u)` zeigt neben dem Feld einen „+“-Button, der eine neue Option per Dialog anlegt.**
+  Für `SelectField`, `ModelListField`, `ModelField` und `ChipsField`; exportiert `addUrl`. GET auf die URL
+  liefert einen `dialog.NewDialogForm`, der POST antwortet mit `response.NewReturnDone().WithCreated(id, name)`
+  — das Frontend hängt `{id, name}` an die Optionsliste und selektiert die Option (bei Mehrfachwerten
+  zusätzlich zu den bestehenden). `id` muss den JSON-Typ der vorhandenen Options-IDs haben.
+  Wirkung erst mit `@xiriframework/xiri-ng >= 0.4.11`; ältere Frontends ignorieren `addUrl`.
 
 ## [0.3.10]
 ### Added
