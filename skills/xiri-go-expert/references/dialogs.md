@@ -6,14 +6,14 @@
 
 ```go
 type Dialog interface {
-    core.Component
+    Print(ctx *core.UiContext) map[string]any
     WithExtra(extra map[string]any) Dialog
     WithOptions(options map[string]any) Dialog
     WithOption(key string, value any) Dialog
+    WithSize(size Size) Dialog
     WithData(payload map[string]any) Dialog
     WithTableHeader() Dialog
     SetButtons(buttons []*button.Button) Dialog
-    Print(ctx *core.UiContext) map[string]any
 }
 ```
 
@@ -239,27 +239,11 @@ func (c *Controller) Info(ctx echo.Context) error {
 }
 ```
 
-### Beispiel: Picker-Dialog (User wählt Zeile)
+### Kein Picker-Dialog
 
-Der Table-Dialog rendert — wenn der Frontend-Button in einer Zeile ein `FieldButtonActionClose` (oder `Save`) hat — beim Klick den Row-Wert zurück in das Parent-Form.
-
-```go
-// Picker: User wählt Device aus der Liste
-b := table.NewBuilder[Device]()
-b.IdField("id", "ID", func(r Device) int64 { return r.ID })
-b.TextField("name", "Name", func(r Device) string { return r.Name })
-b.ButtonsField("select", "", func(r Device) map[string]string {
-    return map[string]string{"0": strconv.FormatInt(r.ID, 10)}
-}).AddButton(0, table.FieldButtonActionSave, "check", core.ColorPrimary, "Wählen")
-
-tbl := b.Build()
-tbl.SetData(c.svc.DB.Device.AllActive())
-
-dlg := dialog.NewDialogTable("Gerät wählen", tbl).WithOption("size", "lg")
-return wc.Component(dlg)
-```
-
-Der Frontend-Flow: User klickt in der Zeile, `select`-Button liefert den Wert (`r.ID`) zurück an das Form, das den Dialog geöffnet hat.
+Der Table-Dialog ist im Frontend **reine Anzeige**: `xiri-raw-table` rendert keine Buttons und liefert
+keinen Wert zurück. Einen „Zeile wählen und ins Parent-Form übernehmen"-Flow gibt es nicht — dafür
+`ModelField`/`ModelListField` (Select mit Options/URL) oder `SetAddURL` (siehe form-fields.md) verwenden.
 
 ## Component-Dialog — beliebige Komponente im Dialog
 
@@ -329,7 +313,7 @@ dialog.NewDialogWaitingError(message)     // {"done": true, "error": ...}
 
 ```
 1. Button klickt → Controller.StartImport
-      returns NewDialogWaiting("Importiere...", /api/import/status, 2000, ...)
+      returns NewDialogWaiting("Importiere...", pollUrl, "Import", 2000, nil, nil)
       Frontend öffnet Dialog + startet Polling
 
 2. Polling → Controller.ImportStatus
@@ -398,16 +382,17 @@ b.SetSelectButtons([]*button.TableButton{
     ),
 })
 
-// Handler: GET = Dialog öffnen, POST = wirklich löschen
+// Handler: beide Schritte kommen als POST auf dieselbe URL.
+//   1. Select-Button der Tabelle: POST {"data":[ids]}              → Dialog öffnen
+//   2. OK im Dialog:              POST {"data":[ids],"done":true}  → wirklich löschen
+// ExtractMultiSelectRequest unterscheidet über den "done"-Key (isDialogOpen).
 func (c *Controller) BulkDeleteConfirm(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
 
-    if ctx.Request().Method == "GET" {
-        // Die Frontend-Buttonline hängt die IDs im POST-Body an.
-        // Hier lesen wir sie aus, um sie im Dialog-Extra wieder mitzuschicken.
-        ids, _, _, err := dialog.ExtractMultiSelectRequest(ctx)
-        if err != nil { return wc.BadRequest(err.Error()) }
+    ids, _, isDialogOpen, err := dialog.ExtractMultiSelectRequest(ctx)
+    if err != nil { return wc.BadRequest(err.Error()) }
 
+    if isDialogOpen {
         dlg := dialog.NewDialogFormMultiDelete(
             c.apiUrl("bulk-delete-confirm"),  // POST-Target (selbe URL)
             ids,
@@ -417,10 +402,7 @@ func (c *Controller) BulkDeleteConfirm(ctx echo.Context) error {
         return wc.Component(dlg)
     }
 
-    // POST: Bulk-Delete ausführen
-    ids, _, _, err := dialog.ExtractMultiSelectRequest(ctx)
-    if err != nil { return wc.BadRequest(err.Error()) }
-
+    // Submit: Bulk-Delete ausführen
     if err := c.svc.DB.Device.DeleteMany(ctx.Request().Context(), ids); err != nil {
         return wc.InternalServerError(err.Error())
     }
@@ -433,14 +415,16 @@ func (c *Controller) BulkDeleteConfirm(ctx echo.Context) error {
 
 ```go
 func dialog.ExtractMultiSelectRequest(c echo.Context) (
-    ids      []int64,
-    extra    map[string]interface{},
-    hasExtra bool,
-    err      error,
+    ids          []int64,
+    body         map[string]interface{}, // kompletter Request-Body
+    isDialogOpen bool,                   // true = kein "done"-Key → Schritt 1 (Dialog öffnen)
+    err          error,
 )
 ```
 
-Parst die IDs aus dem Request-Body (unterstützt mehrere Payload-Formate, die das Frontend schickt) — bequemer als manuelles `c.Bind(&struct{IDs []int64}{})`.
+Liest die IDs aus `body["data"]` (Zahlen oder numerische Strings, andere Elemente werden übersprungen).
+Fehlt `data`, gibt es einen Fehler. `isDialogOpen` unterscheidet „Dialog öffnen" (Select-Button, ohne `done`)
+vom Submit des Dialogs (mit `done: true`).
 
 ## Dialog-Extras und Options
 
@@ -481,6 +465,6 @@ Custom-Content (z.B. eine Komponente): einfach eine Komponente als `content` an 
 
 - **Form-Dialog: `header` ist `*string`** — nicht `string`. `&header` oder `nil` übergeben.
 - **Waiting-Dialog: URL muss den API-Prefix tragen**, weil Polling-GETs darauf gehen. `xurl.NewUrlPrefix(...)` oder `c.apiUrl(...)`.
-- **MultiDelete ohne `ExtractMultiSelectRequest`**: die IDs im Request kommen in verschiedenen Feldern (`ids`, `data`, `selectedIds`, je nach Button-Action). Der Extractor glättet das.
-- **`NewDialogFormMultiDelete` POST-URL = selbe GET-URL**: Der Delete-Dialog POSTed beim OK wieder an die URL, die im Button als `action: dialog` definiert wurde. Deshalb dieselbe URL — Controller unterscheidet via `ctx.Request().Method`.
+- **MultiDelete ohne `ExtractMultiSelectRequest`**: die IDs kommen immer unter `data`, mal als Zahl, mal als String. Der Extractor normalisiert das und liefert `isDialogOpen`.
+- **`NewDialogFormMultiDelete`: Öffnen und Submit sind beide POST auf dieselbe URL.** Der Select-Button schickt `{"data":[ids]}`, das OK im Dialog `{"data":[ids],"done":true}`. Nicht über `ctx.Request().Method` unterscheiden (immer POST), sondern über `isDialogOpen` aus `ExtractMultiSelectRequest`.
 - **Größen:** Nutze `WithSize(dialog.SizeLg)` statt `WithOption("size", "lg")` — typsicher und compile-time-geprüft. Raw CSS-Werte (`"750px"`) funktionieren weiterhin als Escape-Hatch.

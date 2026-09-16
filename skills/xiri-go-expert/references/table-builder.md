@@ -33,11 +33,11 @@ b.FloatField("price", "device.price", func(d Device) float64 { return d.Price })
 b.BoolField("active", "device.active", func(d Device) bool { return d.Active })
 b.BoolNField("flags", "device.flags", func(d Device) []bool { return []bool{d.Flag1, d.Flag2} })
 
-// Datum/Zeit (Unix-Timestamp int64, nil-safe via Pointer)
-b.DateTimeField("created", "device.created", func(d Device) int64 { return d.CreatedAt })
-b.DateTimeNField("times", "device.times", func(d Device) []*int64 { return []*int64{d.T1, d.T2} })
-b.DateField("date", "device.date", func(d Device) int64 { return d.Date })
-b.DateNField("dates", "device.dates", func(d Device) []*int64 { return []*int64{d.D1, d.D2} })
+// Datum/Zeit (time.Time; Zero-Time wird leer gerendert)
+b.DateTimeField("created", "device.created", func(d Device) time.Time { return d.CreatedAt })
+b.DateTimeNField("times", "device.times", func(d Device) []time.Time { return []time.Time{d.T1, d.T2} })
+b.DateField("date", "device.date", func(d Device) time.Time { return d.Date })
+b.DateNField("dates", "device.dates", func(d Device) []time.Time { return []time.Time{d.D1, d.D2} })
 
 // Einheiten (auto-konvertiert je UiContext)
 b.DistanceField("km", "device.distance", func(d Device) float64 { return d.Km })
@@ -45,13 +45,13 @@ b.SpeedField("speed", "device.speed", func(d Device) float64 { return d.Speed })
 b.PressureField("pressure", "device.pressure", func(d Device) float64 { return d.Pressure })
 // Accessor liefert immer bar; Ausgabe je UiContext.Pressure in bar, psi oder kPa
 
-// Dauer (HH:MM oder Xd HH:MM)
-b.TimeLengthField("duration", "device.duration", func(d Device) int { return d.DurationMin })
+// Dauer in Sekunden (HH:MM oder Xd HH:MM; CSV/Excel: Minuten)
+b.TimeLengthField("duration", "device.duration", func(d Device) int64 { return d.DurationSec })
 
-// Buttons (Aktionen pro Zeile)
+// Buttons (Aktionen pro Zeile): Key = Button-Index "0","1",…, Value = URL ("" blendet den Button aus)
 b.ButtonsField("actions", "", func(d Device) map[string]string {
     return map[string]string{
-        "id": fmt.Sprintf("%d", d.ID),
+        "0": fmt.Sprintf("/device/%d/edit", d.ID),
     }
 })
 
@@ -71,10 +71,10 @@ b.HtmlField("badge", "device.badge", func(d Device) string {
 })
 
 // Input (inline editierbar)
-b.InputField("value", "device.value", func(d Device) string { return d.Value })
+b.InputField("value", "device.value", func(d Device) any { return d.Value })
 
 // Header (Abschnitts-Trenner)
-b.HeaderField("section", "Abschnitt")
+b.HeaderField("section", "Abschnitt", func(d Device) string { return d.Section })
 
 // Chips (Status-Tags pro Zelle, kein Inline-Edit)
 // Accessor liefert []table.Chip{Label, Color}. Pro Zelle werden alle Chips
@@ -100,7 +100,7 @@ b.ChipsField("battery", "Battery", func(d Device) []table.Chip {
 b.TextField("name", "device.name", accessor).
     WithWidth("200px").
     WithMinWidth("100px").
-    WithAlign(table.AlignLeft).     // AlignLeft, AlignCenter, AlignRight
+    WithAlign(table.FieldAlignLeft). // FieldAlignLeft/Center/Right — oder .AlignLeft()/.AlignCenter()/.AlignRight()
     WithSort(true).
     WithSearch(true).
     WithSticky(true).               // Fixierte Spalte
@@ -236,10 +236,11 @@ type EditableChipOption struct {
 
 ```go
 b.ButtonsField("actions", "", accessor).
-    AddButton("edit", "edit", "/device/{id}/edit", "", core.ButtonActionDialog, core.ColorPrimary, false).
-    AddButton("delete", "delete", "/device/{id}/delete", "", core.ButtonActionDialog, core.ColorError, false).
-    AddMenuItem("export", "Export CSV", "/device/{id}/export", core.ButtonActionDownload, false)
-// URL-Platzhalter {key} werden aus dem accessor-Map ersetzt
+    AddButton(0, table.FieldButtonActionDialog, "edit",   core.ColorPrimary, "Bearbeiten").
+    AddButton(1, table.FieldButtonActionDialog, "delete", core.ColorError,   "Löschen")
+// AddButton(key int, action table.FieldButtonAction, icon string, color core.Color, hint string)
+// Die URL pro Button liefert der Accessor unter dem Key strconv.Itoa(key); keine Platzhalter-Ersetzung.
+// Menü-Items: table.AddMenu[T](fb, key, ...) + fb.AddMenuItem(action, icon, color, text) — siehe tables.md
 ```
 
 ## Table Options
@@ -265,7 +266,7 @@ b.SetDisplay("xcol-12")
 b.SetMinWidth("800px")
 b.SetScrollHeight("400px")
 b.SetTextNoData("Keine Geräte gefunden")
-b.SetEmptyState("/api/devices/empty")  // URL für EmptyState-Komponente
+b.SetEmptyState(emptystate.New("inbox", core.ColorGray, "Keine Geräte"))  // *emptystate.EmptyState
 
 // Tree-Modus (Einrückung + Expand/Collapse; Zeilen bleiben flach, Baum aus id/parentId)
 b.Tree(table.TreeConfig{
@@ -279,13 +280,13 @@ b.TreeAddSubWhen(func(r Device) bool { return r.AllowsChildren }) // optional: "
 
 // Select-Buttons (Multi-Select Actions)
 b.SetSelect(true)
-b.AddMultiEditButton("edit", "Bearbeiten", "/api/devices/multi-edit")
-b.AddMultiDeleteButton("delete", "Löschen", "/api/devices/multi-delete")
-b.AddMultiEditAndDeleteButtons(editBtn, deleteBtn)
+b.AddMultiEditButton("/api/devices/multi-edit")       // dialog + "edit" + primary + "BEARBEITEN"
+b.AddMultiDeleteButton("/api/devices/multi-delete")   // dialog + "delete" + warn + "LOESCHEN"
+b.AddMultiEditAndDeleteButtons("/api/devices/multi-edit", "/api/devices/multi-delete")
 
 // Top Buttons
-b.SetButtonsTop([]*button.Button{
-    button.NewSimpleDialogButton("add", "/api/devices/add", core.ColorPrimary),
+b.SetButtonsTop([]*button.TableButton{
+    button.NewTableButton(core.ButtonActionDialog, "add", xurl.NewUrl("/api/devices/add"), "Neu", core.ColorPrimary, false, nil),
 })
 ```
 
@@ -305,10 +306,7 @@ b.SetFlags("search")  // UI-only Filter-Felder (nicht an DB gesendet)
 ## Build & Verwenden
 
 ```go
-t, err := b.Build()
-if err != nil {
-    return err
-}
+t := b.Build()   // *Table[Device]; Konfigurationsfehler werden per slog.Warn gemeldet
 ```
 
 ### Statische Daten
@@ -325,9 +323,9 @@ func HandleDeviceTable(c echo.Context) error {
     ctx := getUiContext(c)
     t := buildDeviceTable()
 
-    // gibt (map[string]any, error) zurück; hier werden die Werte unten über
-    // GetFilterValues() gelesen, der Fehler darf aber nicht verworfen werden
-    if _, err := t.LoadFilterData(c); err != nil {
+    // gibt (map[string]any, error) zurück — die geparsten Filterwerte
+    filters, err := t.LoadFilterData(c)
+    if err != nil {
         return c.JSON(http.StatusBadRequest, response.NewErrorResponse(err.Error()))
     }
 
@@ -345,11 +343,8 @@ func HandleDeviceTable(c echo.Context) error {
     }
 
     // Filter-Werte auslesen
-    if t.HasFilter() {
-        filterValues := t.GetFilterValues()
-        if status, ok := filterValues["status"]; ok && status != nil {
-            query = query.Where("status = ?", status)
-        }
+    if status, ok := filters["status"]; ok && status != nil {
+        query = query.Where("status = ?", status)
     }
 
     var totalCount int64
@@ -363,7 +358,8 @@ func HandleDeviceTable(c echo.Context) error {
     query.Offset(pp.Page * pp.PageSize).Limit(pp.PageSize).Find(&devices)
 
     t.SetData(devices)
-    return t.ToServerSideResponse(ctx, int(totalCount)).DataResponse().Send(c)
+    res := t.ToServerSideResponse(ctx, int(totalCount)).DataResponse(ctx) // response.DataResult{Type, Body}
+    return c.JSON(http.StatusOK, res.Body)
 }
 ```
 
@@ -374,12 +370,12 @@ func HandleDevicePage(c echo.Context) error {
     ctx := getUiContext(c)
     t := buildDeviceTable()
 
-    card := card.NewCard(core.CardTypeTable, t, "devices.list", "", "", "", true, false, "")
-    card.SetURL("/api/devices/table")  // AJAX-Modus
-    card.ButtonTop(button.NewSimpleDialogButton("add", "/api/devices/add-dialog", core.ColorPrimary))
+    card := card.NewCard(core.CardTypeTable, t, "devices.list", nil, nil, nil, true, false, nil)
+    card.SetURL(xurl.NewUrl("/api/devices/table"))  // AJAX-Modus
+    card.ButtonTop(button.NewSimpleDialogButton("add", xurl.NewUrl("/api/devices/add-dialog"), core.ColorPrimary))
 
     p := page.NewPage()
-    p.Bread("Geräte", "", false)
+    p.Bread("Geräte", nil, false)
     p.Add(card)
     return c.JSON(http.StatusOK, p.Print(ctx))
 }
@@ -391,9 +387,10 @@ func HandleDevicePage(c echo.Context) error {
 var statusIcons = table.NewIconSet()
 
 var (
-    IconOnline  = statusIcons.Add("check_circle", core.ColorSuccess, "Online", nil)
-    IconOffline = statusIcons.Add("cancel", core.ColorError, "Offline", nil)
-    IconUnknown = statusIcons.Add("help", core.ColorGray, "Unbekannt", nil)
+    // Add(value, icon string, color core.Color, hint string) *IconRef — mit Extra-Options: AddWithOptions(..., opts)
+    IconOnline  = statusIcons.Add("online", "check_circle", core.ColorSuccess, "Online")
+    IconOffline = statusIcons.Add("offline", "cancel", core.ColorError, "Offline")
+    IconUnknown = statusIcons.Add("unknown", "help", core.ColorGray, "Unbekannt")
 )
 
 // Verwendung im Field:
@@ -421,11 +418,11 @@ Wenn `Csv: &true` / `Excel: &true` in den Tabellen-Optionen gesetzt ist und die 
 ## Response-Methoden
 
 ```go
-// Server-Side mit Pagination
-t.ToServerSideResponse(ctx, totalCount).DataResponse().Send(c)
+// Server-Side mit Pagination — DataResponse(ctx) liefert response.DataResult{Type, Body}, kein Send()
+t.ToServerSideResponse(ctx, totalCount).DataResponse(ctx)
 
-// Vollständige Response (mit Fields, Footer, Components)
-t.ToTableDataResponse(ctx).WithFooter().WithTotalCount(total).DataResponse().Send(c)
+// Vollständige Response (Fields bei SetFieldsCanChange, Footer und Components automatisch)
+t.ToTableDataResponse(ctx).WithTotalCount(total).DataResponse(ctx)
 
 // Direkt als Komponente (statisch)
 t.Print(ctx)  // map[string]any für Einbettung in Page/Card

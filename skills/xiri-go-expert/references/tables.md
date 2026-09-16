@@ -30,29 +30,31 @@ Der Builder (`TableBuilder[T]`) konfiguriert Struktur und Options; `Build()` gib
 
 ## Spalten-Typen — vollständige Liste
 
-Alle Field-Konstruktoren haben die **gleiche Signatur**: `(id, name string, accessor func(T) <Typ>) *FieldBuilder`. Der zurückgegebene `*FieldBuilder` erlaubt Chaining für Modifier (siehe unten).
+Alle Field-Konstruktoren haben die **gleiche Signatur**: `(id, name string, accessor func(T) <Typ>) *FieldBuilder` (Ausnahme: `IconFieldFromSet` hat zusätzlich `iconSet *table.IconSet` als 4. Parameter). Der zurückgegebene `*FieldBuilder` erlaubt Chaining für Modifier (siehe unten).
 
 ### Skalar-Typen
 
 | Methode                                | Accessor-Rückgabe | Rendering                              |
 | -------------------------------------- | ----------------- | -------------------------------------- |
-| `IdField`                              | `int64`           | ID-Spalte (klein, grau)                |
+| `IdField`                              | `int64`           | nicht sichtbar; liefert `row.id` für Selection/Inline-Edit/Tree |
 | `IntField`                             | `int`             | Zahl, locale-formatiert                |
 | `Int32Field`                           | `int32`           | wie IntField                           |
 | `Int64Field`                           | `int64`           | wie IntField                           |
 | `FloatField`                           | `float64`         | Zahl mit Dezimalen                     |
 | `TextField`                            | `string`          | Text                                   |
-| `BoolField`                            | `bool`            | ✓/✗ oder `WithBoolText`-Override       |
+| `BoolField`                            | `bool`            | Text `true`/`false`; praktisch immer `WithBoolText` setzen |
 | `DateTimeField`                        | `time.Time`       | Datum + Zeit (via UiContext-Locale)    |
 | `DateField`                            | `time.Time`       | Nur Datum                              |
-| `TimeLengthField`                      | `int64` (Sekunden)| Dauer z.B. "2h 15min"                  |
-| `DistanceField`                        | `float64` (m)     | Distanz (km/mi je nach UiContext)      |
-| `SpeedField`                           | `float64` (m/s)   | Geschwindigkeit                        |
+| `TimeLengthField`                      | `int64` (Sekunden)| Dauer "HH:MM" bzw. "Xd HH:MM" (CSV/Excel: Minuten) |
+| `DistanceField`                        | `float64` (km)    | Distanz (km/mi je nach UiContext)      |
+| `SpeedField`                           | `float64` (km/h)  | Geschwindigkeit (km/h, mph, kn je UiContext) |
 | `PressureField`                        | `float64` (bar)   | Druck, konvertiert nach bar/psi/kPa je UiContext |
 | `HtmlField`                            | `string`          | RAW HTML (keine Escape-Logik!)         |
 | `HeaderField`                          | `string`          | Gruppierungs-Header in der Zeile       |
 
 ### Text2-Typen (zwei Werte übereinander in einer Zelle)
+
+> **Deprecated** — alle `Text2*Field` sind im Code als deprecated markiert; stattdessen die N-Typen (`TextNField`, `IntNField`, …) verwenden.
 
 Für "main value + sub value" in einer Spalte (typischer UI-Pattern: grosser Wert + kleiner Untertitel):
 
@@ -145,7 +147,7 @@ b.TextField("name", "Name", accessor).
 
 ```go
 b.TextField("name", "Name", accessor).
-    WithSort(true).       // Server-Side-Sort aktivieren (Default: true wenn indexbar)
+    WithSort(true).       // Spalte sortierbar (Default: true außer Buttons/Header/Chips)
     WithSearch(true)      // ist im pg.Search-Scope
 ```
 
@@ -176,7 +178,7 @@ b.TextField("status", "Status", accessor).
     WithPDFFormatter(myPDFFormatter)
 
 b.BoolField("active", "Aktiv", accessor).
-    WithBoolText("Ja", "Nein")                                // Default: ✓/✗
+    WithBoolText("Ja", "Nein")                                // Default: "true"/"false"
 ```
 
 ### Footer-Aggregation
@@ -285,15 +287,16 @@ Für Table-Top-/Bulk-Buttons heißt das Pendant `TableButton.WithTarget("_blank"
 | --------------------------------- | ------------------------------------------------------ |
 | `FieldButtonActionLink`           | Angular-Route (`routerLink`)                           |
 | `FieldButtonActionHref`           | `<a href>` (externer Link)                             |
-| `FieldButtonActionApi`            | POST, keine Response-Action                            |
-| `FieldButtonActionDialog`         | POST → MatDialog öffnen mit Response                   |
-| `FieldButtonActionForm`           | POST → öffnet Form-Dialog                              |
+| `FieldButtonActionApi`            | GET auf die Zeilen-URL, Response wird ausgewertet (done/refresh/goto) |
+| `FieldButtonActionDialog`         | MatDialog öffnen, Inhalt von der Zeilen-URL            |
 | `FieldButtonActionDownload`       | POST → Blob-Download (mit `WithButtonTarget(key, "_blank")` im Tab anzeigen) |
-| `FieldButtonActionGet/Post/Put/Delete` | Entsprechende HTTP-Methode                         |
-| `FieldButtonActionSave` / `Close` / `Back` | Spezielle Flow-Actions                         |
+| `FieldButtonActionSave`           | POST der per `send` benannten Zeilenfelder             |
 | `FieldButtonActionMenu`           | Öffnet Menü mit weiteren Items (siehe unten)           |
+| `FieldButtonActionForm` / `Get` / `Post` / `Put` / `Delete` / `Close` / `Back` | im Table-Frontend nicht gerendert |
 
 ### Mit Row-Hint (Tooltip pro Zeile)
+
+> Go emittiert dafür `<fieldId>Hint` in den Row-Daten; das xiri-ng-Frontend wertet diesen Key derzeit **nicht** aus (kein Tooltip-Effekt).
 
 ```go
 b.ButtonsField("actions", "", accessor).
@@ -311,26 +314,41 @@ Wenn mehr als 2-3 Actions pro Zeile: Menü einklappen.
 
 ```go
 fb := b.ButtonsField("menu", "", func(r Device) map[string]string {
-    return map[string]string{
-        "0": c.pageUrl("detail", strconv.FormatInt(r.ID, 10)).Print(),
-    }
-}).AddButton(0, table.FieldButtonActionMenu, "more_vert", core.ColorPrimary, "Aktionen")
+    return map[string]string{} // Menü-URLs kommen aus dem AddMenu-Accessor
+})
 
-fb.AddMenuItem(table.FieldButtonActionLink,   "edit",   core.ColorPrimary, "Bearbeiten")
-fb.AddMenuItem(table.FieldButtonActionDialog, "delete", core.ColorWarning, "Löschen")
-fb.AddMenuItem(table.FieldButtonActionApi,    "archive",core.ColorAccent,  "Archivieren")
+// Menü-Button anlegen; der Accessor liefert pro AddMenuItem (positional) die URL
+table.AddMenu[Device](fb, 0, "more_vert", core.ColorPrimary, "Aktionen",
+    func(r Device) []string {
+        id := strconv.FormatInt(r.ID, 10)
+        return []string{
+            c.pageUrl("edit", id).Print(),
+            c.apiUrl("delete", id).PrintPrefix(),
+            c.pageUrl("archive", id).Print(),
+        }
+    })
+
+fb.AddMenuItem(table.FieldButtonActionLink,   "edit",    core.ColorPrimary, "Bearbeiten")
+fb.AddMenuItem(table.FieldButtonActionDialog, "delete",  core.ColorWarning, "Löschen")
+fb.AddMenuItem(table.FieldButtonActionHref,   "archive", core.ColorAccent,  "Archivieren")
 ```
+
+`AddMenuItem` hängt an dem zuletzt per `table.AddMenu[T]` angelegten Button — ein `AddButton(..., FieldButtonActionMenu, ...)`
+allein reicht nicht (das Frontend erwartet pro Menü ein Array `row[fieldId][i][j]`). Menü-Items kennt das Frontend nur
+für `FieldButtonActionLink`, `Href` und `Dialog`.
 
 ### AddMenu mit Row-abhängigen Items
 
 ```go
-// Items sind pro Zeile unterschiedlich (z.B. nur bei Online-Geräten zeigen)
+// Accessor-Element j = URL für das j-te AddMenuItem; "" blendet das Item aus, nil den ganzen Button
 table.AddMenu[Device](fb, 0, "more_vert", core.ColorPrimary, "Aktionen",
     func(r Device) []string {
+        id := strconv.FormatInt(r.ID, 10)
+        restart := ""
         if r.Online {
-            return []string{"restart", "shutdown"}
+            restart = c.apiUrl("restart", id).PrintPrefix()
         }
-        return []string{"start"}
+        return []string{c.pageUrl("edit", id).Print(), restart}
     })
 ```
 
@@ -365,7 +383,7 @@ Im Gegensatz zu `pageheader.New(...).Buttons(...)` erscheinen Top-Buttons **dire
 
 ## Select Buttons (Bulk-Actions über Row-Selection)
 
-Bulk-Actions werden **unten** (je nach Frontend-Config auch oben) angezeigt, sobald mindestens eine Zeile selektiert wurde. `SetSelectButtons` aktiviert **automatisch** die Row-Checkbox-Spalte — man muss `SetSelect(true)` nicht extra aufrufen.
+Bulk-Actions (`SetSelectButtons`) werden **unten** angezeigt, sobald mindestens eine Zeile selektiert wurde (die neuere `b.BulkActions(...)`-Leiste erscheint oben und sendet `{ids, mode, count}`). `SetSelectButtons` aktiviert **automatisch** die Row-Checkbox-Spalte — man muss `SetSelect(true)` nicht extra aufrufen.
 
 ```go
 b.SetSelectButtons([]*button.TableButton{
@@ -405,13 +423,13 @@ b.AddMultiEditAndDeleteButtons(editUrl, deleteUrl)
 
 ### Bulk-Handler im Controller
 
-Das Frontend sendet bei Button-Click ein Array von IDs. Beispiel-Handler:
+Das Frontend sendet bei Button-Click `{"data": [ids]}` (bei `b.BulkActions(...)` dagegen `{"ids": [...], "mode", "count"}`). Beispiel-Handler:
 
 ```go
 func (c *Controller) BulkDelete(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
     var req struct {
-        IDs []int64 `json:"ids"`
+        IDs []int64 `json:"data"`
     }
     if err := ctx.Bind(&req); err != nil {
         return wc.BadRequest(err.Error())
@@ -445,12 +463,12 @@ b.SetReload(true)           // manueller Reload-Button (Icon in der Toolbar)
 b.SetDense(true)            // Legacy: Alias für DensityCompact, kann kein "relaxed"
 b.SetPagination(true)
 b.SetSearch(true)
-b.SetQuery(false)           // Filter-Panel oben automatisch
+b.SetQuery(false)           // landet nur als "query" im JSON; das Frontend wertet es nicht aus
 b.SetFilterCollapsed(true)  // wrappt SetFilter in ein Expansion-Panel; true = eingeklappt starten,
                             // false = aufgeklappt, gar nicht gesetzt = kein Panel (siehe table-filtering.md)
 b.SetCsv(true)              // CSV-Export-Button verfügbar
 b.SetExcel(true)            // Excel-Export
-b.SetSaveState(true)        // Filter/Sort/Page persistieren im LocalStorage
+b.SetSaveState(true)        // Filter/Sort/Page persistieren (Session-Storage, 1 h; nur zusammen mit SetSaveStateId)
 b.SetSaveStateId("device-table")
 b.SetBorders(true)
 b.SetBordersHeader(true)
@@ -502,19 +520,19 @@ setzen. Bei einer Tabelle mit `SetURL` bleibt die Leiste wegen der Stand-Anzeige
 
 Beispiel mit Panel drumherum: `references/components.md`, Abschnitt „Tabelle als Panel-Inhalt".
 
-Fast alle Setter geben `*TableBuilder[T]` zurück, d.h. man kann alles in einer Chain hängen:
+Fast alle Table-Setter geben `*TableBuilder[T]` zurück (Field-Konstruktoren dagegen `*FieldBuilder`), d.h. Table-Setter kann man in einer Chain hängen:
 
 ```go
-tbl := table.NewBuilder[Device]().
+b := table.NewBuilder[Device]().
     SetTitle("Geräte").
     SetServerSide(true).
     SetSaveState(true).
     SetSaveStateId("devices").
-    IdField("id", "ID", func(r Device) int64 { return r.ID }).
-    TextField("name", "Name", func(r Device) string { return r.Name }).WithSticky(true).
     SetButtonsTop(topButtons).
-    SetSelectButtons(bulkButtons).
-    Build()
+    SetSelectButtons(bulkButtons)
+b.IdField("id", "ID", func(r Device) int64 { return r.ID })
+b.TextField("name", "Name", func(r Device) string { return r.Name }).WithSticky(true)
+tbl := b.Build()
 ```
 
 ## Auto-Refresh (Polling während Background-Worker)
@@ -608,8 +626,7 @@ func (c *Controller) Data(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
     uc := wc.UiContext()
 
-    tbl := c.buildTable(uc)
-    tbl.SetFilter(c.buildFilterGroup(uc))      // Filter-FormGroup attachen
+    tbl := c.buildTable(uc)                    // buildTable ruft b.SetFilter(c.buildFilterGroup(uc)) am Builder vor Build() auf
 
     filters, err := tbl.LoadFilterData(ctx)
     if err != nil { return wc.BadRequest(err.Error()) }
@@ -619,8 +636,7 @@ func (c *Controller) Data(ctx echo.Context) error {
     if err != nil { return wc.InternalServerError(err.Error()) }
 
     tbl.SetData(rows)
-    tbl.SetTotal(int(total))
-    return wc.Data(tbl)
+    return wc.Data(tbl.ToServerSideResponse(uc, int(total)))
 }
 ```
 
@@ -664,7 +680,7 @@ tbl.HideFields("foo", "bar")
 tbl.ShowFields("foo", "bar")
 ```
 
-Wenn die Field-Liste abhängig vom Request variieren muss (z.B. Role-Based-Columns), kann man `b.SetFieldsCanChange()` setzen — dann wird das Field-Export nicht gecached.
+Wenn die Field-Liste abhängig vom Request variieren muss (z.B. Role-Based-Columns), kann man `b.SetFieldsCanChange()` setzen — dann werden die Feld-Definitionen (`fields`) in jeder Data-Response mitgeschickt.
 
 ## Flags — UI-State, der nicht als Filter zählt
 
@@ -672,7 +688,7 @@ Wenn die Field-Liste abhängig vom Request variieren muss (z.B. Role-Based-Colum
 b.SetFlags("_viewMode", "_showArchived")
 ```
 
-Keys die im Request-Body als Flags erkannt werden, landen **nicht** in der Filter-Map (`LoadFilterData`-Return). Sie bleiben aber in `tbl.GetFilterData()` — du kannst sie separat abfragen:
+Keys die im Request-Body als Flags erkannt werden, verwirft `LoadFilterData` komplett — sie landen weder in der Filter-Map (`LoadFilterData`-Return) noch in `tbl.GetFilterData()`. Wer den Wert braucht, deklariert den Key **nicht** als Flag: dann steht er (bei gesetztem Filter) im Roh-Body `tbl.GetFilterData()` und wird von `ParseAndValidate` ignoriert:
 
 ```go
 raw := tbl.GetFilterData()
@@ -776,5 +792,5 @@ Table-Builder nutzt dann `TextField` für `GroupName` / `OwnerName` — keine In
 - **Inline-Edit-URL:** `SetEditUrl` nimmt einen `string` (nicht `*xurl.Url`) — hier explizit `c.apiUrl("inline").PrintPrefix()` übergeben.
 - **Filter + Multi-Select:** `NewSelectField(..., options).SetMultiple(true)`. Es gibt **kein** `NewMultiSelectField`. Optional `.SetSelectAll(true)` für einen „Alle / Keine“-Toggle im Dropdown.
 - **SelectButtons aktivieren Select automatisch** — `SetSelect(true)` ist redundant nach `SetSelectButtons(...)`.
-- **`SetServerSide(true)` ohne `SetTotal` ergibt falsche Pagination.** Immer Total aus der DB-Query mitschicken.
+- **`SetServerSide(true)` ohne `ToServerSideResponse(uc, total)` / `WithTotalCount` ergibt falsche Pagination.** Immer Total aus der DB-Query mitschicken.
 - **`WithEditableOptionsUrl` erwartet eine JSON-Response-Struktur** der Form `[{value, label, color?}]` — das Backend muss die Options als Liste liefern, nicht als Map.

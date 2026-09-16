@@ -15,9 +15,8 @@ func (c *Controller) Page(ctx echo.Context) error {
     uc := wc.UiContext()
 
     fg := c.buildFilterGroup(uc)
-    tbl := c.buildTable(uc)
+    tbl := c.buildTable(uc)          // buildTable ruft b.SetFilter(fg) am Builder auf (nur dort verfügbar)
     tbl.SetURL(c.apiUrl("data"))
-    tbl.SetFilter(fg)
 
     q := query.NewQueryWithFormGroup(fg, nil, c.apiUrl("data"), nil, nil, nil).
         WithSaveStateId("devices.filter").
@@ -28,7 +27,7 @@ func (c *Controller) Page(ctx echo.Context) error {
     p.Bread("Devices", c.pageUrl(), false)
 
     addBtn := button.NewLinkButton("Neu", c.pageUrl("add"),
-        core.ColorPrimary, core.ButtonTypeRaised, "add", false, nil, nil)
+        core.ColorPrimary, core.ButtonTypeRaised, "", false, nil, nil)   // 5. Arg = hint, kein Icon
     buttons := button.NewButtonLine("", nil)
     buttons.Add(addBtn)
     p.Add(pageheader.New("Geräte").Buttons(buttons))
@@ -40,8 +39,7 @@ func (c *Controller) Page(ctx echo.Context) error {
 // ---------- Data ----------
 func (c *Controller) Data(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
-    tbl := c.buildTable(wc.UiContext())
-    tbl.SetFilter(c.buildFilterGroup(wc.UiContext()))
+    tbl := c.buildTable(wc.UiContext())   // Filter-FormGroup setzt buildTable via Builder.SetFilter
 
     filters, err := tbl.LoadFilterData(ctx)
     if err != nil { return wc.BadRequest(err.Error()) }
@@ -51,8 +49,8 @@ func (c *Controller) Data(ctx echo.Context) error {
     if err != nil { return wc.InternalServerError(err.Error()) }
 
     tbl.SetData(rows)
-    tbl.SetTotal(int(total))      // für Server-Side-Pagination
-    return wc.Data(tbl)
+    // Server-Side-Pagination: totalCount kommt über ToServerSideResponse (kein SetTotal)
+    return wc.Data(tbl.ToServerSideResponse(wc.UiContext(), int(total)))
 }
 
 // ---------- Add ----------
@@ -198,14 +196,13 @@ func (c *Controller) Dashboard(ctx echo.Context) error {
     sg := statgrid.New().Title("Übersicht").Columns(4)
     sg.Add(stat.New(strconv.Itoa(c.svc.CountDevices()), "Geräte").Icon("router"))
     sg.Add(stat.New(strconv.Itoa(c.svc.CountActive()), "Aktiv").
-        Icon("check_circle").IconColor(core.ColorSuccess))
+        Icon("check_circle").IconColor(string(core.ColorSuccess)))
     sg.Add(stat.New(strconv.Itoa(c.svc.CountErrors()), "Fehler").
-        Icon("error").IconColor(core.ColorError))
+        Icon("error").IconColor(string(core.ColorError)))
 
     // Jüngste Geräte als Card-Tabelle
-    recent := c.buildTable(uc)
+    recent := c.buildTable(uc)          // Titel im Builder: b.SetTitle("Zuletzt geändert") (nur dort verfügbar)
     recent.SetData(c.svc.RecentDevices(10))
-    recent.SetTitle("Zuletzt geändert")
 
     p := page.NewPage()
     p.Add(pageheader.New("Dashboard").Icon("dashboard", core.ColorPrimary))
@@ -234,11 +231,11 @@ func (c *Controller) WizardPage(ctx echo.Context) error {
     step3Fields, _ := fb3.BuildAddForDisplay()
 
     s, err := stepper.NewStepper(
-        c.apiUrl("wizard", "save").PrintPrefix(),
+        c.apiUrl("wizard", "save"),                       // *xurl.Url
         3,
         []string{"Person", "Adresse", "Bestätigung"},
-        []stepper.StepFields{step1Fields, step2Fields, step3Fields},
-        "Zurück", "Weiter", "Fertig", "",
+        [][]map[string]any{step1Fields, step2Fields, step3Fields},
+        "Zurück", "Weiter", "Fertig", nil,                // display *string
     )
     if err != nil { return wc.InternalServerError(err.Error()) }
 
@@ -251,7 +248,7 @@ func (c *Controller) WizardPage(ctx echo.Context) error {
 
 ## 5a. MassDelete — Bulk-Delete via Confirm-Dialog
 
-Der klassische Flow: User selektiert Zeilen → klickt "Löschen" → Confirm-Dialog → POST löscht alle. Zwei Handler (GET = Dialog, POST = Delete), **gleiche URL**.
+Der klassische Flow: User selektiert Zeilen → klickt "Löschen" → Confirm-Dialog → POST löscht alle. **Beide Schritte sind POST** auf dieselbe URL (das Frontend öffnet den Dialog mit `POST {"data": [ids]}`); unterschieden wird über `isDialogOpen` (3. Rückgabewert von `ExtractMultiSelectRequest`, `false` sobald `done` mitkommt).
 
 ```go
 // Table-Setup: Select-Button mit action: dialog
@@ -272,11 +269,11 @@ func (c *Controller) MassDelete(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
 
     // IDs aus Request auslesen (unterstützt verschiedene Payload-Formate)
-    ids, _, _, err := dialog.ExtractMultiSelectRequest(ctx)
+    ids, _, isDialogOpen, err := dialog.ExtractMultiSelectRequest(ctx)
     if err != nil { return wc.BadRequest(err.Error()) }
     if len(ids) == 0 { return wc.BadRequest("keine Zeilen gewählt") }
 
-    if ctx.Request().Method == "GET" {
+    if isDialogOpen {
         dlg := dialog.NewDialogFormMultiDelete(
             c.apiUrl("mass-delete"),    // dieselbe URL — POST löscht
             ids,
@@ -312,12 +309,12 @@ b.SetSelectButtons([]*button.TableButton{
     ),
 })
 
-// Handler: GET = Form-Dialog, POST = Bulk-Update
+// Handler: POST ohne `done` = Form-Dialog, POST mit `done` = Bulk-Update
 func (c *Controller) MassEdit(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
     uc := wc.UiContext()
 
-    ids, _, _, err := dialog.ExtractMultiSelectRequest(ctx)
+    ids, _, isDialogOpen, err := dialog.ExtractMultiSelectRequest(ctx)
     if err != nil { return wc.BadRequest(err.Error()) }
     if len(ids) == 0 { return wc.BadRequest("keine Zeilen gewählt") }
 
@@ -329,15 +326,14 @@ func (c *Controller) MassEdit(ctx echo.Context) error {
     fb := formbuilder.NewFormBuilder(uc).
         AddField(statusF).AddField(ownerF).AddField(noteF)
 
-    if ctx.Request().Method == "GET" {
+    if isDialogOpen {
         fields, _ := fb.BuildAddForDisplay()
-        header := fmt.Sprintf("%d Geräte bearbeiten", len(ids))
-        dlg := dialog.NewDialogForm(
+        dlg := dialog.NewDialogFormMultiEdit(
             fields,
             c.apiUrl("mass-edit"),   // POST: dieselbe URL
-            &header,
-            map[string]any{"ids": ids},   // IDs durchreichen!
-            nil, nil,
+            ids,                     // setzt extra["data"]=ids + extra["done"]=true
+            fmt.Sprintf("%d Geräte bearbeiten", len(ids)),
+            "Speichern", "Abbrechen",
         ).WithOption("size", "md")
         return wc.Component(dlg)
     }
@@ -370,16 +366,17 @@ func (c *Controller) MassEdit(ctx echo.Context) error {
 ```
 
 **Wichtig:**
-- `extra.ids` im Dialog mitschicken → das Frontend hängt sie beim Submit wieder an den Request, sodass der POST-Handler wieder `ExtractMultiSelectRequest` nutzen kann.
+- `NewDialogFormMultiEdit` setzt `extra["data"]=ids` und `extra["done"]=true` → das Frontend hängt `extra` beim Submit wieder an den Request, sodass der POST-Handler wieder `ExtractMultiSelectRequest` nutzen kann (liest nur den Key `data`; `done` schaltet `isDialogOpen` auf `false`).
 - **Leere Felder = keine Änderung** — deshalb alle MassEdit-Felder `required: false`. Check vor dem `Updates(...)`-Call, dass mindestens ein Feld gesetzt ist.
 - GORM `.Updates(map[string]any)` ignoriert zero-values nicht — deshalb die Map nur mit tatsächlichen Änderungen füllen.
 
 ## 5. Bulk-Actions (einfach, ohne Dialog)
 
 ```go
-// Table mit Select-Buttons
-tbl := c.buildTable(uc)
-tbl.SetSelectButtons([]*button.TableButton{
+// Table mit Select-Buttons (SetSelectButtons gibt es nur am TableBuilder, vor Build())
+b := table.NewBuilder[Device]()
+// ... Felder ...
+b.SetSelectButtons([]*button.TableButton{
     button.NewTableButton(core.ButtonActionApi, "delete",
         c.apiUrl("bulk-delete"), "Löschen", core.ColorError, false, nil),
     button.NewTableButton(core.ButtonActionApi, "export",
@@ -389,13 +386,14 @@ tbl.SetSelectButtons([]*button.TableButton{
 // Bulk-Handler
 func (c *Controller) BulkDelete(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
-    var req struct{ IDs []int64 `json:"ids"` }
-    if err := ctx.Bind(&req); err != nil { return wc.BadRequest(err.Error()) }
-    if err := c.svc.DB.Device.DeleteMany(ctx.Request().Context(), req.IDs); err != nil {
+    // Select-Buttons posten {"data": [ids]} (nicht "ids" — das gibt es nur bei b.BulkActions)
+    ids, _, _, err := dialog.ExtractMultiSelectRequest(ctx)
+    if err != nil { return wc.BadRequest(err.Error()) }
+    if err := c.svc.DB.Device.DeleteMany(ctx.Request().Context(), ids); err != nil {
         return wc.InternalServerError(err.Error())
     }
     return wc.Component(response.NewReturnRefreshTable().
-        WithMessage(fmt.Sprintf("%d gelöscht", len(req.IDs)), response.MessageSuccess))
+        WithMessage(fmt.Sprintf("%d gelöscht", len(ids)), response.MessageSuccess))
 }
 ```
 
@@ -403,7 +401,7 @@ func (c *Controller) BulkDelete(ctx echo.Context) error {
 
 ```go
 // Page
-card := card.NewCard(core.CardTypeTable, nil, "Live-Status", "", "", "", true, false, "")
+card := card.NewCard(core.CardTypeTable, nil, "Live-Status", nil, nil, nil, true, false, nil)
 card.SetURL(c.apiUrl("card", "status")).WithReload(true)
 p.Add(card)
 
@@ -595,7 +593,7 @@ func (c *Controller) ConfirmArchive(ctx echo.Context) error {
         []*button.Button{
             button.NewSimpleCloseButton("Abbrechen"),
             button.NewSimpleApiButton("Archivieren",
-                c.apiUrl("archive", ctx.Param("id")).PrintPrefix(),
+                c.apiUrl("archive", ctx.Param("id")),   // *xurl.Url, kein String
                 core.ColorWarning),
         }, nil, nil)
     return wc.Component(d)

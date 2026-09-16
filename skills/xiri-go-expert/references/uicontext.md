@@ -19,7 +19,7 @@ type UiContext struct {
 type TranslateFunc func(key string) string
 ```
 
-Die Typen sind `int`-Aliase (Enums), keine Strings. Werte kommen aus:
+Die Typen sind benannte `int`-Typen (`type Timezone int` usw., Enums), keine Strings. Werte kommen aus:
 
 - `types/language`: `language.Deutsch`, `language.Englisch`, `language.Kroatisch`, `language.Spanisch`, `language.Franzoesisch`, `language.Italienisch`, … (27 Werte)
 - `types/locale`: `locale.De`, `locale.EnGB`, `locale.DeAT`, `locale.DeCH`, `locale.EnUS`, `locale.Fr`, `locale.It`, … (31 Werte — feiner als Language)

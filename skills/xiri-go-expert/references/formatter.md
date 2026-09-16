@@ -21,26 +21,28 @@ Alle Funktionen sind nil-safe bzgl. `*core.UiContext` (nutzen intern `ctx.SafeLo
 
 ```go
 formatter.ToUnixTimestamp(t time.Time) int64          // Seconds since epoch
-formatter.ToUnixTimestampBigInt(t time.Time) int64    // Alias für int64-Emphasis
-formatter.FromUnixTimestamp(ts int64) time.Time
-formatter.FromUnixTimestampBigInt(ts int64) time.Time
+formatter.ToUnixTimestampBigInt(t time.Time) int64    // MILLISEKUNDEN (t.UnixMilli())
+formatter.FromUnixTimestamp(ts int64) time.Time       // Sekunden
+formatter.FromUnixTimestampBigInt(ts int64) time.Time // Millisekunden — nicht mit den Sekunden-Varianten mischen
 ```
 
 ### Unix-Timestamp → Locale-String
 
 ```go
 formatter.FormatTimestampDateTime(ts int64, ctx *core.UiContext) string
-  // "24.02.2024 18:30" (DE) / "02/24/2024 6:30 PM" (EnUS) / "24/02/2024 18:30" (EnGB)
+  // "2024-02-24 18:30" (DE, ISO) / "02/24/2024 06:30 PM" (EnUS) / "24/02/2024 18:30" (EnGB)
 
 formatter.FormatTimestampDate(ts int64, ctx *core.UiContext) string
-  // "24.02.2024"
+  // "2024-02-24" (DE, ISO) / "02/24/2024" (EnUS) / "24/02/2024" (EnGB)
 
 formatter.FormatTimestampFullDate(ts int64, ctx *core.UiContext) string
-  // lang, mit Wochentag — Locale-abhängig
+  // Alias für FormatTimestampDateTime (identische Ausgabe)
 
 formatter.FormatTimestampToTextRange(ts int64, includeTime bool,
     timezone string, translate ...func(string) string) string
-  // "heute um 14:00" / "vor 3 Stunden" / "gestern" — relative Text-Darstellung
+  // relative Darstellung über Übersetzungs-Keys: "T.JETZT" (< 1 min) / "T.VOR n T.MIN" /
+  // "T.VOR n T.HOUR" / "T.VOR n d" (< 7 Tage), sonst fix "2006-01-02[ 15:04]".
+  // translate muss die T.*-Keys auflösen, sonst erscheinen sie roh.
 ```
 
 ### `time.Time` → Locale-String
@@ -56,7 +58,7 @@ formatter.FormatTime(t time.Time, ctx *core.UiContext) string
 ```go
 formatter.FormatMinutesAfterMidnight(
     dayTimestamp        int32,   // Unix-Timestamp (Sekunden) des Tages-Anfangs
-    minutesAfterMidnight int16,  // 0..1440
+    minutesAfterMidnight int16,  // 0..1439 (ab 1440 → "-")
     timezone            string,  // IANA-Name, z.B. "Europe/Vienna"
 ) string
   // "08:30" — für Fahrplan-artige Daten
@@ -72,7 +74,7 @@ formatter.FormatDouble2(value float64, ctx *core.UiContext) string
   // 2 Nachkommastellen, Locale-Separatoren: "1.234,56" (DE) / "1,234.56" (EnUS)
 
 formatter.FormatBigNumber(value float64, ctx *core.UiContext) string
-  // "1,2M" / "3,5k" — kompakte Darstellung für KPI-Werte
+  // Tausendertrennung ohne Nachkommastellen: 1234567.89 → "1.234.568" (DE) / "1,234,568" (EnUS)
 ```
 
 ## Locale-aware mit expliziter Locale (`formatter/locale.go`)
@@ -100,8 +102,8 @@ formatter.FormatPressureLocale(bar float64, pressUnit pressure.Pressure, loc loc
   // (2.5, Psi, De)  → "36,3 psi"
 
 formatter.FormatSpeedLocale(kmh float64, distUnit distance.Distance, loc locale.Locale) string
-  // (50, Kilometer, De) → "50 km/h"
-  // (50, Miles,     De) → "31 mph"
+  // (50, Kilometer, De) → "50,0 km/h"   (immer 1 Nachkommastelle)
+  // (50, Miles,     De) → "31,1 mph"
 ```
 
 ## Zeitdauer (`formatter/timeformat.go`)
@@ -110,13 +112,13 @@ Input ist **Sekunden** (int64).
 
 ```go
 formatter.FormatTimeLengthHM(seconds int64, ctx *core.UiContext) string
-  // 5430 → "01:30" (h:mm, bei < 1h: "30 min")
+  // 5430 → "01:30"; immer HH:MM (1800 → "00:30")
 
 formatter.FormatTimeLengthHMS(seconds int64, ctx *core.UiContext) string
   // 5430 → "01:30:30"
 
 formatter.FormatTimeLengthH(seconds int64, ctx *core.UiContext) string
-  // 5430 → "1,5 h"
+  // 5430 → "1.5 h" (Punkt, nicht Locale-abhängig)
 
 formatter.FormatTimeLengthMin(seconds int64, ctx *core.UiContext) string
   // 5430 → "90 min"
@@ -157,14 +159,14 @@ Liefert einen lesbaren String, der die Regel zusammenfasst (z.B. "Mo-Fr 08:00-17
 ```go
 b := table.NewBuilder[Device]()
 b.FloatField("uptime", "Uptime", func(r Device) float64 { return r.Uptime }).
-    WithFormatter(func(v any) string {
+    WithFormatter(table.FormatterFunc(func(v any, _ table.Row, _ table.OutputType, ctx *core.UiContext) any {
         seconds, ok := v.(float64)
         if !ok { return "" }
-        return formatter.FormatTimeLengthHMS(int64(seconds), uc)
-    })
+        return formatter.FormatTimeLengthHMS(int64(seconds), ctx)
+    }))
 ```
 
-Achtung: `WithFormatter` nimmt eine Func ohne `ctx`-Parameter — du schließt `uc` in der Closure (Build-Zeit) mit ein. Wenn der Table-Builder pro Request neu gebaut wird (empfohlen), ist das unproblematisch; bei wiederverwendeten Buildern würde das die falsche Locale einfrieren.
+`WithFormatter` nimmt ein `table.OutputFormatter`-Interface; `table.FormatterFunc` ist der Func-Adapter. Der Formatter erhält `ctx` pro Aufruf — kein Closure über `uc` nötig, auch bei wiederverwendeten Buildern korrekt.
 
 ## Häufige Fehler
 

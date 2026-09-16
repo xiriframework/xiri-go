@@ -2,14 +2,14 @@
 
 ## FormBuilder
 
-Import: `"github.com/xiriframework/xiri-go/form/builder"`
+Import: `formbuilder "github.com/xiriframework/xiri-go/form/builder"` (Package-Name ist `builder`, Alias wie in SKILL.md)
 
 Fluent API für Formular-Erstellung mit Type-Safe Value Binding.
 
 ### Konstruktor
 
 ```go
-fb := builder.NewFormBuilder(ctx) // ctx = *core.UiContext
+fb := formbuilder.NewFormBuilder(ctx) // ctx = *core.UiContext
 ```
 
 ### Fields hinzufügen
@@ -72,7 +72,7 @@ Container für FormFields mit Context-aware Options Loading.
 
 ```go
 fg := group.NewFormGroup(fields)                  // Ohne Context
-fg := group.NewFormGroupWithContext(fields, ctx)   // Mit Context (lädt automatisch Options)
+fg, err := group.NewFormGroupWithContext(fields, ctx) // Mit Context (lädt automatisch Options)
 ```
 
 ### Kernmethoden
@@ -91,7 +91,7 @@ fg.SetContext(ctx)                 // Context setzen + Options laden
 
 ```go
 fields := fg.ExportForFrontend()
-// []map[string]interface{} — Fields ohne Werte
+// []map[string]interface{} — Fields mit ihren Default-Werten (= ExportForFrontendWithValues(nil))
 
 fields := fg.ExportForFrontendWithValues(values)
 // []map[string]interface{} — Fields mit Werten
@@ -107,12 +107,12 @@ values, err := fg.ParseAndValidate(rawData)      // Beides
 
 ## BindAndValidate (Request Binding)
 
-Import: `"github.com/xiriframework/xiri-go/form/builder"`
+Import: `formbuilder "github.com/xiriframework/xiri-go/form/builder"` (Package-Name ist `builder`, Alias wie in SKILL.md)
 
 Extrahiert Form-Daten aus Echo-Request und bindet sie an FormGroup-Fields.
 
 ```go
-if err := builder.BindAndValidate(c, fg); err != nil {
+if err := formbuilder.BindAndValidate(c, fg); err != nil {
     return c.JSON(http.StatusBadRequest, response.NewErrorResponse(err.Error()))
 }
 ```
@@ -136,7 +136,7 @@ status := statusField.(*field.SelectField).Value      // int32
 ### BindFromMap (Alternative)
 
 ```go
-err := builder.BindFromMap(formData, fg)
+err := formbuilder.BindFromMap(formData, fg)
 // formData: map[string]interface{} — bereits geparstes Formular
 ```
 
@@ -145,7 +145,7 @@ err := builder.BindFromMap(formData, fg)
 ```go
 // fields.go — Shared Field-Definition
 func vehicleFields(ctx *core.UiContext, v *Vehicle) *builder.FormBuilder {
-    fb := builder.NewFormBuilder(ctx)
+    fb := formbuilder.NewFormBuilder(ctx)
 
     var name, plate string
     var groupID int32
@@ -160,7 +160,7 @@ func vehicleFields(ctx *core.UiContext, v *Vehicle) *builder.FormBuilder {
     fb.AddField(field.NewTextField("name", "vehicle.name", true, name))
 
     mf := field.NewModelField("group_id", "vehicle.group", true, "group", groupID)
-    mf.SetLoaderFunc(func(ctx *core.UiContext) ([]field.ModelOption, error) {
+    mf.SetLoaderFunc(func(ctx *core.UiContext, modelType string) ([]field.ModelOption, error) {
         return loadGroups(ctx)
     })
     fb.AddField(mf)
@@ -183,13 +183,13 @@ func HandleVehicleAdd(c echo.Context) error {
 
     f := form.NewForm(
         fg.ExportForFrontendWithValues(defaults),
-        "/api/vehicle/add",
-        nil, nil, "", ctx,
+        xurl.NewUrlPrefix("/vehicle/add", "/api"), // *url.Url, kein string
+        nil, nil, nil, ctx,
     )
 
     p := page.NewPage()
-    p.Bread("Fahrzeuge", "/vehicles", false)
-    p.Bread("Hinzufügen", "", false)
+    p.Bread("Fahrzeuge", xurl.NewUrl("/vehicles"), false)
+    p.Bread("Hinzufügen", nil, false)
     p.Add(f)
     return c.JSON(http.StatusOK, p.Print(ctx))
 }
@@ -212,13 +212,13 @@ func HandleVehicleEdit(c echo.Context) error {
 
     f := form.NewForm(
         fg.ExportForFrontendWithValues(values),
-        fmt.Sprintf("/api/vehicle/%d/edit", id),
-        nil, nil, "", ctx,
+        xurl.NewUrlPrefix(fmt.Sprintf("/vehicle/%d/edit", id), "/api"),
+        nil, nil, nil, ctx,
     )
 
     p := page.NewPage()
-    p.Bread("Fahrzeuge", "/vehicles", false)
-    p.Bread(vehicle.Name, "", false)
+    p.Bread("Fahrzeuge", xurl.NewUrl("/vehicles"), false)
+    p.Bread(vehicle.Name, nil, false)
     p.Add(f)
     return c.JSON(http.StatusOK, p.Print(ctx))
 }
@@ -233,7 +233,7 @@ func HandleVehicleSave(c echo.Context) error {
         return err
     }
 
-    if err := builder.BindAndValidate(c, fg); err != nil {
+    if err := formbuilder.BindAndValidate(c, fg); err != nil {
         return c.JSON(http.StatusBadRequest, response.NewErrorResponse(err.Error()))
     }
 

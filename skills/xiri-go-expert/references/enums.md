@@ -140,8 +140,8 @@ FieldTypeBool       FieldType = "bool"
 FieldTypeSelect     FieldType = "select"
 FieldTypeModel      FieldType = "model"
 FieldTypeModelList  FieldType = "modellist"
-FieldTypeDeviceList FieldType = "devicelist"
-FieldTypeDriverList FieldType = "driverlist"
+FieldTypeRadio      FieldType = "radio"
+FieldTypeDivider    FieldType = "divider"
 FieldTypeTime       FieldType = "time"
 FieldTypeTimeRange  FieldType = "timerange"
 FieldTypeTimelimit  FieldType = "timelimit"
@@ -168,16 +168,16 @@ OutputExcel OutputType = 3  // Excel export
 ## Table FieldAlign
 
 ```go
-AlignLeft   FieldAlign = "left"
-AlignCenter FieldAlign = "center"
-AlignRight  FieldAlign = "right"
+FieldAlignLeft   FieldAlign = "left"
+FieldAlignCenter FieldAlign = "center"
+FieldAlignRight  FieldAlign = "right"
 ```
 
 ## Table FieldFooter
 
 ```go
-FooterNo     FieldFooter = "no"
-FooterSum    FieldFooter = "sum"
-FooterCount  FieldFooter = "count"
-FooterStatic FieldFooter = "static"
+FieldFooterNo     FieldFooter = "no"
+FieldFooterSum    FieldFooter = "sum"
+FieldFooterCount  FieldFooter = "count"
+FieldFooterStatic FieldFooter = "static"
 ```

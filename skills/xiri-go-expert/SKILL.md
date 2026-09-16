@@ -31,12 +31,12 @@ import xurl "github.com/xiriframework/xiri-go/component/url"
 
 xurl.NewUrl("/devices")                      // Frontend-Link (kein Prefix)
 xurl.NewUrlPrefix("/devices", "/api/v1")     // API-Endpoint (mit Prefix)
-u.Add("edit", "42")                           // Chain-Append
-u.Print()        // ohne Prefix — Links, Breadcrumbs
-u.PrintPrefix()  // mit Prefix   — API-Calls, form/table Submit-URLs
+u.Add("edit").Add("42")                       // Chain-Append (ein Segment pro Add)
+u.Print()        // ohne Prefix
+u.PrintPrefix()  // mit Prefix — das geben ALLE Komponenten aus (auch Link-Buttons, Breadcrumbs)
 ```
 
-**Regel:** Page-/Link-URLs = `Print()`. API-URLs (`tbl.SetURL`, `form.NewForm`, Dialog-Submit) = `*xurl.Url` direkt (intern korrekt aufgelöst) oder `PrintPrefix()` wo `string` erwartet wird. Controller-Helper + Sidebar-Pattern: **`references/url-routing.md`**.
+**Regel:** Komponenten wählen **nicht** zwischen `Print()`/`PrintPrefix()` — sie geben immer `PrintPrefix()` aus. Page-/Link-URLs daher mit `NewUrl` (leerer Prefix) bauen, API-URLs (`tbl.SetURL`, `form.NewForm`, Dialog-Submit) mit `NewUrlPrefix`; `PrintPrefix()` nur wo `string` erwartet wird. Controller-Helper + Sidebar-Pattern: **`references/url-routing.md`**.
 
 **Query-String in Navigations-Links ist erlaubt:** `xurl.NewUrl("/Admin/Devices/Table?config=98")` funktioniert für Frontend-Links (Button `action: 'link'`, cardlink, links/list/sidenav, Tabellen-Link-Felder) — das Frontend parst den `?…`-Teil zu Route-Query-Params (via `xiriUrl`-Pipe in xiri-ng). `Add(...)` hängt nur Path-Segmente an (`/…/98`); für Query-Params den String direkt an `NewUrl` übergeben.
 
@@ -130,7 +130,7 @@ tags.BaseField.SetReloadOn(reloadURL, "status")   // beides Pflicht, sonst wird 
 
 // Handler hinter reloadURL:
 status, tags, fg := ctrl.buildThingForm(wc.UiContext())
-if err := builder.BindReload(c, fg); err != nil {   // nachsichtig: leeres Pflichtfeld ist ok
+if err := formbuilder.BindReload(c, fg); err != nil {   // nachsichtig: leeres Pflichtfeld ist ok
     return wc.BadRequest(err.Error())
 }
 tags.Options = ctrl.tagsForStatus(status.Value)
@@ -173,7 +173,7 @@ formbuilder.BindAndValidate(ctx, fg)
 | Field                           | Go-Typ in `filters` map       |
 | ------------------------------- | ----------------------------- |
 | TextField                       | `string`                      |
-| IntField                        | `int32`                       |
+| IntField                        | `int` (nicht `int32`; `Value` am Feld ist `*int32`) |
 | BoolField                       | `bool`                        |
 | TimeField                       | `int64`                       |
 | SelectField                     | Option-Value-Typ              |

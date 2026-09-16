@@ -78,7 +78,9 @@ f, err := field.NewNumberField("price", "device.price", true, 42.0)
 // in int32 passt (Bruchzahl oder außerhalb des int32-Bereichs).
 
 // Optionale Konfiguration:
-f.Subtype = "float"   // int (default), pint (positive int), float, bigint, real
+f.Subtype = "pint"    // einzig wirksamer Subtype: exportiert min=0. Andere Werte (float, bigint, real)
+                      // werden nicht exportiert (Export-Subtype ist immer "number"); das Feld akzeptiert
+                      // grundsätzlich nur ganzzahlige int32-Werte.
 f.TextPrefix = "€"
 f.TextSuffix = "Stück"
 
@@ -136,7 +138,7 @@ f := field.NewModelField("group_id", "device.group", true, "group", currentGroup
 // Parameter: id, translationKey, required, modelType, currentValue (int32)
 
 // Dynamische Optionen laden via LoaderFunc:
-f.SetLoaderFunc(func(ctx *core.UiContext) ([]field.ModelOption, error) {
+f.SetLoaderFunc(func(ctx *core.UiContext, modelType string) ([]field.ModelOption, error) {
     groups, _ := db.GetGroups()
     opts := make([]field.ModelOption, len(groups))
     for i, g := range groups {
@@ -153,7 +155,7 @@ f.List = []field.ModelOption{
 
 f.AllowSearch = true
 f.URL = "/api/groups/search"  // Live-Suche via API
-f.Filter = map[string]interface{}{"active": true}  // Vorfilter
+f.Params = map[string]interface{}{"active": true}  // wird als "params" exportiert (f.Filter ist wirkungslos)
 
 // Nach BindAndValidate:
 groupID := f.Value  // int32
@@ -190,11 +192,12 @@ f := field.NewTimeField("start", "event.start", true, 0)
 
 f.Subtype = "datetime"  // datetime (default), date, time, yearmonth
 
-// Tag-Offsets für Min/Max (z.B. -30 Tage bis +365 Tage):
+// Min/Max begrenzen nur den Datepicker im Frontend (keine Server-Validierung).
+// Tag-Offsets (|val| < 10000, z.B. -30 Tage bis +365 Tage) oder absolute Unix-Timestamps:
 f.Min = int64Ptr(-30)
 f.Max = int64Ptr(365)
 
-// Oder absolute Timestamps:
+// MinDate/MaxDate validieren nur serverseitig, erreichen das Frontend nicht — für beides beide setzen:
 f.MinDate = &time.Time{...}
 f.MaxDate = &time.Time{...}
 
@@ -237,7 +240,7 @@ Zeitbereich-Auswahl. Value: `*TimeRangeValue`
 f := field.NewTimeRangeField("range", "report.range", true)
 f := field.NewTimeRangeFieldWithDefault("range", "report.range", true, 7) // Letzte 7 Tage
 
-f.Subtype = "daterange"  // daterange (default), time
+f.Subtype = "daterange"  // ohne Subtype: Frontend-Typ "datetimerange" (Datum+Uhrzeit); "daterange" → nur Datum
 f.AllowSingleDay = true
 
 // Nach BindAndValidate:
@@ -253,8 +256,8 @@ eingegebener Text). Die JSON-/Go-Typunterscheidung trägt die Semantik: `number/
 `string` = Freitext.
 
 Die `List`-Optionen brauchen **numerische `Value`** (int64), damit sie als IDs funktionieren — die
-exportierte `id` wird im Frontend (`XiriFormFieldSelectOption.id: number`) erkannt und beim Auswählen
-als ID zurückgesendet. String-Option-Values würden als Freitext interpretiert.
+exportierte `id` wird im Frontend (`XiriFormFieldSelectOption.id: number | string`; Chips behandeln nur
+`typeof === 'number'` als Option) erkannt und beim Auswählen als ID zurückgesendet. String-Option-Values würden als Freitext interpretiert.
 
 ```go
 f := field.NewChipsField("tags", "device.tags", false)
@@ -289,8 +292,9 @@ Zeitbeschränkung mit Wochentagen. Mappt auf 5 DB-Spalten.
 
 ```go
 f := field.NewTimeLimitField("timelimit", "device.timelimit", false)
-// Exportiert: time_check, time_weekdays, time_from, time_to, time_in
-// Value: TimeLimitValue{Check, Weekdays [7]bool, FromHour, FromMin, ToHour, ToMin, In}
+// f.ToMultiDb(value) liefert die 5 DB-Spalten: time_check, time_weekdays, time_from, time_to, time_in
+// Kein f.Value/BindValue: f.Parse(raw) bzw. fg.ParseValues(...) liefert
+// TimeLimitValue{Check, Weekdays [7]bool, FromHour, FromMin, ToHour, ToMin, In}
 ```
 
 ## GeoformField
@@ -299,7 +303,7 @@ Geometrie-Feld für Geofencing.
 
 ```go
 f := field.NewGeoformField("geofence", "zone.geofence", true)
-// Value: GeoformValue{Type (1=Polygon, 2=Kreis), Path}
+// Kein f.Value/BindValue: f.Parse(raw) bzw. fg.ParseValues(...) liefert *GeoformValue{Type (1=Polygon, 2=Kreis), Path}
 ```
 
 ## ArrayField
@@ -396,8 +400,8 @@ fb.AddField(active).AddField(reason).AddField(prio).AddField(critNote)
 ### Runtime-Verhalten
 
 - Das Frontend wertet die Bedingungen live aus (reactive) — Ein-/Ausblenden ohne Roundtrip.
-- Beim Submit werden **nur** Werte sichtbarer Felder mitgeschickt — versteckte Felder sind bewusst leer.
-- Deshalb nach `BindAndValidate`: wenn ein Feld ausgeblendet war, ist `field.Value == nil` — prüfen, bevor man dereferenziert.
+- Versteckte Felder bleiben im FormGroup und werden beim Submit mit ihrem letzten Wert mitgeschickt. Wer sie ignorieren will, muss die Bedingung serverseitig nachprüfen.
+- Fehlt ein Feld im Request, bindet `BindAndValidate` den Konstruktor-Default — `field.Value` ist dann i. d. R. ein Zeiger auf den Nullwert (`""`, `0`, `false`), nicht `nil`. `nil` gibt es nur bei nil-Default (z. B. File, JSON/TimeRange ohne Default).
 
 ### Low-Level — direkt `Condition` bauen (selten nötig)
 
@@ -458,7 +462,7 @@ func (ctrl *Controller) FormReload(c echo.Context) error {
     status, tags, fg := ctrl.buildThingForm(wc.UiContext())
 
     // Nachsichtig binden: mitten im Ausfüllen ist ein leeres Pflichtfeld normal.
-    if err := builder.BindReload(c, fg); err != nil {
+    if err := formbuilder.BindReload(c, fg); err != nil {
         return wc.BadRequest(err.Error())
     }
 
@@ -471,7 +475,7 @@ func (ctrl *Controller) FormReload(c echo.Context) error {
 `buildThingForm` muss **dieselbe** Funktion sein, die auch die normale Form-Action benutzt, und
 die typisierten Feld-Pointer mit zurückgeben — sonst laufen Formular und Reload auseinander.
 
-- `builder.BindReload(c, fg)` — wie `BindAndValidate`, aber ohne Validierungsfehler. Jedes Feld
+- `formbuilder.BindReload(c, fg)` — wie `BindAndValidate`, aber ohne Validierungsfehler. Jedes Feld
   wird zuerst auf seinen Default gebunden; scheitert der Request-Wert, bleibt der Default stehen.
   Nur ein unlesbarer Request-Body ist ein Fehler. Der Overposting-Schutz gilt unverändert.
 

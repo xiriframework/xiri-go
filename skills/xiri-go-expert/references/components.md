@@ -10,9 +10,9 @@ Container für eine komplette Seite mit Breadcrumbs.
 
 ```go
 p := page.NewPage()
-p.Bread("Home", "/", false)
-p.Bread("Devices", "/devices", false)
-p.Bread("Detail", "", false)  // letzter ohne Link
+p.Bread("Home", xurl.NewUrl("/"), false)
+p.Bread("Devices", xurl.NewUrl("/devices"), false)
+p.Bread("Detail", nil, false)  // letzter ohne Link
 p.Add(component)               // Komponente hinzufügen
 p.AddNewRow(component)          // Neue Grid-Zeile erzwingen
 p.Extra("customKey", value)     // Extra-Feld am Root-Level
@@ -37,7 +37,7 @@ Karte mit Header, Content und Buttons.
 
 ```go
 // Table-Card
-c := card.NewCard(core.CardTypeTable, tableComponent, "devices.list", "", "", "", true, false, "")
+c := card.NewCard(core.CardTypeTable, tableComponent, "devices.list", nil, nil, nil, true, false, nil)
 c.ButtonTop(addButton)                   // Icon-Buttons rechts im Card-Header
 c.WithCollapsible(true)
 c.WithMaxHeight("400px")
@@ -49,8 +49,8 @@ c := card.NewCardList("info.title", cardListContent)
 c.Print(ctx)
 
 // AJAX-Card (lädt sich komplett von URL: Titel, Buttons, Inhalt)
-c := card.NewCard(core.CardTypeTable, nil, "devices.list", "", "", "", true, false, "")
-c.SetURL("/api/devices/table")
+c := card.NewCard(core.CardTypeTable, nil, "devices.list", nil, nil, nil, true, false, nil)
+c.SetURL(xurl.NewUrl("/api/devices/table"))
 c.WithReload(true)
 c.Print(ctx)
 // Endpoint: fertige Card bauen und wc.Data(card) liefern → {"card": {...}}
@@ -101,7 +101,7 @@ content.SetDense(true)
 
 ```go
 content := card.NewCardListContentFields(
-    []card.CardListField{{Name: "name", Label: "Name"}, {Name: "status", Label: "Status", Type: "badge"}},
+    []card.CardListField{{ID: "name", Name: "Name", Format: "text"}, {ID: "status", Name: "Status", Format: "html"}},
     []map[string]interface{}{{"name": "Device 1", "status": "Online"}},
 )
 ```
@@ -156,14 +156,14 @@ Einzelne Statistik-Kachel.
 ```go
 s := stat.New("42", "devices.total")
 s.Icon("devices")
-s.IconColor(core.ColorPrimary)
+s.IconColor(string(core.ColorPrimary))
 s.Suffix("km")
 s.SetTrend(5.2, stat.TrendUp)
 s.Print(ctx)
 
 // AJAX-Stat
 s := stat.New("", "devices.total")
-s.SetURL("/api/stats/devices")
+s.SetURL(xurl.NewUrl("/api/stats/devices"))
 s.WithReload(true)
 
 // Compact-Stat (für Multi-Component-Cards)
@@ -185,8 +185,8 @@ sg := statgrid.New()
 sg.Title("dashboard.stats")
 sg.Columns(3)
 sg.Add(stat.New("42", "devices.total").Icon("devices"))
-sg.Add(stat.New("3", "devices.offline").Icon("warning").IconColor(core.ColorError))
-sg.Add(stat.New("98%", "devices.uptime").Icon("check_circle").IconColor(core.ColorSuccess))
+sg.Add(stat.New("3", "devices.offline").Icon("warning").IconColor(string(core.ColorError)))
+sg.Add(stat.New("98%", "devices.uptime").Icon("check_circle").IconColor(string(core.ColorSuccess)))
 sg.Print(ctx)
 ```
 
@@ -413,8 +413,10 @@ s.Print(ctx)
 Formular-Komponente (rendert FormGroup-Fields).
 
 ```go
-f := form.NewForm(fields, "/api/vehicle/save", "vehicle.add", buttons, "", ctx)
+header := "vehicle.add"
+f := form.NewForm(fields, xurl.NewUrl("/api/vehicle/save"), &header, buttons, nil, ctx)
 // fields: []map[string]interface{} aus fg.ExportForFrontendWithValues(defaults)
+// header, display: *string (nil = kein Header / Default-Display)
 // buttons: []*button.Button (nil = Standard Back+Save)
 f.Print(ctx)
 ```
@@ -429,7 +431,7 @@ content := &dialog.DialogQuestionContent{Icon: "delete", Question: "Wirklich lö
 d := dialog.NewDialog(core.DialogTypeQuestion, "dialog.delete", content,
     []*button.Button{
         button.NewSimpleCloseButton("cancel"),
-        button.NewSimpleApiButton("delete", "/api/device/123/delete", core.ColorError),
+        button.NewSimpleApiButton("delete", xurl.NewUrl("/api/device/123/delete"), core.ColorError),
     }, nil, nil)
 d.Print(ctx)
 
@@ -456,7 +458,7 @@ Zeitstrahl — vertikal (Default) oder horizontal.
 
 ```go
 tl := timeline.New()
-tl.Add("Erstellt").Description("Von Admin").Datetime("2024-01-15").Icon("add").IconColor(core.ColorSuccess)
+tl.Add("Erstellt").Description("Von Admin").Datetime("2024-01-15").Icon("add").IconColor(string(core.ColorSuccess))
 tl.Add("Bearbeitet").Description("Name geändert").Datetime("2024-01-16").Icon("edit")
 tl.Print(ctx)
 
@@ -765,9 +767,9 @@ g := gantt.New("project").Title("Project plan").
 
 ## Eigenes Chart-Component bauen
 
-Alle vier Charts teilen sich `chart.BaseChart` (`component/chart/`). Für einen neuen Chart-Typ:
+Alle echarts-Charts außer `barchart` (eigene Felder) teilen sich `chart.BaseChart` (`component/chart/`) als Feld `base`. Für einen neuen Chart-Typ:
 
-1. Neues Package `component/<type>chart/`. Struct embedded `*chart.BaseChart`. Builder mit `.Title(t)`, `.Color(c)`, `.Compact()`, `.WithDisplay(d)`, `.SetURL(u)`, `.WithReload(r)` als Forward-Methoden.
+1. Neues Package `component/<type>chart/`. Struct hält ein Feld `base *chart.BaseChart`. Builder mit `.Title(t)`, `.Color(c)`, `.Compact()`, `.WithDisplay(d)`, `.SetURL(u)`, `.WithReload(r)` als Forward-Methoden.
 2. `Print(ctx)` ruft `base.Envelope("<type>chart", data, nil)`. `data` enthält `base.PrintBaseData(ctx)` plus die typ-spezifischen Felder.
 3. Angular-Seite: neuer Component `xiri-<type>chart` mit `[option]` an `xiri-echarts-host` (siehe linechart/piechart als Vorlage).
 
@@ -778,7 +780,7 @@ Leerzustand-Anzeige.
 ```go
 es := emptystate.New("devices", core.ColorPrimary, "Keine Geräte")
 es.WithDescription("Fügen Sie ein neues Gerät hinzu")
-es.WithButton(button.NewSimpleLinkButton("add", "/devices/add", core.ColorPrimary))
+es.WithButton(button.NewSimpleLinkButton("add", xurl.NewUrl("/devices/add"), core.ColorPrimary))
 es.Print(ctx)
 ```
 
@@ -787,10 +789,11 @@ es.Print(ctx)
 Fortschrittsbalken mit mehreren Zeilen.
 
 ```go
-mp := progress.NewMultiProgress("Verteilung", 5, false, "")
-mp.AddLine("Online", 42, core.ColorSuccess, "42")
-mp.AddLine("Offline", 3, core.ColorError, "3")
-mp.AddTotal("Gesamt", 45, core.ColorPrimary, "45")
+online, offline, total, sum := "42", "3", "45", 45
+mp := progress.NewMultiProgress("Verteilung", 5, false, nil)   // display *string
+mp.AddLine("Online", 42, core.ColorSuccess, &online)           // value *string
+mp.AddLine("Offline", 3, core.ColorError, &offline)
+mp.AddTotal("Gesamt", &sum, core.ColorPrimary, &total)         // sum *int, value *string
 mp.Print(ctx)
 ```
 
@@ -799,11 +802,12 @@ mp.Print(ctx)
 Listen-Komponente mit Sektionen.
 
 ```go
-section := list.NewListSection("Favoriten", nil)
-section.AddItem(list.NewSimpleListSectionItem("Device 1", "Online", "/device/1", "devices", core.ColorSuccess))
-section.AddItem(list.NewSimpleListSectionItem("Device 2", "Offline", "/device/2", "devices", core.ColorError))
+name := "Favoriten"
+section := list.NewListSection(&name, nil)   // name *string
+section.AddItem(list.NewSimpleListSectionItem("Device 1", "Online", xurl.NewUrl("/device/1"), "devices", core.ColorSuccess))
+section.AddItem(list.NewSimpleListSectionItem("Device 2", "Offline", xurl.NewUrl("/device/2"), "devices", core.ColorError))
 
-l := list.NewList(nil, "")
+l := list.NewList(nil, nil)                  // sections, display *string
 l.AddSection(section)
 l.Print(ctx)
 ```
@@ -816,8 +820,8 @@ Link-Karte.
 lk := links.New()
 lk.Header("navigation.title")
 lk.HeaderIcon("menu", core.ColorPrimary)
-lk.Add(button.NewSimpleLinkButton("Geräte", "/devices", core.ColorPrimary))
-lk.Add(button.NewSimpleLinkButton("Benutzer", "/users", core.ColorSecondary))
+lk.Add(button.NewSimpleLinkButton("Geräte", xurl.NewUrl("/devices"), core.ColorPrimary))
+lk.Add(button.NewSimpleLinkButton("Benutzer", xurl.NewUrl("/users"), core.ColorSecondary))
 lk.Print(ctx)
 ```
 
@@ -829,7 +833,8 @@ Toolbar mit Suche und Buttons.
 tb := toolbar.New()
 tb.Title("devices.toolbar")
 tb.Icon("devices")
-tb.Search("Suchen...")
+placeholder := "Suchen..."
+tb.Search(&placeholder)   // *string
 tb.Buttons(buttonLine)
 tb.Print(ctx)
 ```
@@ -839,7 +844,8 @@ tb.Print(ctx)
 Filter-Bereich für Tabellen.
 
 ```go
-q := query.NewQueryWithFormGroup(filterGroup, filterValues, "/api/devices/table", nil, "devices-filter", nil)
+saveStateId := "devices-filter"
+q := query.NewQueryWithFormGroup(filterGroup, filterValues, xurl.NewUrl("/api/devices/table"), nil, &saveStateId, nil)
 q.Collapsed(true) // Expansion-Panel, eingeklappt; ohne Aufruf gar kein Panel
 q.Print(ctx)
 ```
@@ -854,11 +860,11 @@ Mehrstufiger Wizard.
 
 ```go
 s, err := stepper.NewStepper(
-    "/api/wizard/save",
+    xurl.NewUrl("/api/wizard/save"),
     2,
     []string{"Schritt 1", "Schritt 2"},
-    []stepper.StepFields{step1Fields, step2Fields},
-    "Zurück", "Weiter", "Fertig", "",
+    [][]map[string]any{step1Fields, step2Fields},   // je Schritt fg.ExportForFrontend()
+    "Zurück", "Weiter", "Fertig", nil,              // display *string
 )
 s.Print(ctx)
 ```
@@ -866,11 +872,11 @@ s.Print(ctx)
 ## Layout-Helfer (`component/layout`)
 
 ```go
-layout.NewSpacer("")                                    // Leerraum
-layout.NewContainer("")                                 // Container für Verschachtelung
-layout.NewHeader("Titel", core.ColorPrimary, nil, "")   // Überschrift
-layout.NewDivider().Text("Abschnitt").Spacing("large")  // Trennlinie
-layout.NewHtml("<b>HTML</b>", "")                        // Raw HTML
+layout.NewSpacer(nil)                                    // Leerraum (display *string)
+layout.NewContainer(nil)                                 // Container für Verschachtelung
+layout.NewHeader("Titel", core.ColorPrimary, nil, nil)   // Überschrift (size, display *string)
+layout.NewDivider().Text("Abschnitt").Spacing("large")   // Trennlinie
+layout.NewHtml("<b>HTML</b>", nil)                        // Raw HTML
 ```
 
 ## Button (`component/button`)
@@ -1072,9 +1078,10 @@ Custom-Payload-Konvention identisch zum Button: `WithData` für Frontend-Daten, 
 ## InfoText / InfoPoint (`component/info`)
 
 ```go
-info.NewInfoText("Hinweis: Dieses Feature ist Beta.", "")
-info.NewInfoPoint("192.168.1.1", "lan", core.ColorPrimary, nil, nil, nil, nil, nil, "")
-info.NewInfoText("Hinweis: <b>Beta</b>", "").WithHtml()  // Text als HTML rendern (opt-in, auch auf InfoPoint)
+info.NewInfoText("Hinweis: Dieses Feature ist Beta.", nil)   // display *string
+// (text, icon, iconColor string, subtext *string, url *string, urlParams map[string]string, iconSet *string, dense *bool, display *string)
+info.NewInfoPoint("192.168.1.1", "lan", string(core.ColorPrimary), nil, nil, nil, nil, nil, nil)
+info.NewInfoText("Hinweis: <b>Beta</b>", nil).WithHtml()  // Text als HTML rendern (opt-in, auch auf InfoPoint)
 ```
 
 ## TachoTime (`component/tachotime`)

@@ -1,6 +1,6 @@
 # TachoTime — Fahrtenschreiber-Diagramm
 
-`component/tachotime` rendert Tacho-/Lenkzeit-Daten (Compliance-Dashboards, LKW-Telemetrie). Selten gebraucht, hier als Referenz.
+`component/tachotime` erzeugt das JSON für Tacho-/Lenkzeit-Daten (Compliance-Dashboards, LKW-Telemetrie). **xiri-ng hat keinen Renderer für `type: "tachotime"`** — die Komponente braucht einen projekteigenen Frontend-Renderer. Selten gebraucht, hier als Referenz.
 
 ## Konstruktoren
 
@@ -56,7 +56,7 @@ return wc.Component(tt)
 
 ## Activity-Codes
 
-Der `activity`-Parameter in `TachoTimeData` ist ein kodierter Zustand — welche Werte dein Frontend rendert, hängt vom Projekt-Mapping ab. Übliche Konvention:
+Der `activity`-Parameter in `TachoTimeData` ist ein kodierter Zustand — welche Werte dein (projekteigenes) Frontend rendert, hängt vom Projekt-Mapping ab. Übliche Konvention:
 
 | Code | Bedeutung       |
 | ---- | --------------- |
@@ -65,8 +65,8 @@ Der `activity`-Parameter in `TachoTimeData` ist ein kodierter Zustand — welche
 | 3    | Bereitschaft    |
 | 4    | Sonstige Arbeit |
 
-**Wichtig:** Das ist **kein** im xiri-go definierter Enum — prüfe das Frontend-Rendering.
+**Wichtig:** Das ist **kein** im xiri-go definierter Enum und xiri-ng rendert `tachotime` nicht — prüfe den projekteigenen Renderer.
 
 ## Duration-Format
 
-Alle String-Durations (`"01:00"`, `"08:00"`) sind `HH:MM`. Die numerischen Minuten-Werte am Ende von `NewTachoTimeDay` (driving/working/breakTime/available/total) werden separat geliefert — das Frontend nutzt sie für Summary-Zeilen, die Strings für Balken-Labels.
+Alle String-Durations (`"01:00"`, `"08:00"`) sind `HH:MM`. Die numerischen Minuten-Werte am Ende von `NewTachoTimeDay` (driving/working/breakTime/available/total) werden separat geliefert — ein Renderer kann sie für Summary-Zeilen nutzen, die Strings für Balken-Labels.

@@ -23,7 +23,7 @@ wc.Data(tbl)  ──► JSON-Response
 
 ## Filter-FormGroup aufbauen
 
-Filter nutzen dieselben Fields wie normale Forms, aber `required=false` und keine Defaults:
+Filter nutzen dieselben Fields wie normale Forms, aber `required=false`. Achtung: fehlende Keys bekommen den Field-Default (`NewSelectField`: die **erste Option**, `NewTextField`: `""`) — für „kein Filter" eine Leer-Option voranstellen:
 
 ```go
 import (
@@ -55,11 +55,11 @@ func (c *Controller) buildFilterGroup(ctx *core.UiContext) *group.FormGroup {
 Filter-FormGroup der Tabelle zuordnen:
 
 ```go
+b.SetFilter(filterFg)     // am Builder, vor Build(); aktiviert ParseAndValidate in LoadFilterData
 tbl := b.Build()
-tbl.SetFilter(filterFg)   // aktiviert ParseAndValidate in LoadFilterData
 ```
 
-Oder direkt via `NewQueryWithFormGroup` (siehe unten), das passt die Filter automatisch in die `LoadFilterData`-Pipeline.
+Ohne `SetFilter` am Builder parst `LoadFilterData` nichts — `NewQueryWithFormGroup` (siehe unten) rendert nur den Filter, es verbindet ihn nicht mit der Tabelle.
 
 Weil Filter dieselben Fields wie Forms rendern, erben sie auch **abhängige Felder**: ein Filter kann
 per `SetReloadOn(...)` seine Optionen nachladen, sobald ein anderer Filter sich ändert (Details in
@@ -90,7 +90,7 @@ Ablauf intern:
 | Field-Konstruktor                                  | Go-Typ in parsed map           |
 | -------------------------------------------------- | ------------------------------ |
 | `NewTextField`                                     | `string`                       |
-| `NewIntField`                                      | `int32`                        |
+| `NewIntField`                                      | `int`                          |
 | `NewBoolField`                                     | `bool`                         |
 | `NewTimeField`                                     | `int64` (Unix-Seconds)         |
 | `NewSelectField(...)` mit `int`-Options            | `int` (wie Option-Werte)       |
@@ -101,10 +101,10 @@ Ablauf intern:
 | `NewModelListField`                                | `field.ModelListValue`         |
 | `NewChipsField`                                    | `[]interface{}` (int64 Options-IDs + string Freitext) |
 | `NewArrayField`                                    | `[]interface{}` (pro-Item-Typ wie Inner-Field) |
-| `NewTimeRangeField`                                | `map[string]int64` (`from`, `to`) |
-| `NewFileField`                                     | `string` (Path/Base64/Key)     |
+| `NewTimeRangeField`                                | `*field.TimeRangeValue` (`.Start`, `.End`; Raw-Keys `start`/`end`) |
+| `NewFileField`                                     | `any` (Raw-Wert unverändert)   |
 
-Unbekannte/fehlende Keys ⇒ nicht in der Map (weil `required=false` → Field liefert `nil` oder Default).
+Fehlende Keys ⇒ Field-Default in der Map (Select: erste Option, Text: `""`, Multi-Select: leere Liste); nur Felder ohne Default fehlen. Unbekannte Keys ⇒ bei gesetztem Filter ignoriert.
 
 ## Safe Type-Assertions (Pattern)
 
@@ -114,7 +114,7 @@ Weil JSON flach serialisiert und der Parse-Typ pro Field streng ist, **immer** m
 if v, ok := filters["name"].(string); ok && v != "" {
     q = q.Where("name ILIKE ?", "%"+v+"%")
 }
-if v, ok := filters["minCount"].(int32); ok && v > 0 {
+if v, ok := filters["minCount"].(int); ok && v > 0 {
     q = q.Where("count >= ?", v)
 }
 if v, ok := filters["from"].(int64); ok && v > 0 {
@@ -201,9 +201,10 @@ func (c *Controller) Page(ctx echo.Context) error {
     uc := wc.UiContext()
 
     fg := c.buildFilterGroup(uc)
-    tbl := c.buildTable()
+    b := c.buildTable()          // *table.TableBuilder[Device]
+    b.SetFilter(fg)              // Tabelle kennt die Filter-Fields für ParseAndValidate (vor Build)
+    tbl := b.Build()
     tbl.SetURL(c.apiUrl("data"))
-    tbl.SetFilter(fg)   // Tabelle kennt die Filter-Fields für ParseAndValidate
 
     q := query.NewQueryWithFormGroup(
         fg,
@@ -271,7 +272,7 @@ Manchmal schickt das Frontend zusätzliche UI-State-Keys mit (z.B. View-Modus), 
 tbl.SetFlags("_viewMode", "_showArchived")
 ```
 
-Diese Keys landen **nicht** in der `parsedFilters`-Map (werden vor `ParseAndValidate` entfernt). Sie bleiben aber in `tbl.GetFilterData()` — für den Fall, dass du sie trotzdem inspizieren willst.
+Diese Keys werden von `LoadFilterData` komplett verworfen — weder in der `parsedFilters`-Map noch in `tbl.GetFilterData()`. Wer den Wert braucht, deklariert den Key nicht als Flag und liest ihn aus dem Roh-Body `tbl.GetFilterData()`.
 
 ## CSV-/Excel-Export
 
@@ -306,17 +307,17 @@ selectBtn := button.NewTableButton(
     false,
     nil,
 )
-tbl.SetSelectButtons([]*button.TableButton{selectBtn})
+b.SetSelectButtons([]*button.TableButton{selectBtn})   // am Builder, vor Build()
 ```
 
-Das Frontend aktiviert automatisch Row-Checkboxes und sendet bei Button-Click eine Liste von IDs:
+Der Builder setzt damit `select=true` (Row-Checkboxes); bei Button-Click sendet das Frontend `{"data": [ids]}` (bei `b.BulkActions(...)` dagegen `{"ids": [...], "mode", "count"}`):
 
 ```go
 // Controller
 func (c *Controller) BulkDelete(ctx echo.Context) error {
     wc := webcontext.GetWebContext(ctx)
     var req struct {
-        IDs []int64 `json:"ids"`
+        IDs []int64 `json:"data"`
     }
     if err := ctx.Bind(&req); err != nil {
         return wc.BadRequest(err.Error())

@@ -49,16 +49,17 @@ p.Extra("tenantId", 42)
 
 ```json
 {
-  "type": "page",
-  "bread": [{ "name": "Start", "link": "/", "extern": false }, ...],
+  "bread": [{ "label": "Start", "link": "/", "extern": false }, ...],
   "data": [
     { "type": "page-header", ... },
-    { "type": "stat-grid",   ..., "newRow": false },
+    { "type": "stat-grid",   ... },
     { "type": "table",        ..., "newRow": true }
   ],
   "tenantId": 42
 }
 ```
+
+Kein `type`-Feld am Root; `newRow` erscheint nur bei `AddNewRow` (als `true`), sonst gar nicht.
 
 Rückgabe meist via `wc.Page(p)` (GEM-WebContext), nicht via `c.JSON(...)`.
 
@@ -223,16 +224,16 @@ Kleine Bausteine, die meist **innerhalb** anderer Komponenten (Section, Card) od
 ```go
 import "github.com/xiriframework/xiri-go/component/layout"
 
-size := "h2"
+size := "x2"
 display := "xcol-md-12"
 layout.NewHeader("Allgemeine Daten", core.ColorPrimary, &size, &display)
 // oder als Chain:
 h := layout.NewHeader("Infos", core.ColorInherit, nil, nil).
-    WithSize("h3").
+    WithSize("x15").
     WithDisplay("xcol-md-12")
 ```
 
-Renderable Sizes: `h1 … h6`. Default (wenn `nil` übergeben) ist i.d.R. `h2`.
+Renderable Sizes (CSS-Klassen im Frontend): `x1` (1rem), `x15` (1.5rem), `x2` (2rem), `x25` (2.5rem), `x3` (3rem). Ohne Size (`nil`): 1.6rem.
 
 ### `layout.Divider` — Trennlinie
 
@@ -257,12 +258,10 @@ Nützlich zwischen zwei Komponenten, wenn der Grid-Row-Gap nicht genug ist.
 ### `layout.Container` — mehrere Komponenten in einem Grid-Slot
 
 ```go
-container := layout.NewContainer(nil).
+container := layout.NewContainer(nil).   // *layout.Container
     Add(stat1).
     Add(stat2).
     Add(stat3)
-
-container.(*layout.Container)    // Struct-Name
 ```
 
 Alles im Container landet in **einem** Grid-Slot, intern aber wieder als 12-Spalten-Subgrid. Praktisch für Kompositionen, die als Einheit skalieren sollen.
@@ -280,7 +279,7 @@ layout.NewHtml("<p>Beliebiger <b>HTML</b>-Inhalt</p>", nil)
 ```go
 bl := button.NewButtonLine("right", nil)          // class + display
 bl.Add(button.NewSimpleCloseButton("Abbrechen"))
-bl.Add(button.NewSimpleApiButton("Speichern", c.apiUrl("save").PrintPrefix(), core.ColorPrimary))
+bl.Add(button.NewSimpleApiButton("Speichern", c.apiUrl("save"), core.ColorPrimary))
 bl.WithDisplay("xcol-md-12")
 
 p.Add(bl)
@@ -295,7 +294,7 @@ button.NewButtonLine(class string, display *string) *ButtonLine
   .Print(ctx) map[string]any
   .PrintData(ctx) map[string]any            // nur die data, ohne Type-Wrapper
   .PrintButtons(ctx) []map[string]any        // nur das Button-Array
-  .DataResponse(ctx) response.DataResult     // für Ajax-Replace via RefreshButtons
+  .DataResponse(ctx) response.DataResult     // {"data": PrintData(ctx)} für AJAX-Endpoints
 ```
 
 ### `class`-Werte
@@ -320,7 +319,7 @@ p.Add(pageheader.New("Geräte").Buttons(buttons))
 
 ## Farben
 
-Quelle: `component/core/enums.go`. `core.Color` ist ein `string`-Alias.
+Quelle: `component/core/enums.go`. `core.Color` ist ein benannter String-Typ (`type Color string`), kein Alias — an `string`-Parameter (z. B. `stat.IconColor`, `timeline.Item.IconColor`, `info.NewInfoPoint`) muss `string(core.ColorX)` übergeben werden.
 
 ### Theme-Farben (primär zu nutzen)
 
@@ -390,9 +389,9 @@ func (c *Controller) DevicePage(ctx echo.Context) error {
     p.Add(stat.New(strconv.Itoa(c.svc.CountTotal()), "Gesamt").
         Icon("router").WithDisplay("xcol-md-4"))
     p.Add(stat.New(strconv.Itoa(c.svc.CountOnline()), "Online").
-        Icon("check_circle").IconColor(core.ColorSuccess).WithDisplay("xcol-md-4"))
+        Icon("check_circle").IconColor(string(core.ColorSuccess)).WithDisplay("xcol-md-4"))
     p.Add(stat.New(strconv.Itoa(c.svc.CountOffline()), "Offline").
-        Icon("cancel").IconColor(core.ColorError).WithDisplay("xcol-md-4"))
+        Icon("cancel").IconColor(string(core.ColorError)).WithDisplay("xcol-md-4"))
 
     // Section mit Tabelle — volle Breite, neue Zeile
     sec := section.New().
@@ -411,7 +410,7 @@ Ergebnis: Breadcrumbs → Header mit Neu-Button → drei Stat-Karten in einer Ze
 
 ## Häufige Fehler
 
-- **`display` überschreibt Default**: Ein nacktes `WithDisplay("xcol-md-6")` lässt das Default-`xcol` weg. In der Regel nicht schlimm (das Frontend fügt `xcol` immer als Basisklasse hinzu), aber beim Debugging beachten.
+- **`display` überschreibt Default**: Ein nacktes `WithDisplay("xcol-md-6")` lässt das Default-`xcol` weg — das Frontend (`resolveClass`) übernimmt `display` unverändert und fügt `xcol` **nicht** hinzu. Funktioniert trotzdem, weil jede `xcol-{bp}-{N}`-Klasse in `grid.scss` selbst `span 12` als Mobile-Basis mitbringt; bei eigenen Klassen `xcol` explizit mitgeben (`"xcol xcol-md-12"`).
 - **Breadcrumb-URL-Format**: `p.Bread(name, *xurl.Url, extern)` — der zweite Parameter ist `*xurl.Url`, nicht `string`. Für "kein Link" → `nil`.
 - **`AddNewRow` vor der ersten Komponente** hat keinen visuellen Effekt (die erste ist immer in einer neuen Zeile).
 - **ButtonLine `class=""`** defaults zu `"right"` — das ist **nicht** "keine Klasse". Wenn du linksbündig willst, explizit `NewButtonLine("left", nil)`.

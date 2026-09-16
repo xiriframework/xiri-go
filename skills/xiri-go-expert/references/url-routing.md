@@ -18,8 +18,8 @@ func NewUrlPrefix(url string, prefix string) *Url        // mit Prefix
 func (u *Url) Add(url string) *Url                       // append-Chain
 func (u *Url) AddPrefix(prefix string) *Url              // prepend-Chain
 
-func (u *Url) Print() string                             // ohne Prefix (Frontend-Link)
-func (u *Url) PrintPrefix() string                       // mit Prefix (API-POST-Target)
+func (u *Url) Print() string                             // ohne Prefix
+func (u *Url) PrintPrefix() string                       // mit Prefix — das geben alle Komponenten aus
 ```
 
 Beispiel:
@@ -39,14 +39,14 @@ u2.Print()       // "/Portal/Device/Edit/7"
 | ----------------------- | ------- | --------------------------- | ------------------------------------------- |
 | Angular-Route (Link)    | **nein** | `<a routerLink>`            | `/devices`, `/devices/edit/42`              |
 | API-Endpoint (POST/GET) | **ja**   | HttpClient, `form.NewForm`  | `/api/v1/devices/save`                      |
-| Breadcrumb              | **nein** | Angular Router              | `/devices`                                  |
+| Breadcrumb              | **nein** (`Bread` gibt `PrintPrefix()` aus → `NewUrl` nehmen) | Angular Router | `/devices`          |
 | Button `action: link`   | **nein** | Router                      | `/devices/edit/42`                          |
 | Button `action: api`    | **ja**   | HttpClient                  | `/api/v1/devices/save`                      |
 | Button `action: dialog` | **ja**   | fetch + MatDialog           | `/api/v1/devices/42/delete`                 |
 | `table.SetURL(...)`     | **ja**   | HttpClient                  | `/api/v1/devices/data`                      |
 | `form.NewForm(_, url, …)` | **ja** | HttpClient                  | `/api/v1/devices/save`                      |
 
-Deshalb: **`Print()` in Links/Breadcrumbs, `PrintPrefix()` in API-Zielen**. Builder wie `button.NewLinkButton` und `table.SetURL` akzeptieren `*xurl.Url` direkt — sie picken intern die richtige Variante.
+Deshalb: **Links/Breadcrumbs mit `NewUrl`, API-Ziele mit `NewUrlPrefix` bauen.** Builder wie `button.NewLinkButton`, `page.Bread` und `table.SetURL` akzeptieren `*xurl.Url` direkt, geben aber **immer `PrintPrefix()`** aus (kein Umschalten nach Action) — ein `NewUrlPrefix` in einem Link-Button landet mit Prefix im Frontend.
 
 ## Controller-Helper für saubere Prefix-Nutzung
 
@@ -96,17 +96,17 @@ xiri-go liefert **keine** eigene Sidebar-Komponente — Sidebars werden im Front
 
 ```json
 {
-  "prefix": "/portal/",
+  "prefix": "/portal",
   "fields": [
-    { "name": "Devices", "link": "/portal/devices", "icon": "router" },
-    { "name": "Users",   "link": "/portal/users",   "icon": "group" }
+    { "name": "Devices", "link": "/devices", "icon": "router" },
+    { "name": "Users",   "link": "/users",   "icon": "group" }
   ]
 }
 ```
 
-Der Go-Endpoint der diese Struktur liefert, baut sie mit `xurl.NewUrl(pagePrefix + "/devices").Print()` — d.h. **dieselben** URLs, die auch in Breadcrumbs und Link-Buttons landen. **`prefix`** in der Sidebar-Config ist der Route-Prefix, der im Active-Match **entfernt** werden soll (z.B. `/portal/` damit `/portal/devices` als `devices` hervorgehoben wird).
+Der Go-Endpoint der diese Struktur liefert, baut `link` mit `xurl.NewUrl("/devices").Print()` — **ohne** `pagePrefix`. Das Frontend streift **`prefix`** nur von der aktuellen Router-URL ab und vergleicht den Rest exakt mit `link` (`/portal/devices` − `/portal` = `/devices`); ein `link` mit Prefix (`/portal/devices`) wird daher nie als aktiv markiert.
 
-**Regel:** `pagePrefix` in Go = `prefix` in Sidebar-Config = gemeinsamer Anfang aller Page-URLs.
+**Regel:** `pagePrefix` in Go = `prefix` in Sidebar-Config (ohne Trailing-Slash); `link` = Page-URL **ohne** diesen Prefix (oder `path`-Regex setzen).
 
 ### Aufklappbare Menüs (bis zu 3 Ebenen)
 
@@ -114,17 +114,17 @@ Ein `XiriNavigationField` ist entweder ein **Link** (`link`), ein **externer Lin
 
 ```json
 {
-  "prefix": "/portal/",
+  "prefix": "/portal",
   "fields": [
     {
       "name": "Forms", "icon": "edit_note", "menu": true,
       "sub": [
-        { "name": "Basic", "link": "/portal/forms/basic", "icon": "text_fields" },
+        { "name": "Basic", "link": "/forms/basic", "icon": "text_fields" },
         {
           "name": "Advanced", "icon": "tune", "menu": true,
           "sub": [
-            { "name": "Select",  "link": "/portal/forms/advanced/select" },
-            { "name": "Special", "link": "/portal/forms/advanced/special" }
+            { "name": "Select",  "link": "/forms/advanced/select" },
+            { "name": "Special", "link": "/forms/advanced/special" }
           ]
         }
       ]
@@ -133,7 +133,7 @@ Ein `XiriNavigationField` ist entweder ein **Link** (`link`), ein **externer Lin
 }
 ```
 
-`menu`-Knoten brauchen kein `link` — der Klick togglet nur das Auf-/Zuklappen (`showSubmenu` wird vom Frontend verwaltet, nicht setzen). Alle URLs in `link` bleiben **ohne** API-Prefix, auf jeder Ebene.
+`menu`-Knoten brauchen kein `link` — der Klick togglet nur das Auf-/Zuklappen (`showSubmenu` wird vom Frontend verwaltet, nicht setzen). Alle URLs in `link` bleiben **ohne** API-Prefix und **ohne** Sidebar-`prefix`, auf jeder Ebene.
 
 ### Einträge weglassen (`hide`)
 
@@ -142,7 +142,7 @@ rendert den Eintrag dann **gar nicht** (kein `routerLink` im DOM), auf allen dre
 verstecktes Kind aktiviert und öffnet auch seinen Parent nicht.
 
 ```json
-{ "name": "Admin", "link": "/portal/admin", "icon": "shield", "hide": true }
+{ "name": "Admin", "link": "/admin", "icon": "shield", "hide": true }
 ```
 
 **Kein Berechtigungs-Contract.** Client-Filtern ist keine Autorisierung — der Server muss die
@@ -160,5 +160,5 @@ Bei einem aktiven (Tief-)Link klappt das Frontend automatisch **alle Vorfahren**
 
 - **Falsche Mischung**: `tbl.SetURL(xurl.NewUrl("/data"))` ohne Prefix → xiri-ng POSTed an `/data` und bekommt 404. Immer `NewUrlPrefix` für API-URLs.
 - **String-Konkatenation**: `fmt.Sprintf("%s/edit/%d", prefix, id)` in Handlern — gerne schleicht sich hier der API-Prefix in einen Link ein. Stattdessen `c.pageUrl("edit", strconv.FormatInt(id, 10)).Print()`.
-- **Doppelte Slashes**: `NewUrl("/devices/").Add("/edit")` → `/devices//edit`. `Add` prefixt selbst einen Slash; `Add` **nicht** mit führendem Slash füttern.
+- **Doppelte Slashes**: `NewUrl("/devices/").Add("/edit")` → `/devices///edit`. `Add` prefixt selbst einen Slash; `Add` **nicht** mit führendem Slash füttern.
 - **Falscher Prefix beim Weiterdelegieren**: `u.AddPrefix("/tenant-x")` ist **cumulativ** — mehrfaches `AddPrefix` stackt. Wenn du nur einen Prefix setzen willst, verwende `NewUrlPrefix` beim Erzeugen.

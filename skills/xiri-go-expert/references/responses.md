@@ -222,7 +222,7 @@ Beispiel — Card mit `SetURL` + AJAX-Reload:
 
 ```go
 // Page: Card als Shell, lädt Daten lazy
-card := card.NewCard(core.CardTypeTable, nil, "Live-Status", "", "", "", true, false, "")
+card := card.NewCard(core.CardTypeTable, nil, "Live-Status", nil, nil, nil, true, false, nil)
 card.SetURL(c.apiUrl("card", "status"))
 card.WithReload(true)   // Frontend pollt
 
