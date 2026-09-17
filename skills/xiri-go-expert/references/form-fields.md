@@ -400,7 +400,7 @@ fb.AddField(active).AddField(reason).AddField(prio).AddField(critNote)
 ### Runtime-Verhalten
 
 - Das Frontend wertet die Bedingungen live aus (reactive) — Ein-/Ausblenden ohne Roundtrip.
-- Versteckte Felder bleiben im FormGroup und werden beim Submit mit ihrem letzten Wert mitgeschickt. Wer sie ignorieren will, muss die Bedingung serverseitig nachprüfen.
+- Per `showWhen` versteckte Felder sind im Frontend disabled: sie fehlen im Submit-Body und blockieren die Validierung nicht (ab xiri-ng 0.4.14). Server-seitig bindet `BindAndValidate` für den fehlenden Key den Konstruktor-Default.
 - Fehlt ein Feld im Request, bindet `BindAndValidate` den Konstruktor-Default — `field.Value` ist dann i. d. R. ein Zeiger auf den Nullwert (`""`, `0`, `false`), nicht `nil`. `nil` gibt es nur bei nil-Default (z. B. File, JSON/TimeRange ohne Default).
 
 ### Low-Level — direkt `Condition` bauen (selten nötig)
