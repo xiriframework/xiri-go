@@ -36,7 +36,7 @@ formatter.FormatTimestampDate(ts int64, ctx *core.UiContext) string
   // "24.02.2024" (DE) / "02/24/2024" (EnUS) / "24/02/2024" (EnGB)
 
 formatter.FormatTimestampFullDate(ts int64, ctx *core.UiContext) string
-  // Alias für FormatTimestampDateTime (identische Ausgabe)
+  // Deprecated: Alias für FormatTimestampDateTime
 
 formatter.FormatTimestampToTextRange(ts int64, includeTime bool,
     timezone string, translate ...func(string) string) string

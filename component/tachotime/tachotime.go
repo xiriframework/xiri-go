@@ -69,6 +69,9 @@ type TachoTimeDriveDayData struct {
 // ============================================================================
 
 // NewTachoTime creates a new TachoTime component.
+//
+// xiri-ng ships no renderer for type "tachotime"; the consuming app must register its
+// own component in its dyncomponent switch.
 func NewTachoTime(header string, data []TachoTimeDay, display *string) *TachoTime {
 	return &TachoTime{
 		header:  header,
