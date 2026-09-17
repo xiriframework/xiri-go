@@ -6,6 +6,41 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Changed
+
+- **Datumsformate folgen jetzt der Locale.** Deutsch (und DeAT, DeCH, Nb, Da, Fi) rendert `24.02.2024`
+  statt ISO; Hr, Pl, Cs, Ro, Tr, Bg, Sl, Sk, Sr, Ru, Uk ebenfalls mit Punkt statt Slash; Nl `24-02-2024`;
+  Hu `2024.02.24`; EnGB `FormatTime` 24 h statt 12 h. Unverändert: Sv (ISO), EnUS, Ja/ZhCN und die
+  Slash-DMY-Gruppe (EnGB, Es, Fr, It, Pt, PtBR, El, ArAE). `FormatDateTime` ist jetzt immer
+  `FormatDate + " " + FormatTime`. Eine Zeile pro Locale in `formatter/datetime_test.go`. (E1 aus
+  `todo/10-skill-audit-funde.md`)
+- **Tabellenzellen von Datums-, Dauer-, `text2*`- und `*N`-Feldern sind Zellobjekte `{"d", "v"}`.**
+  `d` ist die bisherige Anzeige, `v` der Rohwert (ISO-Datum, lokale ISO-Zeit `2006-01-02T15:04:05`,
+  Sekunden, Zahl; `null` = leer); Feld-JSON bekommt `"cellObject": "string" | "number"`. xiri-ng sortiert nach `v`,
+  zeigt `d` und editiert `v` — der Server bekommt beim Inline-Edit `"2024-02-25"` statt `"25.02.2024"`.
+  **Braucht xiri-ng ≥ 0.4.14** (ältere Clients zeigen `[object Object]`). Weitere Keys im Objekt sind
+  für spätere Erweiterungen reserviert. Integer-`v` > 2^53 ziehen im Browser gleich (Anzeige bleibt exakt).
+  Apps, die Rows von Hand bauen (`NewTableDataResponse`) und Feld-Metadaten dieser Typen mitschicken,
+  müssen `{d, v}` liefern; nackte Werte zeigt der Client an, sortiert sie aber wie leer.
+  `dateTime`-`v` ist lokale Zeit ohne Offset: in der doppelten Stunde der DST-Rückstellung ist die
+  Reihenfolge undefiniert (bewusst akzeptiert).
+- **PDF-Ausgabe** von Datumsfeldern folgt denselben Locale-Formaten (kein Zellobjekt, nur das Format).
+- **Inline-Edit für `date`, `dateTime`, `timeLength`** sendet jetzt `v` (`"2024-02-25"`,
+  `"2024-02-25T15:05:00"`, Sekunden) statt des Anzeigestrings; `nil` heißt geleert. `text2`/`textn`
+  bleiben wie bisher nicht inline-editierbar.
+
+### Added
+
+- **`Table.Cell(ctx, fieldID, row)`** formatiert eine Zelle wie `GetData` — für `ReturnInlineEdit.Updates`
+  nach einem Inline-Save. Nicht für Link- und Buttons-Felder (`nil`; `GetData` ergänzt dort Link-Split
+  bzw. Menüdaten), die per Refresh aktualisiert werden. Kommt kein neues Zellobjekt für die editierte
+  Zelle zurück, zeigt der Client `v` als Text; URL-Tabellen laden zusätzlich neu, sofern die Antwort
+  nicht selbst refresht oder navigiert; Tabellen mit statischen Daten behalten den Text.
+- **`formatter.ParseLocalDateTime(v, ctx)`**, `CellDateLayout`, `CellDateTimeLayout`: parsen das `v`
+  eines Datums-/Zeit-Inline-Edits in der Zeitzone des Users; eine bei der DST-Vorstellung nicht
+  existierende Uhrzeit ist ein Fehler, keine stille Verschiebung.
+- `DateField`/`DateTimeField`/`TimeLengthField` setzen `inputType` `date`/`datetime-local`/`number`
+  als Default (per `WithInputType` überschreibbar).
 
 ## [0.3.11]
 ### Changed

@@ -30,10 +30,10 @@ formatter.FromUnixTimestampBigInt(ts int64) time.Time // Millisekunden — nicht
 
 ```go
 formatter.FormatTimestampDateTime(ts int64, ctx *core.UiContext) string
-  // "2024-02-24 18:30" (DE, ISO) / "02/24/2024 06:30 PM" (EnUS) / "24/02/2024 18:30" (EnGB)
+  // "24.02.2024 18:30" (DE) / "02/24/2024 06:30 PM" (EnUS) / "24/02/2024 18:30" (EnGB)
 
 formatter.FormatTimestampDate(ts int64, ctx *core.UiContext) string
-  // "2024-02-24" (DE, ISO) / "02/24/2024" (EnUS) / "24/02/2024" (EnGB)
+  // "24.02.2024" (DE) / "02/24/2024" (EnUS) / "24/02/2024" (EnGB)
 
 formatter.FormatTimestampFullDate(ts int64, ctx *core.UiContext) string
   // Alias für FormatTimestampDateTime (identische Ausgabe)
@@ -44,6 +44,15 @@ formatter.FormatTimestampToTextRange(ts int64, includeTime bool,
   // "T.VOR n T.HOUR" / "T.VOR n d" (< 7 Tage), sonst fix "2006-01-02[ 15:04]".
   // translate muss die T.*-Keys auflösen, sonst erscheinen sie roh.
 ```
+
+**Formate sind vereinfachte Produktformate, nicht CLDR** (numerisch, ohne Leerzeichen/Abschlusspunkte,
+12-Stunden-Uhr nur EnUS). Eine Zeile pro Locale steht in `formatter/datetime_test.go` — dort ändern,
+wenn ein Kunde ein anderes Format braucht. Die Tabellensortierung hängt nicht am Format: Datums-,
+Dauer- und mehrwertige Zellen sind Zellobjekte `{d, v}` (siehe tables.md, „Sortierung“).
+
+`formatter.ParseLocalDateTime(v, ctx)` parst das `v` eines Inline-Edits (`2006-01-02T15:04:05`,
+`2006-01-02T15:04`, `2006-01-02`) in der Zeitzone des Users; `CellDateLayout`/`CellDateTimeLayout`
+sind die Layouts.
 
 ### `time.Time` → Locale-String
 
