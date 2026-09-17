@@ -10,7 +10,7 @@ Alle Fields implementieren `FormField` Interface und embedden `*BaseField`.
 field.SetClass("xcol-md-6")      // CSS-Klasse (Grid-Breite)
 field.SetHint("tooltip.text")    // Tooltip/Hilfetext
 field.SetStep(1)                 // Schritt in Multi-Step-Forms
-field.SetDisabled(true)          // Deaktiviert
+field.SetDisabled(true)          // Deaktiviert: UI gesperrt (ab xiri-ng 0.4.14), Wert wird serverseitig nie gebunden (Default)
 field.SetAccess([]string{"admin"}) // Rollen-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetScenario([]string{"add"}) // Szenario-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetForm(false)             // Nicht im Formular anzeigen

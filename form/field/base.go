@@ -154,6 +154,7 @@ func (f *BaseField) GetBaseExport(ctx *core.UiContext, value interface{}) map[st
 		"value":    value,
 		"form":     f.Form,
 		"hide":     f.Hide,
+		"disabled": f.Disabled,
 	}
 
 	// Translate name and hint (SafeTranslate returns key unchanged if ctx/Translate is nil)

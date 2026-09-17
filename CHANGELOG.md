@@ -57,6 +57,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Fixed
 
+- **`SetDisabled(true)` erreicht jetzt das Frontend.** `GetBaseExport` schreibt `disabled` ins Feld-JSON (auch im
+  `ExportPatch`). Bisher wirkte das Flag nur serverseitig — das Binding verwarf den Wert, das Feld war im UI aber
+  bedienbar. xiri-ng sperrt das Control ab 0.4.14 beim Aufbau. Ältere Clients (≤ 0.4.13) werten den Key bereits
+  in `reloadOn`-Patches und beim Wiederaktivieren nach globalem Disable aus und sperren zusammengesetzte Felder
+  visuell — das Control bleibt dort aber beim Aufbau enabled.
+  (`todo/12-disabled-feld-export.md`)
 - **`LoadFilterData` setzt keine Field-Defaults mehr** für fehlende Filter-Keys. Ein `NewSelectField`-Filter
   ohne gesendeten Wert lieferte bisher die erste Option und filterte damit ungewollt. Fehlende Keys fehlen
   jetzt in der Map (`if v, ok := filters["status"]; ok`). Formulare (`BindAndValidate`) bekommen weiterhin
