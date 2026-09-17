@@ -139,7 +139,7 @@ Spezial-Formatter für Zeitfenster-Definitionen (z.B. Öffnungszeiten, Geo-Fenci
 
 ```go
 formatter.FormatTimeLimitFromDB(
-    weekdaysStr string,      // Postgres-Array-Literal: "{t,t,t,t,f,f,f}"  (Mo-So)
+    weekdaysStr string,      // Postgres-Array-Literal: "{f,t,t,t,t,t,f}"  (So-Sa, Index 0 = Sonntag; gleiche Reihenfolge wie TimeLimitValue.Weekdays)
     timeFrom    *string,     // "08:00:00" oder nil
     timeTo      *string,     // "17:00:00" oder nil
     timeIn      *bool,       // true = "im Zeitraum"/aktiv, false = "außerhalb"

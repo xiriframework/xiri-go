@@ -6,7 +6,7 @@ import "fmt"
 // Parses PostgreSQL boolean array string and time strings to create formatted output
 //
 // Parameters:
-//   - weekdaysStr: PostgreSQL boolean array format "{t,f,t,f,t,f,f}" (Mon-Sun)
+//   - weekdaysStr: PostgreSQL boolean array format "{t,f,t,f,t,f,f}" (Sun-Sat: index 0 = Sunday, matches TimeLimitField.Weekdays and TL.WD0)
 //   - timeFrom: Time string in "HH:MM:SS" format (can be nil)
 //   - timeTo: Time string in "HH:MM:SS" format (can be nil)
 //   - timeIn: If true, time limit applies inside range; if false, outside range (shows "Nicht: ")
