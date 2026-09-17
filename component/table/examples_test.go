@@ -3,6 +3,7 @@ package table_test
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	xurl "github.com/xiriframework/xiri-go/component/url"
 	"github.com/xiriframework/xiri-go/form/field"
 	"github.com/xiriframework/xiri-go/form/group"
+	"github.com/xiriframework/xiri-go/formatter"
 	"github.com/xiriframework/xiri-go/types/distance"
 	"github.com/xiriframework/xiri-go/types/language"
 	"github.com/xiriframework/xiri-go/types/locale"
@@ -388,17 +390,19 @@ func TestExample05_DateTimeField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	// DateTime formatted with user timezone
-	if lastSeenValue, ok := data[0]["last_seen"].(string); ok {
-		fmt.Printf("DateTime field output: %s\n", lastSeenValue)
-		// Output: 2021-12-20 12:26 (German format with Vienna timezone)
+	// DateTime formatted with user timezone: web cells are {d: display, v: local ISO}.
+	vienna, _ := time.LoadLocation("Europe/Vienna")
+	ts := rows[0].LastSeen.Unix()
+	want := map[string]any{"d": formatter.FormatTimestampDateTime(ts, ctx), "v": time.Unix(ts, 0).In(vienna).Format(formatter.CellDateTimeLayout)}
+	if got := data[0]["last_seen"]; !reflect.DeepEqual(got, want) {
+		t.Errorf("last_seen = %#v, want %#v", got, want)
 	}
 
-	// Different format for CSV
+	// Different format for CSV: CSV cells stay a plain ISO string.
 	csvData := tbl.GetData(ctx, table.OutputCSV)
-	if csvLastSeen, ok := csvData[0]["last_seen"].(string); ok {
-		fmt.Printf("DateTime CSV output: %s\n", csvLastSeen)
-		// Output: 2021-12-20 12:26:40 (ISO format)
+	wantCSV := time.Unix(ts, 0).In(vienna).Format("2006-01-02 15:04:05")
+	if csvData[0]["last_seen"] != wantCSV {
+		t.Errorf("last_seen (CSV) = %#v, want %q", csvData[0]["last_seen"], wantCSV)
 	}
 }
 
@@ -418,10 +422,12 @@ func TestExample06_DateField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	// Date formatted without time
-	if createdValue, ok := data[0]["created"].(string); ok {
-		fmt.Printf("Date field output: %s\n", createdValue)
-		// Output: 2021-08-26
+	// Date formatted without time: web cells are {d: display, v: local ISO date}.
+	vienna, _ := time.LoadLocation("Europe/Vienna")
+	ts := rows[0].CreatedDate.Unix()
+	want := map[string]any{"d": formatter.FormatTimestampDate(ts, ctx), "v": time.Unix(ts, 0).In(vienna).Format(formatter.CellDateLayout)}
+	if got := data[0]["created"]; !reflect.DeepEqual(got, want) {
+		t.Errorf("created = %#v, want %#v", got, want)
 	}
 }
 
@@ -879,8 +885,8 @@ func TestExample17_Text2IntField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	// Web output: [2]string with locale-aware formatting
-	trips := data[0]["trips"].([2]string)
+	// Web output: cell object {d: [2]string, v: int64} — d keeps the locale-aware formatting.
+	trips := data[0]["trips"].(map[string]any)["d"].([2]string)
 	fmt.Printf("Today vs Total Trips: [%s, %s]\n", trips[0], trips[1])
 	// Output: ["5", "1.234"] (German locale uses dot for thousands)
 
@@ -912,7 +918,7 @@ func TestExample18_Text2FloatField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	fuel := data[0]["fuel"].([2]string)
+	fuel := data[0]["fuel"].(map[string]any)["d"].([2]string)
 	fmt.Printf("Current vs Average Fuel: [%s, %s]\n", fuel[0], fuel[1])
 	// Output: ["45.67", "52.34"] (English locale uses dot for decimals)
 }
@@ -942,7 +948,7 @@ func TestExample19_Text2DateTimeField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	times := data[0]["times"].([2]string)
+	times := data[0]["times"].(map[string]any)["d"].([2]string)
 	fmt.Printf("Last Seen vs Created: [%s, %s]\n", times[0], times[1])
 	// Output: Timezone-aware datetime formatting for both timestamps
 }
@@ -974,7 +980,7 @@ func TestExample20_Text2DistanceField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	distances := data[0]["distances"].([2]string)
+	distances := data[0]["distances"].(map[string]any)["d"].([2]string)
 	fmt.Printf("Today vs Total Distance: [%s, %s]\n", distances[0], distances[1])
 	// Output: ["123,5 km", "9.876,5 km"] (German locale + km units)
 
@@ -1011,7 +1017,7 @@ func TestExample21_Text2SpeedField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	speeds := data[0]["speeds"].([2]string)
+	speeds := data[0]["speeds"].(map[string]any)["d"].([2]string)
 	fmt.Printf("Max vs Avg Speed: [%s, %s]\n", speeds[0], speeds[1])
 	// Output: ["120,5 km/h", "85,3 km/h"]
 }
@@ -1113,7 +1119,7 @@ func TestExample24_Text2TimeLengthField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	times := data[0]["times"].([2]string)
+	times := data[0]["times"].(map[string]any)["d"].([2]string)
 	fmt.Printf("Duration vs Idle: [%s, %s]\n", times[0], times[1])
 	// Output: ["05:30", "02:00"]
 
@@ -2128,7 +2134,7 @@ func TestExample_IntNField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	stats := data[0]["stats"].([]string)
+	stats := data[0]["stats"].(map[string]any)["d"].([]string)
 	fmt.Printf("IntNField output: %v\n", stats)
 
 	if len(stats) != 3 {
@@ -2168,7 +2174,7 @@ func TestExample_FloatNField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	fuel := data[0]["fuel"].([]string)
+	fuel := data[0]["fuel"].(map[string]any)["d"].([]string)
 	fmt.Printf("FloatNField output: %v\n", fuel)
 
 	if len(fuel) != 2 {
@@ -2208,7 +2214,7 @@ func TestExample_DateTimeNField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	times := data[0]["times"].([]string)
+	times := data[0]["times"].(map[string]any)["d"].([]string)
 	fmt.Printf("DateTimeNField output: %v\n", times)
 
 	if len(times) != 3 {
@@ -2242,7 +2248,7 @@ func TestExample_DateNField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	dates := data[0]["dates"].([]string)
+	dates := data[0]["dates"].(map[string]any)["d"].([]string)
 	fmt.Printf("DateNField output: %v\n", dates)
 
 	if len(dates) != 2 {
@@ -2268,7 +2274,7 @@ func TestExample_DistanceNField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	distances := data[0]["distances"].([]string)
+	distances := data[0]["distances"].(map[string]any)["d"].([]string)
 	fmt.Printf("DistanceNField output: %v\n", distances)
 
 	if len(distances) != 3 {
@@ -2301,7 +2307,7 @@ func TestExample_SpeedNField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	speeds := data[0]["speeds"].([]string)
+	speeds := data[0]["speeds"].(map[string]any)["d"].([]string)
 	fmt.Printf("SpeedNField output: %v\n", speeds)
 
 	if len(speeds) != 2 {
@@ -2387,7 +2393,7 @@ func TestExample_TimeLengthNField(t *testing.T) {
 	tbl.SetData(rows)
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	durations := data[0]["durations"].([]string)
+	durations := data[0]["durations"].(map[string]any)["d"].([]string)
 	fmt.Printf("TimeLengthNField output: %v\n", durations)
 
 	if len(durations) != 3 {

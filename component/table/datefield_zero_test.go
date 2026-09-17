@@ -1,6 +1,7 @@
 package table_test
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -20,10 +21,11 @@ func TestDateFieldZeroTimeEmpty(t *testing.T) {
 	tbl.SetData([]row{{When: time.Time{}}}) // zero time
 	data := tbl.GetData(ctx, table.OutputWeb)
 
-	if got := data[0]["dt"]; got != "" {
-		t.Errorf("DateTimeField zero time = %v, want empty string", got)
+	want := map[string]any{"d": "", "v": nil}
+	if got := data[0]["dt"]; !reflect.DeepEqual(got, want) {
+		t.Errorf("DateTimeField zero time = %#v, want %#v", got, want)
 	}
-	if got := data[0]["d"]; got != "" {
-		t.Errorf("DateField zero time = %v, want empty string", got)
+	if got := data[0]["d"]; !reflect.DeepEqual(got, want) {
+		t.Errorf("DateField zero time = %#v, want %#v", got, want)
 	}
 }

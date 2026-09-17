@@ -151,6 +151,16 @@ b.TextField("name", "Name", accessor).
     WithSearch(true)      // ist im pg.Search-Scope
 ```
 
+Datums-, Dauer- und `text2*`/`*N`-Felder liefern auf Web ein Zellobjekt `{"d": Anzeige, "v": Rohwert}`
+mit `"cellObject": "string" | "number"` im Feld-JSON (`cellValueFor` in `component/table/cell.go`). `v` ist ISO-Datum,
+lokale ISO-Zeit, Sekunden oder Zahl; `null` = leer. Der Client sortiert nach `v`, zeigt `d`, editiert
+`v`. Nach einem Inline-Save `tbl.Cell(ctx, fieldID, row)` in `ReturnInlineEdit.Updates` legen (nicht
+für Link-/Buttons-Felder, dort `nil`); mit Zellobjekt wird es übernommen, mit nacktem Wert bleibt dieser als
+Anzeige und `v` wird die Eingabe (kein Reload), ohne Antwort zeigt der Client `v` als Text und lädt
+URL-Tabellen neu (sofern die Antwort nicht selbst refresht/navigiert). `date`/`dateTime`/`timeLength`
+bekommen `inputType` `date`/`datetime-local`/`number` als Default. `v` eines Edits mit
+`formatter.ParseLocalDateTime` parsen (`nil` = geleert). Braucht xiri-ng ≥ 0.4.14.
+
 ### Sichtbarkeit
 
 ```go
@@ -593,8 +603,8 @@ tbl.SetData(regions)
   muss vorher aufgerufen sein.
 - Multi-Root wird unterstützt; Knoten mit fehlendem Parent werden als Root behandelt, Zyklen
   abgefangen (Knoten wird Root, Warn-Log).
-- Sortierung anderer Spalten ist im Tree-Modus deaktiviert; Geschwister werden alphabetisch
-  nach der Tree-Spalte sortiert.
+- Sortierung anderer Spalten ist im Tree-Modus deaktiviert; Geschwister werden
+  nach dem Sortierwert der Tree-Spalte sortiert (numerisch bei Zahlen, sonst alphabetisch).
 - **Falle:** `ParentIdField` darf **nicht** über `.Hide()` versteckt werden — versteckte
   Felder fallen aus den Row-Daten (`GetData` überspringt sie), und der Baum bricht. Stattdessen
   als `IdField`/Format `id` ausgeben: aus der Anzeige gefiltert, aber in den Daten vorhanden.

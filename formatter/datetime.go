@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/xiriframework/xiri-go/types/locale"
 	"github.com/xiriframework/xiri-go/component/core"
+	"github.com/xiriframework/xiri-go/types/locale"
 )
 
 // ToUnixTimestamp converts Go time.Time to Unix timestamp in SECONDS
@@ -31,7 +31,8 @@ func FromUnixTimestampBigInt(ts int64) time.Time {
 }
 
 // FormatTimestampToTextRange formats a Unix timestamp to a relative text range
-// e.g., "gerade eben", "vor 2 min", "vor 3 h", "vor 2 d", "02.01.2006 15:04"
+// e.g., "gerade eben", "vor 2 min", "vor 3 h", "vor 2 d", "2006-01-02 15:04"
+// The fallback date is ISO and not locale-aware: there is no UiContext here.
 // Parameters:
 //   - timestamp: Unix timestamp in seconds
 //   - includeTime: If true, shows time for dates older than 7 days
@@ -101,42 +102,40 @@ func FormatTimestampDate(timestamp int64, ctx *core.UiContext) string {
 	return FormatDate(FromUnixTimestamp(timestamp), ctx)
 }
 
-// dateLayout returns the Go date format string for a locale
+// dateLayout returns the Go date layout for a locale. These are deliberately simplified product
+// formats (numeric, no CLDR spaces or trailing dots); every locale is pinned in datetime_test.go.
+// Client-side table sorting does not depend on the layout — cell objects carry the raw value v.
 func dateLayout(loc locale.Locale) string {
 	switch loc {
-	case locale.De, locale.DeAT, locale.DeCH, locale.Sv, locale.Nb, locale.Da, locale.Fi:
-		return "2006-01-02" // ISO
 	case locale.EnUS:
-		return "01/02/2006" // US MDY
+		return "01/02/2006"
 	case locale.Ja, locale.ZhCN:
-		return "2006/01/02" // Asian YMD
-	default:
-		return "02/01/2006" // European DMY
+		return "2006/01/02"
+	case locale.Sv:
+		return "2006-01-02"
+	case locale.Hu:
+		return "2006.01.02"
+	case locale.Nl:
+		return "02-01-2006"
+	case locale.EnGB, locale.Es, locale.Fr, locale.It, locale.Pt, locale.PtBR, locale.El, locale.ArAE:
+		return "02/01/2006"
+	default: // De, DeAT, DeCH, Hr, Pl, Cs, Ro, Tr, Bg, Sl, Sk, Sr, Nb, Da, Fi, Ru, Uk
+		return "02.01.2006"
 	}
 }
 
-// dateTimeLayout returns the Go datetime format string for a locale
-func dateTimeLayout(loc locale.Locale) string {
-	switch loc {
-	case locale.De, locale.DeAT, locale.DeCH, locale.Sv, locale.Nb, locale.Da, locale.Fi:
-		return "2006-01-02 15:04"
-	case locale.EnUS:
-		return "01/02/2006 03:04 PM"
-	case locale.Ja, locale.ZhCN:
-		return "2006/01/02 15:04"
-	default:
-		return "02/01/2006 15:04"
-	}
-}
-
-// timeLayout returns the Go time-only format string for a locale
+// timeLayout returns the Go time-only layout: 12-hour clock for EnUS, 24-hour everywhere else
+// (product decision, also where CLDR prefers 12h, e.g. El and ArAE).
 func timeLayout(loc locale.Locale) string {
-	switch loc {
-	case locale.EnUS, locale.EnGB:
+	if loc == locale.EnUS {
 		return "03:04 PM"
-	default:
-		return "15:04"
 	}
+	return "15:04"
+}
+
+// dateTimeLayout is date and time joined by a space — one source of truth, no third table.
+func dateTimeLayout(loc locale.Locale) string {
+	return dateLayout(loc) + " " + timeLayout(loc)
 }
 
 // FormatDate formats a time.Time to date
@@ -181,9 +180,42 @@ func FormatTime(t time.Time, ctx *core.UiContext) string {
 	return t.In(loc).Format(timeLayout(ctx.SafeLocale()))
 }
 
-// FormatTimestampFullDate formats a Unix timestamp to full date (Y-m-d H:i format)
+// FormatTimestampFullDate is an alias of FormatTimestampDateTime (locale layout, no weekday)
 func FormatTimestampFullDate(timestamp int64, ctx *core.UiContext) string {
 	return FormatTimestampDateTime(timestamp, ctx)
+}
+
+// CellDateLayout and CellDateTimeLayout are the layouts of v in table cell objects (date / dateTime
+// fields): ISO, in the user's timezone, without zone suffix — what <input type="date"> and
+// <input type="datetime-local"> produce and consume.
+const (
+	CellDateLayout     = "2006-01-02"
+	CellDateTimeLayout = "2006-01-02T15:04:05"
+)
+
+// ParseLocalDateTime parses the v an inline edit sends back for a date or dateTime cell
+// ("2006-01-02T15:04:05", "2006-01-02T15:04" or "2006-01-02") in the user's timezone.
+// A wall-clock time that does not exist there (the skipped hour when DST starts) is an error,
+// not silently shifted: ParseInLocation would normalise it, so the result is formatted back and
+// compared with the input. In the repeated hour when DST ends the zone choice is Go's (accepted).
+func ParseLocalDateTime(value string, ctx *core.UiContext) (time.Time, error) {
+	loc, err := time.LoadLocation(ctx.SafeTimezone().GetIANA())
+	if err != nil {
+		loc = time.UTC
+	}
+	var lastErr error
+	for _, layout := range []string{CellDateTimeLayout, "2006-01-02T15:04", CellDateLayout} {
+		t, err := time.ParseInLocation(layout, value, loc)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if t.Format(layout) != value {
+			return time.Time{}, fmt.Errorf("local time %q does not exist in %s", value, loc)
+		}
+		return t, nil
+	}
+	return time.Time{}, lastErr
 }
 
 // FormatMinutesAfterMidnight converts "minutes after midnight" to HH:MM time string

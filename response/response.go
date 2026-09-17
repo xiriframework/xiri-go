@@ -169,11 +169,23 @@ func (r ReturnRefreshPanel) WithMessage(text string, msgType MessageType) Return
 //
 // JSON output examples:
 //
-//	Updates only:    {"done": true, "updates": {"price": ["1.299,00", 1299], "lastModified": "11.03.2026"}}
+//	Updates only:    {"done": true, "updates": {"price": ["1.299,00", 1299], "lastModified": {"d": "11.03.2026", "v": "2026-03-11"}}}
 //	With message:    {"done": true, "updates": {"status": "Active"}, "message": "Saved", "messageType": "success"}
 //	Refresh table:   {"done": true, "refresh": "table"}
 //	Goto:            {"done": true, "goto": "/other/page"}
 //	Combined:        {"done": true, "updates": {"status": "Active"}, "refresh": "table", "message": "Saved", "messageType": "success"}
+//
+// Fields whose column delivers cell objects (date, dateTime, timeLength, text2*, *N — field JSON
+// "cellObject": "string" | "number") expect the whole object in Updates; build it with tbl.Cell(ctx, fieldID, row).
+// The client handles three cases: (1) Server returns a cell object for the edited cell → taken as is.
+// (2) Server returns a bare value → kept as display d, v set to user input, no reload.
+// (3) No value for the edited cell → client shows v as text, URL-backed tables reload unless the
+// response already refreshes/navigates; static-data tables keep the text.
+// Bare values in Updates for other cell-object cells (not the edited one) are wrapped as {d: value, v: null}
+// with a console warning and sort as empty.
+// The edited value arrives as v: "2006-01-02" / "2006-01-02T15:04:05" (parse with
+// formatter.ParseLocalDateTime), seconds or a number — never the locale display string; nil means
+// the user cleared the field.
 //
 // Use case: Inline edit completed — patch row fields, optionally trigger navigation/reload
 type ReturnInlineEdit struct {

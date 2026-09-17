@@ -84,7 +84,7 @@ type field[T any] struct {
 	accessor func(T) any // Extract value from row struct
 
 	// T-dependent accessors for icon fields and menu buttons
-	hintAccessor  func(T) string          // Optional: extracts per-row hint text for icon fields
+	hintAccessor  func(T) string           // Optional: extracts per-row hint text for icon fields
 	menuAccessors map[int]func(T) []string // Per-button menu data accessor (key = button index)
 }
 
@@ -155,6 +155,14 @@ func (f *fieldBase) format(value any, row Row, output OutputType, ctx *core.UiCo
 	// This is required for sortable number columns in xiri-ui Angular frontend
 	if output == OutputWeb && f.fieldType == fieldTypeNumber {
 		return []any{formatted, value}
+	}
+
+	// Cell-object fields (date, dateTime, timeLength, text2*, *N): {d: display, v: raw value}.
+	// The client sorts and edits v and shows d; further keys may be added without breaking clients.
+	if output == OutputWeb {
+		if v, ok := cellValueFor(f.fieldTypeHint, value, ctx); ok {
+			return map[string]any{"d": formatted, "v": v}
+		}
 	}
 
 	return formatted
@@ -241,6 +249,8 @@ func (f *fieldBase) toTableField() *tableFieldJSON {
 
 		// Unexported fields - access control
 		access: f.access,
+
+		cellObject: cellObjectKind(f.fieldTypeHint),
 
 		// Initialize empty maps
 		buttons: make(map[int]*fieldButtonJSON),
