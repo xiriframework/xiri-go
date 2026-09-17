@@ -27,7 +27,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   müssen `{d, v}` liefern. Antwortet der Server für die editierte Zelle mit einem Zellobjekt, übernimmt der
   Client es; mit einem nackten Wert bleibt dieser als Anzeige `d`, `v` wird der eingegebene Wert, kein Reload;
   ohne Antwort für die Zelle zeigt der Client `v` als Text und lädt URL-Tabellen neu (statische Daten behalten
-  den Text). Eine Antwort patcht Zellen **oder** refresht — nicht beides. Nackte Werte in anderen Zellen werden
+  den Text). `Updates` plus `Refresh` ist weiterhin erlaubt (erst Patch, dann Reload); nicht unterstützt
+  sind nur widersprüchliche Antworten, die dieselbe Zelle doppelt beschreiben oder ein Einzel-Zellupdate
+  (`table: "update"`) mit einem Refresh kombinieren — dort gewinnt der Refresh. Nackte Werte in anderen Zellen werden
   zu `{d: value, v: null}` normalisiert (Konsolenwarnung) und sortieren wie leer.
   `dateTime`-`v` ist lokale Zeit ohne Offset: in der doppelten Stunde der DST-Rückstellung ist die
   Reihenfolge undefiniert (bewusst akzeptiert). Tabellen mit `SetSaveInputUrl`, die Datums-/Dauer-/
