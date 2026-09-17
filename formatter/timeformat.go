@@ -32,16 +32,16 @@ func FormatTimeLengthMin(seconds int64, ctx *core.UiContext) string {
 	return fmt.Sprintf("%d min", minutes)
 }
 
-// FormatTimeLengthH converts seconds to hours with decimals and "h" suffix.
-// Example: 3665 seconds → "1.0 h"
+// FormatTimeLengthH converts seconds to hours with one decimal and "h" suffix,
+// using the locale's decimal separator.
+// Example: 5400 seconds → "1,5 h" (De) / "1.5 h" (EnUS)
 // Note: Translation of "h" should be done by caller if needed.
 func FormatTimeLengthH(seconds int64, ctx *core.UiContext) string {
 	if seconds < 0 {
-		return "0.0 h"
+		seconds = 0
 	}
-
 	hours := float64(seconds) / 3600.0
-	return fmt.Sprintf("%.1f h", hours)
+	return FormatNumberLocale(hours, 1, ctx.SafeLocale()) + " h"
 }
 
 // FormatTimeLengthHMS converts seconds to "HH:MM:SS" format.

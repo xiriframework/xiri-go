@@ -304,17 +304,21 @@ Für Table-Top-/Bulk-Buttons heißt das Pendant `TableButton.WithTarget("_blank"
 | `FieldButtonActionMenu`           | Öffnet Menü mit weiteren Items (siehe unten)           |
 | `FieldButtonActionForm` / `Get` / `Post` / `Put` / `Delete` / `Close` / `Back` | im Table-Frontend nicht gerendert |
 
-### Mit Row-Hint (Tooltip pro Zeile)
+### Mit Row-Hint (Tooltip pro Zeile) — nur Icon-Felder
 
-> Go emittiert dafür `<fieldId>Hint` in den Row-Daten; das xiri-ng-Frontend wertet diesen Key derzeit **nicht** aus (kein Tooltip-Effekt).
+Go emittiert `<fieldId>Hint` in den Row-Daten; xiri-ng zeigt ihn ab 0.4.14 als Tooltip der Icon-Zelle
+(Vorrang vor dem statischen IconSet-Hint). Für Buttons-Felder gibt es keinen Row-Hint, dort gilt der
+Button-Hint aus `AddButton`.
 
 ```go
-b.ButtonsField("actions", "", accessor).
-    AddButton(0, table.FieldButtonActionDialog, "delete", core.ColorWarning, "Löschen")
+fb := b.IconFieldFromSet("status", "Status", func(r Device) *table.IconRef {
+    if r.Online { return iconOn }
+    return iconOff
+}, icons)
 
 // Generisch (spezialisiert an Table-Typ):
-table.WithRowHint[Device](fieldBuilder, func(r Device) string {
-    return "Gerät " + r.Name + " löschen"
+table.WithRowHint[Device](fb, func(r Device) string {
+    return "Online seit " + formatter.FormatTime(r.OnlineSince, ctx)
 })
 ```
 
@@ -452,6 +456,36 @@ func (c *Controller) BulkDelete(ctx echo.Context) error {
 }
 ```
 
+### `BulkActions` — Bulk-Leiste oben (`builder_options.go`)
+
+```go
+b.BulkActions(
+    button.NewTableButton(core.ButtonActionApi, "archive", c.apiUrl("bulk-archive"), "Archivieren", core.ColorPrimary, false, nil),
+    button.NewTableButton(core.ButtonActionApi, "delete", c.apiUrl("bulk-delete"), "Löschen", core.ColorWarning, false, nil),
+)
+b.SelectAllResults()  // „Alle Ergebnisse wählen": wirkt auf die gesamte gefilterte Menge (alle Seiten), nicht nur die Seite
+b.StickyBulkBar()     // Leiste bleibt beim Scrollen oben stehen
+```
+
+Payload: `{"ids": [...], "mode": "page"|"allResults", "count": n}`; bei `mode: "allResults"` zusätzlich
+`"filter": <aktueller Filter-Body oder null>`. Buttons mit `core.ColorWarning` bestätigt das Frontend mit der
+exakten Anzahl.
+
+```go
+// BulkActions-Handler: Frontend postet {"ids": [...], "mode": "page"|"allResults", "count": n}
+// und bei mode "allResults" zusätzlich "filter": <aktueller Filter-Body oder null>
+var req struct {
+    IDs    []int64        `json:"ids"`
+    Mode   string         `json:"mode"`
+    Count  int            `json:"count"`
+    Filter map[string]any `json:"filter"`
+}
+if err := ctx.Bind(&req); err != nil { return wc.BadRequest(err.Error()) }
+if req.Mode == "allResults" {
+    // Menge serverseitig aus req.Filter bestimmen — req.IDs enthält nur die geladene Seite
+}
+```
+
 ### `ClearSelectButtons` + `AddSelectButton`
 
 ```go
@@ -473,7 +507,7 @@ b.SetReload(true)           // manueller Reload-Button (Icon in der Toolbar)
 b.SetDense(true)            // Legacy: Alias für DensityCompact, kann kein "relaxed"
 b.SetPagination(true)
 b.SetSearch(true)
-b.SetQuery(false)           // landet nur als "query" im JSON; das Frontend wertet es nicht aus
+b.SetQuery(false)           // Deprecated, ohne Frontend-Wirkung
 b.SetFilterCollapsed(true)  // wrappt SetFilter in ein Expansion-Panel; true = eingeklappt starten,
                             // false = aufgeklappt, gar nicht gesetzt = kein Panel (siehe table-filtering.md)
 b.SetCsv(true)              // CSV-Export-Button verfügbar

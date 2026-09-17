@@ -8,6 +8,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/xiriframework/xiri-go/component/table"
+	"github.com/xiriframework/xiri-go/form/field"
+	"github.com/xiriframework/xiri-go/form/group"
 )
 
 func newJSONContext(body string) echo.Context {
@@ -41,5 +43,36 @@ func TestLoadFilterDataEmptyBody(t *testing.T) {
 	}
 	if len(filters) != 0 {
 		t.Errorf("empty body should yield empty filters, got %v", filters)
+	}
+}
+
+// Ein leerer Filter darf nicht filtern: fehlende Keys bekommen keinen Field-Default
+// (NewSelectField würde sonst die erste Option liefern).
+func TestLoadFilterDataMissingKeyHasNoDefault(t *testing.T) {
+	type row struct{}
+	status := field.NewSelectField("status", "Status", false, []field.SelectOption{
+		{Value: "online", Label: "Online"},
+		{Value: "offline", Label: "Offline"},
+	})
+	fg := group.NewFormGroup([]field.FormField{status})
+
+	b := table.NewBuilder[row]()
+	b.SetFilter(fg)
+	tbl := b.Build()
+
+	filters, err := tbl.LoadFilterData(newJSONContext(`{"page": 1}`))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if v, ok := filters["status"]; ok {
+		t.Errorf("missing filter key must not be defaulted, got status=%v", v)
+	}
+
+	filters, err = tbl.LoadFilterData(newJSONContext(`{"status": "offline"}`))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if filters["status"] != "offline" {
+		t.Errorf("present key must be parsed, got %v", filters["status"])
 	}
 }

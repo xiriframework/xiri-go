@@ -39,7 +39,13 @@ Karte mit Header, Content und Buttons.
 // Table-Card
 c := card.NewCard(core.CardTypeTable, tableComponent, "devices.list", nil, nil, nil, true, false, nil)
 c.ButtonTop(addButton)                   // Icon-Buttons rechts im Card-Header
+c.ButtonBottom(saveButton)               // Buttons unter dem Inhalt
+c.WithHeaderSub("Stand 08:12")           // Untertitel
+c.WithHeaderIcon("router")               // Material-Icon links im Header
+c.WithHeaderIconColor("primary")         // Farbe des Header-Icons
+c.WithTranslate(false)                   // Header nicht übersetzen (Default: true)
 c.WithCollapsible(true)
+c.WithCollapsed(true)                    // startet eingeklappt (nur mit WithCollapsible)
 c.WithMaxHeight("400px")
 c.WithFlat(true)                          // rahmenlos: kein Schatten/Hintergrund/Radius (s. u.)
 c.Print(ctx)
@@ -782,6 +788,19 @@ es := emptystate.New("devices", core.ColorPrimary, "Keine Geräte")
 es.WithDescription("Fügen Sie ein neues Gerät hinzu")
 es.WithButton(button.NewSimpleLinkButton("add", xurl.NewUrl("/devices/add"), core.ColorPrimary))
 es.Print(ctx)
+```
+
+## Progress (`component/progress`)
+
+Ein Balken „current of total" für echten Prozessfortschritt (Backfill, Import). Für Anteile an einer Summe
+`MultiProgress` nehmen.
+
+```go
+p := progress.NewProgress(42, 100, "Import")          // current, total, label → value = 42 %
+p.Color(core.ColorSuccess)
+p.Indeterminate()                                      // unbekannter Fortschritt
+p.SetURL(c.apiUrl("import/progress")).WithReload(true) // AJAX: Endpoint liefert p.DataResponse(ctx)
+p.Print(ctx)  // {"type": "progress", "data": {"label", "current", "total", "value", "color"?, "indeterminate"?}}
 ```
 
 ## MultiProgress (`component/progress`)

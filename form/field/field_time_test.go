@@ -316,3 +316,38 @@ func TestTimeFieldMinMaxDifferentTimezones(t *testing.T) {
 		})
 	}
 }
+
+func TestTimeFieldMinDateMaxDateExportedToFrontend(t *testing.T) {
+	ctx := &core.UiContext{Timezone: timezone.EuropeVienna, Locale: locale.De}
+
+	minDate := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	maxDate := time.Date(2026, 12, 31, 23, 59, 59, 0, time.UTC)
+	f := NewTimeField("t", "test.time", false, 0)
+	f.MinDate = &minDate
+	f.MaxDate = &maxDate
+
+	result := f.ExportForFrontend(ctx, nil)
+
+	if got, _ := result["min"].(int64); got != minDate.Unix() {
+		t.Errorf("min: want %d, got %v", minDate.Unix(), result["min"])
+	}
+	if got, _ := result["max"].(int64); got != maxDate.Unix() {
+		t.Errorf("max: want %d, got %v", maxDate.Unix(), result["max"])
+	}
+}
+
+func TestTimeFieldMinOffsetWinsOverMinDate(t *testing.T) {
+	ctx := &core.UiContext{Timezone: timezone.EuropeVienna, Locale: locale.De}
+
+	minDate := time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC)
+	f := NewTimeField("t", "test.time", false, 0)
+	f.MinDate = &minDate
+	offset := int64(0) // heute
+	f.Min = &offset
+
+	result := f.ExportForFrontend(ctx, nil)
+
+	if got, _ := result["min"].(int64); got == minDate.Unix() {
+		t.Errorf("Min offset must take precedence over MinDate, got MinDate %d", got)
+	}
+}

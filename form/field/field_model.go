@@ -21,10 +21,12 @@ type ModelLoaderFunc func(ctx *core.UiContext, modelType string) ([]ModelOption,
 // This is used to select a single object from a list (dropdown/autocomplete)
 type ModelField struct {
 	*BaseField
-	ModelType   string                 // Type of model (e.g., "device", "driver", "group")
-	URL         string                 // API endpoint to fetch options (for frontend)
-	List        []ModelOption          // Predefined list of options
-	Filter      map[string]interface{} // Additional filter parameters
+	ModelType string        // Type of model (e.g., "device", "driver", "group")
+	URL       string        // API endpoint to fetch options (for frontend)
+	List      []ModelOption // Predefined list of options
+	// Deprecated: Filter is neither read nor exported by xiri-go or xiri-ng. Use Params
+	// (exported as "params" and sent with the option request) instead.
+	Filter      map[string]interface{}
 	Add         []ModelOption          // Additional options to add to the list
 	Sub         []int32                // Subtract/remove specific IDs from list
 	AllowSearch bool                   // If true, search/autocomplete is enabled

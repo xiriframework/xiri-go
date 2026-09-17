@@ -98,7 +98,7 @@ func NewDialogWaitingNotDone() Dialog {
 // Parameters:
 //   - u: API URL (relative to apiBaseUrl, e.g. a report download) that the frontend
 //     opens via window.open(apiBaseUrl+u, "_blank") — NOT an Angular route.
-//   - blocked: Optional identifier for blocked/disabled UI element (currently unused by xiri-ng)
+//   - blocked: Deprecated, ignored by xiri-ng. Pass "".
 //
 // Frontend stops polling, closes the dialog and opens the URL in a new tab.
 // If the popup is blocked, the dialog shows a "Download" button instead.

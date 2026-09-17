@@ -180,7 +180,9 @@ func FormatTime(t time.Time, ctx *core.UiContext) string {
 	return t.In(loc).Format(timeLayout(ctx.SafeLocale()))
 }
 
-// FormatTimestampFullDate is an alias of FormatTimestampDateTime (locale layout, no weekday)
+// FormatTimestampFullDate formats a Unix timestamp as date and time.
+//
+// Deprecated: identical to FormatTimestampDateTime (no weekday). Use that directly.
 func FormatTimestampFullDate(timestamp int64, ctx *core.UiContext) string {
 	return FormatTimestampDateTime(timestamp, ctx)
 }

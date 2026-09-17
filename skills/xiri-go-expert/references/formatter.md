@@ -36,7 +36,7 @@ formatter.FormatTimestampDate(ts int64, ctx *core.UiContext) string
   // "24.02.2024" (DE) / "02/24/2024" (EnUS) / "24/02/2024" (EnGB)
 
 formatter.FormatTimestampFullDate(ts int64, ctx *core.UiContext) string
-  // Alias für FormatTimestampDateTime (identische Ausgabe)
+  // Deprecated: Alias für FormatTimestampDateTime
 
 formatter.FormatTimestampToTextRange(ts int64, includeTime bool,
     timezone string, translate ...func(string) string) string
@@ -127,7 +127,7 @@ formatter.FormatTimeLengthHMS(seconds int64, ctx *core.UiContext) string
   // 5430 → "01:30:30"
 
 formatter.FormatTimeLengthH(seconds int64, ctx *core.UiContext) string
-  // 5430 → "1.5 h" (Punkt, nicht Locale-abhängig)
+  // 5430 → "1,5 h" (De) / "1.5 h" (EnUS)
 
 formatter.FormatTimeLengthMin(seconds int64, ctx *core.UiContext) string
   // 5430 → "90 min"
@@ -139,7 +139,7 @@ Spezial-Formatter für Zeitfenster-Definitionen (z.B. Öffnungszeiten, Geo-Fenci
 
 ```go
 formatter.FormatTimeLimitFromDB(
-    weekdaysStr string,      // Postgres-Array-Literal: "{t,t,t,t,f,f,f}"  (Mo-So)
+    weekdaysStr string,      // Postgres-Array-Literal: "{f,t,t,t,t,t,f}"  (So-Sa, Index 0 = Sonntag; gleiche Reihenfolge wie TimeLimitValue.Weekdays)
     timeFrom    *string,     // "08:00:00" oder nil
     timeTo      *string,     // "17:00:00" oder nil
     timeIn      *bool,       // true = "im Zeitraum"/aktiv, false = "außerhalb"

@@ -23,7 +23,7 @@ wc.Data(tbl)  ──► JSON-Response
 
 ## Filter-FormGroup aufbauen
 
-Filter nutzen dieselben Fields wie normale Forms, aber `required=false`. Achtung: fehlende Keys bekommen den Field-Default (`NewSelectField`: die **erste Option**, `NewTextField`: `""`) — für „kein Filter" eine Leer-Option voranstellen:
+Filter nutzen dieselben Fields wie normale Forms, aber `required=false`. Fehlende Keys fehlen auch in der Map (`LoadFilterData` parst ohne Defaults) — `if v, ok := filters["status"]; ok { … }`. Formulare (`BindAndValidate`) bekommen weiterhin Defaults.
 
 ```go
 import (
@@ -104,7 +104,7 @@ Ablauf intern:
 | `NewTimeRangeField`                                | `*field.TimeRangeValue` (`.Start`, `.End`; Raw-Keys `start`/`end`) |
 | `NewFileField`                                     | `any` (Raw-Wert unverändert)   |
 
-Fehlende Keys ⇒ Field-Default in der Map (Select: erste Option, Text: `""`, Multi-Select: leere Liste); nur Felder ohne Default fehlen. Unbekannte Keys ⇒ bei gesetztem Filter ignoriert.
+Fehlende Keys ⇒ fehlen auch in der Map (`LoadFilterData` parst ohne Field-Defaults; „nicht gesendet" heißt „kein Filter"). Formulare (`BindAndValidate`) bekommen weiterhin Defaults. Unbekannte Keys ⇒ bei gesetztem Filter ignoriert.
 
 ## Safe Type-Assertions (Pattern)
 

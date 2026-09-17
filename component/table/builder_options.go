@@ -51,7 +51,11 @@ func (b *TableBuilder[T]) SetSearch(search bool) *TableBuilder[T] {
 	return b
 }
 
-// SetQuery enables/disables query mode in the table
+// SetQuery sets options["query"].
+//
+// Deprecated: xiri-ng does not read options.query. The filter panel is created by
+// SetFilter (the table is wrapped in a Query component on print); use SetFilterCollapsed
+// to control the panel.
 func (b *TableBuilder[T]) SetQuery(query bool) *TableBuilder[T] {
 	b.table.options.Query = &query
 	return b

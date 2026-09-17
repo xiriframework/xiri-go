@@ -197,6 +197,16 @@ der POST stattdessen mit der neuen Option, die das Feld übernimmt und selektier
 return wc.Component(response.NewReturnDone().WithCreated(d.ID, d.Name).WithMessage("Gespeichert", response.MessageSuccess))
 ```
 
+### `NewDialogFormMultiEdit` — Formular für mehrere selektierte IDs
+
+```go
+dialog.NewDialogFormMultiEdit(fields []map[string]any, u *url.Url, ids []int64, header, okText, closeText string) Dialog
+```
+
+Wrapper um `NewDialogForm`, der `extra["data"] = ids` und `extra["done"] = true` setzt; das Frontend
+hängt `extra` beim Submit wieder an, sodass der POST-Handler `ExtractMultiSelectRequest` nutzen kann.
+Header/Texte als Strings (nicht Pointer). Vollständiges Muster mit GET/POST-Handler: `patterns.md` §5b.
+
 ## Table-Dialog — Picker-Dialog oder Info-Anzeige
 
 ```go
@@ -307,7 +317,7 @@ dialog.NewDialogWaitingError(message)     // {"done": true, "error": ...}
 > Die URL muss also eine **API-URL** sein (wie `c.apiUrl(…).Print()`), keine Angular-Route wie
 > `c.pageUrl()` — die würde als `/api/…` aufgerufen. Blockt der Browser das Popup, zeigt der Dialog
 > stattdessen einen „Download"-Button. Soll nach dem Job nur die Seite neu geladen werden, ist der
-> Waiting-Dialog das falsche Werkzeug. `blocked` wird von xiri-ng derzeit nicht ausgewertet.
+> Waiting-Dialog das falsche Werkzeug. `blocked` ist deprecated, `""` übergeben.
 
 ### Flow
 

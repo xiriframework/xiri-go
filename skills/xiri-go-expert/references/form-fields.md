@@ -14,6 +14,7 @@ field.SetDisabled(true)          // Deaktiviert
 field.SetAccess([]string{"admin"}) // Rollen-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetScenario([]string{"add"}) // Szenario-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetForm(false)             // Nicht im Formular anzeigen
+field.SetHide(true)              // Als hidden input rendern: unsichtbar, Wert wird trotzdem gesendet
 field.BaseField.SetAddURL(xurl.NewUrlPrefix("/Portal/Tag/AddDialog", "/api")) // "+"-Button: neue Option per Dialog anlegen
 ```
 
@@ -57,6 +58,10 @@ f.TextSuffix = "kg"
 f.IconPrefix = "euro"
 f.IconSuffix = "weight"
 f.Trim = true
+
+// Kurzform mit Längen-Grenzen:
+f := field.NewTextFieldWithLength("name", "vehicle.name", true, "", 3, 100)
+// Parameter: id, translationKey, required, currentValue, minLen, maxLen
 
 // Nach BindAndValidate:
 name := *f.Value  // string
@@ -127,6 +132,10 @@ multi := field.NewSelectField("tags", "device.tags", false, options).
     SetSelectAll(true)  // "Alle / Keine"-Toggle über der Liste (nur mit SetMultiple;
                         // wirkt auf die aktuell sichtbaren, d. h. gefilterten Optionen)
 tags := multi.Values  // []int32
+
+// Radio-Group statt Dropdown (kleine Optionsmengen, keine Mehrfachauswahl):
+r := field.NewRadioField("mode", "device.mode", true, options)  // *SelectField mit Type "radio"
+// Parsing, Validierung und Export wie SelectField; Optionen als "list" (id/name)
 ```
 
 ## ModelField
@@ -155,7 +164,7 @@ f.List = []field.ModelOption{
 
 f.AllowSearch = true
 f.URL = "/api/groups/search"  // Live-Suche via API
-f.Params = map[string]interface{}{"active": true}  // wird als "params" exportiert (f.Filter ist wirkungslos)
+f.Params = map[string]interface{}{"active": true}  // wird als "params" exportiert (f.Filter ist deprecated/wirkungslos, Params verwenden)
 
 // Nach BindAndValidate:
 groupID := f.Value  // int32
@@ -175,6 +184,7 @@ f.MaxItems = intPtr(10)
 f.AllowEmpty = true
 f.SingleOnly = true  // Nur ein Element erlaubt
 f.SetLoaderFunc(loaderFunc)
+f.SetTree(true)      // Treeselect; braucht eine URL, die verschachtelte "children"-Arrays liefert
 
 // Nach BindAndValidate:
 deviceIDs := f.Value  // []int32
@@ -192,14 +202,14 @@ f := field.NewTimeField("start", "event.start", true, 0)
 
 f.Subtype = "datetime"  // datetime (default), date, time, yearmonth
 
-// Min/Max begrenzen nur den Datepicker im Frontend (keine Server-Validierung).
-// Tag-Offsets (|val| < 10000, z.B. -30 Tage bis +365 Tage) oder absolute Unix-Timestamps:
-f.Min = int64Ptr(-30)
-f.Max = int64Ptr(365)
-
-// MinDate/MaxDate validieren nur serverseitig, erreichen das Frontend nicht — für beides beide setzen:
+// MinDate/MaxDate (*time.Time) validieren serverseitig UND werden als min/max exportiert:
 f.MinDate = &time.Time{...}
 f.MaxDate = &time.Time{...}
+
+// Min/Max (Tag-Offset |val| < 10000, z.B. -30 bis +365 Tage, oder absoluter Unix-Timestamp)
+// begrenzen nur den Picker (keine Server-Validierung) und haben beim Export Vorrang vor MinDate/MaxDate:
+f.Min = int64Ptr(-30)
+f.Max = int64Ptr(365)
 
 // Nach BindAndValidate:
 timestamp := *f.Value  // int64 (Unix seconds)
@@ -400,7 +410,7 @@ fb.AddField(active).AddField(reason).AddField(prio).AddField(critNote)
 ### Runtime-Verhalten
 
 - Das Frontend wertet die Bedingungen live aus (reactive) — Ein-/Ausblenden ohne Roundtrip.
-- Versteckte Felder bleiben im FormGroup und werden beim Submit mit ihrem letzten Wert mitgeschickt. Wer sie ignorieren will, muss die Bedingung serverseitig nachprüfen.
+- Per `showWhen` versteckte Felder sind im Frontend disabled: sie fehlen im Submit-Body und blockieren die Validierung nicht (ab xiri-ng 0.4.14). Server-seitig bindet `BindAndValidate` für den fehlenden Key den Konstruktor-Default.
 - Fehlt ein Feld im Request, bindet `BindAndValidate` den Konstruktor-Default — `field.Value` ist dann i. d. R. ein Zeiger auf den Nullwert (`""`, `0`, `false`), nicht `nil`. `nil` gibt es nur bei nil-Default (z. B. File, JSON/TimeRange ohne Default).
 
 ### Low-Level — direkt `Condition` bauen (selten nötig)

@@ -52,6 +52,25 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   existierende Uhrzeit ist ein Fehler, keine stille Verschiebung.
 - `DateField`/`DateTimeField`/`TimeLengthField` setzen `inputType` `date`/`datetime-local`/`number`
   als Default (per `WithInputType` überschreibbar).
+- **`FormGroup.ParseValuesSparse` / `ParseAndValidateSparse`**: parsen ohne Field-Defaults, validieren nur
+  vorhandene Keys.
+
+### Fixed
+
+- **`LoadFilterData` setzt keine Field-Defaults mehr** für fehlende Filter-Keys. Ein `NewSelectField`-Filter
+  ohne gesendeten Wert lieferte bisher die erste Option und filterte damit ungewollt. Fehlende Keys fehlen
+  jetzt in der Map (`if v, ok := filters["status"]; ok`). Formulare (`BindAndValidate`) bekommen weiterhin
+  Defaults. (E4 aus `todo/10-skill-audit-funde.md`)
+- **`FormatTimeLengthH`** nutzt das Dezimaltrennzeichen der Locale (`1,5 h` für De, `1.5 h` für EnUS).
+- **`TimeField.MinDate`/`MaxDate`** werden jetzt auch als `min`/`max` ans Frontend exportiert, sodass
+  eine absolute Grenze Picker und Server-Validierung zugleich begrenzt. `Min`/`Max` haben beim Export
+  weiterhin Vorrang.
+
+### Deprecated
+
+- `ModelField.Filter` (wirkungslos, `Params` verwenden), `TableBuilder.SetQuery` (xiri-ng liest
+  `options.query` nicht), Parameter `blocked` von `NewDialogWaitingDone` (von xiri-ng ignoriert),
+  `formatter.FormatTimestampFullDate` (identisch mit `FormatTimestampDateTime`).
 
 ## [0.3.11]
 ### Changed
