@@ -180,3 +180,20 @@ func TestParseValuesSparseSkipsDefaults(t *testing.T) {
 		t.Errorf("ParseValuesSparse must not default, got %v", sparse["s"])
 	}
 }
+
+// Ein Form=false-Feld sendet der Client nie — sein Default muss auch sparse ankommen,
+// sonst verliert eine Einzelobjekt-Ansicht (ein Fahrer, ein Gerät) ihren Filterwert.
+func TestParseValuesSparseKeepsNonFormDefaults(t *testing.T) {
+	hidden := field.NewSelectField("device", "Device", false, []field.SelectOption{{Value: int32(7), Label: "7"}})
+	hidden.SetForm(false)
+	hidden.Default = int32(7)
+	fg := NewFormGroup([]field.FormField{hidden})
+
+	sparse, err := fg.ParseValuesSparse(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("ParseValuesSparse: %v", err)
+	}
+	if got, ok := sparse["device"]; !ok || got != int32(7) {
+		t.Errorf("sparse[device] = %v (ok=%v), want 7", got, ok)
+	}
+}

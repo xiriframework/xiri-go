@@ -7,6 +7,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.4.1]
+### Fixed
+
+- **`LoadFilterData` liefert den Default von `Form=false`-Feldern wieder mit.** Der Sparse-Pfad aus
+  v0.4.0 hat ihn mitgestrichen — ein Feld, das nicht im Formular steht, sendet der Client aber nie,
+  sein Default ist also die einzige Quelle. Damit verlor die Einzelobjekt-Ansicht (`SetForm(false)`
+  plus `Default = <objectID>`, das Muster hinter `GetFiltersForSingleObject`) ihren Filterwert und
+  der Report brach mit „filter 'x' not found" ab. Für Formularfelder bleibt es bei v0.4.0:
+  ein nicht gesendeter Key bekommt keinen Default.
+
 ## [0.4.0]
 **Nächstes Release: v0.4.0** — Wire-Format-Änderung (Zellobjekte), nicht als Patch-Bump veröffentlichen.
 

@@ -219,7 +219,7 @@ core.ButtonTypeRaised | Basic | Stroked | Flat | Fab | MiniFab | Icon | IconText
 - **`LoadPaginationParams` NACH `LoadFilterData`** (liest aus gespeicherten Filtern). Nur bei **Server-Side-Pagination** nötig — client-seitig (xiri-ng default) weglassen.
 - **`ButtonsField`-Keys sind Strings** (`"0"`, `"1"`), nicht Ints.
 - **Chips in Tabellen-Zellen**: `b.ChipsField(id, name, accessor)` (pure Display, accessor → `[]table.Chip`). Für editierbare Multi-Select-Chips siehe `WithEditableChipOptions(...)` (anderer Mechanismus).
-- **Filter-Guards**: `if v, ok := filters[k].(string); ok && v != ""` — leere Werte erzeugen sonst falsche WHERE-Clauses. Nicht gesendete Filter-Keys **fehlen** in der Map (`LoadFilterData` setzt keine Field-Defaults, anders als `BindAndValidate`).
+- **Filter-Guards**: `if v, ok := filters[k].(string); ok && v != ""` — leere Werte erzeugen sonst falsche WHERE-Clauses. Nicht gesendete Filter-Keys **fehlen** in der Map (`LoadFilterData` setzt keine Field-Defaults, anders als `BindAndValidate`). Ausnahme: Felder mit `SetForm(false)` sendet der Client nie, deren Default kommt weiter mit (Einzelobjekt-Filter).
 - **`SetReloadOn` braucht URL *und* Feld-IDs.** Fehlt eines, wird gar nichts exportiert und das Feld
   verhält sich wie ein normales — kein Fehler, nur wirkungslos.
 - **Im Reload-Handler `BindReload`, nicht `BindAndValidate`.** Letzteres scheitert an leeren
