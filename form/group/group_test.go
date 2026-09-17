@@ -165,3 +165,18 @@ func TestExportForFrontendWithValues(t *testing.T) {
 		t.Errorf("expected value 'override', got %v", exported[0]["value"])
 	}
 }
+
+func TestParseValuesSparseSkipsDefaults(t *testing.T) {
+	sel := field.NewSelectField("s", "S", false, []field.SelectOption{{Value: "a", Label: "A"}})
+	fg := NewFormGroup([]field.FormField{sel})
+
+	full, _ := fg.ParseValues(map[string]interface{}{})
+	sparse, _ := fg.ParseValuesSparse(map[string]interface{}{})
+
+	if full["s"] != "a" {
+		t.Errorf("ParseValues must keep defaults, got %v", full["s"])
+	}
+	if _, ok := sparse["s"]; ok {
+		t.Errorf("ParseValuesSparse must not default, got %v", sparse["s"])
+	}
+}

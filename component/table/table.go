@@ -226,7 +226,7 @@ func (tc *tableCore) LoadFilterData(c echo.Context) (map[string]any, error) {
 
 	// Parse filter values (if filter exists)
 	if tc.filter != nil {
-		parsedFilters, err := tc.filter.ParseAndValidate(tc.filterData)
+		parsedFilters, err := tc.filter.ParseAndValidateSparse(tc.filterData)
 		if err != nil {
 			return nil, err
 		}
