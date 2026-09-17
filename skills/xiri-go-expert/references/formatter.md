@@ -127,7 +127,7 @@ formatter.FormatTimeLengthHMS(seconds int64, ctx *core.UiContext) string
   // 5430 → "01:30:30"
 
 formatter.FormatTimeLengthH(seconds int64, ctx *core.UiContext) string
-  // 5430 → "1.5 h" (Punkt, nicht Locale-abhängig)
+  // 5430 → "1,5 h" (De) / "1.5 h" (EnUS)
 
 formatter.FormatTimeLengthMin(seconds int64, ctx *core.UiContext) string
   // 5430 → "90 min"
