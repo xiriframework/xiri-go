@@ -24,7 +24,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   **Braucht xiri-ng ≥ 0.4.14** (ältere Clients zeigen `[object Object]`). Weitere Keys im Objekt sind
   für spätere Erweiterungen reserviert. Integer-`v` > 2^53 ziehen im Browser gleich (Anzeige bleibt exakt).
   Apps, die Rows von Hand bauen (`NewTableDataResponse`) und Feld-Metadaten dieser Typen mitschicken,
-  müssen `{d, v}` liefern; nackte Werte zeigt der Client an, sortiert sie aber wie leer.
+  müssen `{d, v}` liefern. Antwortet der Server für die editierte Zelle mit einem Zellobjekt, übernimmt der
+  Client es; mit einem nackten Wert bleibt dieser als Anzeige `d`, `v` wird der eingegebene Wert, kein Reload;
+  ohne Antwort für die Zelle zeigt der Client `v` als Text und lädt URL-Tabellen neu (statische Daten behalten
+  den Text). Eine Antwort patcht Zellen **oder** refresht — nicht beides. Nackte Werte in anderen Zellen werden
+  zu `{d: value, v: null}` normalisiert (Konsolenwarnung) und sortieren wie leer.
   `dateTime`-`v` ist lokale Zeit ohne Offset: in der doppelten Stunde der DST-Rückstellung ist die
   Reihenfolge undefiniert (bewusst akzeptiert). Tabellen mit `SetSaveInputUrl`, die Datums-/Dauer-/
   `text2*`-/`*N`-Spalten enthalten, posten für diese Spalten jetzt `{d, v}` statt des Anzeigestrings
@@ -38,9 +42,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 - **`Table.Cell(ctx, fieldID, row)`** formatiert eine Zelle wie `GetData` — für `ReturnInlineEdit.Updates`
   nach einem Inline-Save. Nicht für Link- und Buttons-Felder (`nil`; `GetData` ergänzt dort Link-Split
-  bzw. Menüdaten), die per Refresh aktualisiert werden. Kommt kein neues Zellobjekt für die editierte
-  Zelle zurück, zeigt der Client `v` als Text; URL-Tabellen laden zusätzlich neu, sofern die Antwort
-  nicht selbst refresht oder navigiert; Tabellen mit statischen Daten behalten den Text.
+  bzw. Menüdaten), die per Refresh aktualisiert werden. Mit Zellobjekt wird es übernommen; mit nacktem Wert
+  bleibt dieser als Anzeige, kein Reload; ohne Antwort zeigt der Client den eingegebenen Wert als Text
+  (URL-Tabellen laden neu, sofern die Antwort nicht selbst refresht/navigiert; statische Daten behalten den Text).
 - **`formatter.ParseLocalDateTime(v, ctx)`**, `CellDateLayout`, `CellDateTimeLayout`: parsen das `v`
   eines Datums-/Zeit-Inline-Edits in der Zeitzone des Users; eine bei der DST-Vorstellung nicht
   existierende Uhrzeit ist ein Fehler, keine stille Verschiebung.

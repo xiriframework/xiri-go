@@ -177,10 +177,12 @@ func (r ReturnRefreshPanel) WithMessage(text string, msgType MessageType) Return
 //
 // Fields whose column delivers cell objects (date, dateTime, timeLength, text2*, *N — field JSON
 // "cellObject": "string" | "number") expect the whole object in Updates; build it with tbl.Cell(ctx, fieldID, row).
-// A bare value is wrapped by the client as {d: value, v: null}: it displays but sorts like an empty
-// cell (console warning). Without a new cell object for the edited cell the client shows v as text;
-// tables loaded from a url then reload, unless the response already refreshes or navigates. Tables
-// with static data keep the text.
+// The client handles three cases: (1) Server returns a cell object for the edited cell → taken as is.
+// (2) Server returns a bare value → kept as display d, v set to user input, no reload.
+// (3) No value for the edited cell → client shows v as text, URL-backed tables reload unless the
+// response already refreshes/navigates; static-data tables keep the text.
+// Bare values in Updates for other cell-object cells (not the edited one) are wrapped as {d: value, v: null}
+// with a console warning and sort as empty.
 // The edited value arrives as v: "2006-01-02" / "2006-01-02T15:04:05" (parse with
 // formatter.ParseLocalDateTime), seconds or a number — never the locale display string; nil means
 // the user cleared the field.

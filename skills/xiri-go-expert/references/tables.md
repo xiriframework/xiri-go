@@ -155,8 +155,9 @@ Datums-, Dauer- und `text2*`/`*N`-Felder liefern auf Web ein Zellobjekt `{"d": A
 mit `"cellObject": "string" | "number"` im Feld-JSON (`cellValueFor` in `component/table/cell.go`). `v` ist ISO-Datum,
 lokale ISO-Zeit, Sekunden oder Zahl; `null` = leer. Der Client sortiert nach `v`, zeigt `d`, editiert
 `v`. Nach einem Inline-Save `tbl.Cell(ctx, fieldID, row)` in `ReturnInlineEdit.Updates` legen (nicht
-für Link-/Buttons-Felder, dort `nil`); ohne neues Zellobjekt zeigt der Client `v` als Text und lädt
-URL-Tabellen neu, sofern die Antwort nicht selbst refresht/navigiert. `date`/`dateTime`/`timeLength`
+für Link-/Buttons-Felder, dort `nil`); mit Zellobjekt wird es übernommen, mit nacktem Wert bleibt dieser als
+Anzeige und `v` wird die Eingabe (kein Reload), ohne Antwort zeigt der Client `v` als Text und lädt
+URL-Tabellen neu (sofern die Antwort nicht selbst refresht/navigiert). `date`/`dateTime`/`timeLength`
 bekommen `inputType` `date`/`datetime-local`/`number` als Default. `v` eines Edits mit
 `formatter.ParseLocalDateTime` parsen (`nil` = geleert). Braucht xiri-ng ≥ 0.4.14.
 
