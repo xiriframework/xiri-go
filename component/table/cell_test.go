@@ -168,3 +168,29 @@ func TestCellObjectFloatsEncode(t *testing.T) {
 		t.Errorf("finite float must pass through, got %#v", v)
 	}
 }
+
+// CalculateFooter reuses field.format, so footers of cell-object fields are {d, v} too on web
+// output — the client (Task 1, cellDisplay) unpacks server footers the same way as row cells.
+func TestCellObjectFooterIsCellObject(t *testing.T) {
+	b := table.NewBuilder[cellRow]()
+	b.TimeLengthField("tl", "tl", func(r cellRow) int64 { return r.Secs }).WithFooterSum()
+	tbl := b.Build()
+	tbl.SetData([]cellRow{{Secs: 60}, {Secs: 120}})
+
+	footer := tbl.CalculateFooter(exampleContext(), table.OutputWeb)
+	got, ok := footer["tl"].(map[string]any)
+	if !ok {
+		t.Fatalf("tl footer = %#v, want map[string]any{d, v}", footer["tl"])
+	}
+	if got["d"] != "00:03" {
+		t.Errorf("tl footer d = %#v, want %q", got["d"], "00:03")
+	}
+	// sumField aggregates via toFloat64, but cellValueFor's toInt64 converts it back for v.
+	if got["v"] != int64(180) {
+		t.Errorf("tl footer v = %#v, want %#v", got["v"], int64(180))
+	}
+
+	if got := tbl.CalculateFooter(exampleContext(), table.OutputCSV)["tl"]; got != "3" {
+		t.Errorf("tl footer (CSV) = %#v, want plain string %q", got, "3")
+	}
+}

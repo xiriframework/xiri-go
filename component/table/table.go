@@ -874,10 +874,12 @@ func (t *Table[T]) GetData(ctx *core.UiContext, output OutputType) []map[string]
 // treeAddSubKey is the reserved row-data key carrying the per-row "+ sub" visibility flag.
 const treeAddSubKey = "_addSub"
 
-// Cell formats one field of one row exactly like GetData does for OutputWeb — for the value
-// cells GetData writes under the field id: cell objects, number pairs, text, chips, icons.
+// Cell formats one field of one row like GetData does for visible value fields on OutputWeb — for
+// the value cells GetData writes under the field id: cell objects, number pairs, text, chips, icons.
 // Use it to build ReturnInlineEdit.Updates after an inline save, so the client gets the new cell
-// object instead of reloading the table. Unknown field IDs yield nil.
+// object instead of reloading the table. Unknown field IDs yield nil. Unlike GetData, hidden
+// (f.hide) fields are not skipped — Cell is asked for one specific field id, and inline-editing a
+// hidden field (e.g. one shown only in an expansion row) is expected to still return its cell.
 //
 // Not supported (nil): link fields (GetData splits them into id and idLink) and buttons fields
 // (GetData merges per-row menu data and hints next to the cell) — patch those with a table refresh.
