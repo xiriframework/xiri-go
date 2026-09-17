@@ -102,50 +102,40 @@ func FormatTimestampDate(timestamp int64, ctx *core.UiContext) string {
 	return FormatDate(FromUnixTimestamp(timestamp), ctx)
 }
 
-// dateLayout returns the Go date format string for a locale.
-//
-// German (and the Nordic locales grouped with it) deliberately render ISO, although CLDR
-// says 24.02.2024: xiri-ng sorts table columns on the rendered display string
-// (table.component.ts, getSortingDataAccessor), and only ISO sorts lexicographically in
-// chronological order. Changing this breaks date sorting for every client-side table —
-// see todo/11-tabellen-sortierung-anzeigeformat.md, which has to land first.
-//
-// For the same reason EnUS (01/02/2006) and the DMY default already sort wrong today.
+// dateLayout returns the Go date layout for a locale. These are deliberately simplified product
+// formats (numeric, no CLDR spaces or trailing dots); every locale is pinned in datetime_test.go.
+// Client-side table sorting does not depend on the layout — cell objects carry the raw value v.
 func dateLayout(loc locale.Locale) string {
 	switch loc {
-	case locale.De, locale.DeAT, locale.DeCH, locale.Sv, locale.Nb, locale.Da, locale.Fi:
-		return "2006-01-02" // ISO
 	case locale.EnUS:
-		return "01/02/2006" // US MDY
+		return "01/02/2006"
 	case locale.Ja, locale.ZhCN:
-		return "2006/01/02" // Asian YMD
-	default:
-		return "02/01/2006" // European DMY
+		return "2006/01/02"
+	case locale.Sv:
+		return "2006-01-02"
+	case locale.Hu:
+		return "2006.01.02"
+	case locale.Nl:
+		return "02-01-2006"
+	case locale.EnGB, locale.Es, locale.Fr, locale.It, locale.Pt, locale.PtBR, locale.El, locale.ArAE:
+		return "02/01/2006"
+	default: // De, DeAT, DeCH, Hr, Pl, Cs, Ro, Tr, Bg, Sl, Sk, Sr, Nb, Da, Fi, Ru, Uk
+		return "02.01.2006"
 	}
 }
 
-// dateTimeLayout returns the Go datetime format string for a locale
-func dateTimeLayout(loc locale.Locale) string {
-	switch loc {
-	case locale.De, locale.DeAT, locale.DeCH, locale.Sv, locale.Nb, locale.Da, locale.Fi:
-		return "2006-01-02 15:04"
-	case locale.EnUS:
-		return "01/02/2006 03:04 PM"
-	case locale.Ja, locale.ZhCN:
-		return "2006/01/02 15:04"
-	default:
-		return "02/01/2006 15:04"
-	}
-}
-
-// timeLayout returns the Go time-only format string for a locale
+// timeLayout returns the Go time-only layout: 12-hour clock for EnUS, 24-hour everywhere else
+// (product decision, also where CLDR prefers 12h, e.g. El and ArAE).
 func timeLayout(loc locale.Locale) string {
-	switch loc {
-	case locale.EnUS, locale.EnGB:
+	if loc == locale.EnUS {
 		return "03:04 PM"
-	default:
-		return "15:04"
 	}
+	return "15:04"
+}
+
+// dateTimeLayout is date and time joined by a space — one source of truth, no third table.
+func dateTimeLayout(loc locale.Locale) string {
+	return dateLayout(loc) + " " + timeLayout(loc)
 }
 
 // FormatDate formats a time.Time to date
@@ -190,7 +180,7 @@ func FormatTime(t time.Time, ctx *core.UiContext) string {
 	return t.In(loc).Format(timeLayout(ctx.SafeLocale()))
 }
 
-// FormatTimestampFullDate formats a Unix timestamp to full date (Y-m-d H:i format)
+// FormatTimestampFullDate is an alias of FormatTimestampDateTime (locale layout, no weekday)
 func FormatTimestampFullDate(timestamp int64, ctx *core.UiContext) string {
 	return FormatTimestampDateTime(timestamp, ctx)
 }
