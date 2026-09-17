@@ -155,7 +155,7 @@ f.List = []field.ModelOption{
 
 f.AllowSearch = true
 f.URL = "/api/groups/search"  // Live-Suche via API
-f.Params = map[string]interface{}{"active": true}  // wird als "params" exportiert (f.Filter ist wirkungslos)
+f.Params = map[string]interface{}{"active": true}  // wird als "params" exportiert (f.Filter ist deprecated/wirkungslos, Params verwenden)
 
 // Nach BindAndValidate:
 groupID := f.Value  // int32

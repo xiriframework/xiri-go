@@ -307,7 +307,7 @@ dialog.NewDialogWaitingError(message)     // {"done": true, "error": ...}
 > Die URL muss also eine **API-URL** sein (wie `c.apiUrl(…).Print()`), keine Angular-Route wie
 > `c.pageUrl()` — die würde als `/api/…` aufgerufen. Blockt der Browser das Popup, zeigt der Dialog
 > stattdessen einen „Download"-Button. Soll nach dem Job nur die Seite neu geladen werden, ist der
-> Waiting-Dialog das falsche Werkzeug. `blocked` wird von xiri-ng derzeit nicht ausgewertet.
+> Waiting-Dialog das falsche Werkzeug. `blocked` ist deprecated, `""` übergeben.
 
 ### Flow
 

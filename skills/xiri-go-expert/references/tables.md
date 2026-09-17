@@ -473,7 +473,7 @@ b.SetReload(true)           // manueller Reload-Button (Icon in der Toolbar)
 b.SetDense(true)            // Legacy: Alias für DensityCompact, kann kein "relaxed"
 b.SetPagination(true)
 b.SetSearch(true)
-b.SetQuery(false)           // landet nur als "query" im JSON; das Frontend wertet es nicht aus
+b.SetQuery(false)           // Deprecated, ohne Frontend-Wirkung
 b.SetFilterCollapsed(true)  // wrappt SetFilter in ein Expansion-Panel; true = eingeklappt starten,
                             // false = aufgeklappt, gar nicht gesetzt = kein Panel (siehe table-filtering.md)
 b.SetCsv(true)              // CSV-Export-Button verfügbar
