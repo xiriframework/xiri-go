@@ -79,6 +79,20 @@ func applyFieldTypeDefaults(base *fieldBase, ft fieldTypeHint) {
 		base.boolFalseText = "false"
 	}
 
+	// Inline editors bind v of the cell object; these input types produce exactly that v
+	// (the client also normalises browser values by inputType: "" → null, number → Number).
+	switch ft {
+	case date:
+		s := "date"
+		base.inputType = &s
+	case dateTime:
+		s := "datetime-local"
+		base.inputType = &s
+	case timeLength:
+		s := "number" // seconds
+		base.inputType = &s
+	}
+
 	// Assign formatter (closures that may reference decimals)
 	switch ft {
 	case idHint:

@@ -125,6 +125,8 @@ type tableFieldJSON struct {
 	editableOptionsSearch bool
 	editableSearchUrl     string
 
+	cellObject string // "string" | "number" (kind of v): web cells are {d, v} objects; "" = plain cells
+
 	// access control
 	access []string
 
@@ -212,6 +214,15 @@ func (tf *tableFieldJSON) print(ctx *core.UiContext) map[string]any {
 	if tf.editableSearchUrl != "" {
 		ret["editableSearchUrl"] = tf.editableSearchUrl
 	}
+	if tf.cellObject != "" {
+		ret["cellObject"] = tf.cellObject
+	}
+	// date/dateTime/timeLength carry an inputType default (applyFieldTypeDefaults) although their
+	// fieldType is fieldTypeText, not fieldTypeInput — expose it here; fieldTypeInput overrides
+	// below with its own (pointer-valued, for historical reasons) assignment.
+	if tf.inputType != nil && tf.fieldType != fieldTypeInput {
+		ret["inputType"] = *tf.inputType
+	}
 
 	// Text decoration
 	if tf.textPrefix != nil {
@@ -277,4 +288,3 @@ func (tf *tableFieldJSON) print(ctx *core.UiContext) map[string]any {
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
