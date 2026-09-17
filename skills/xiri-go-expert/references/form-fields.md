@@ -14,6 +14,7 @@ field.SetDisabled(true)          // Deaktiviert
 field.SetAccess([]string{"admin"}) // Rollen-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetScenario([]string{"add"}) // Szenario-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetForm(false)             // Nicht im Formular anzeigen
+field.SetHide(true)              // Als hidden input rendern: unsichtbar, Wert wird trotzdem gesendet
 field.BaseField.SetAddURL(xurl.NewUrlPrefix("/Portal/Tag/AddDialog", "/api")) // "+"-Button: neue Option per Dialog anlegen
 ```
 
@@ -57,6 +58,10 @@ f.TextSuffix = "kg"
 f.IconPrefix = "euro"
 f.IconSuffix = "weight"
 f.Trim = true
+
+// Kurzform mit Längen-Grenzen:
+f := field.NewTextFieldWithLength("name", "vehicle.name", true, "", 3, 100)
+// Parameter: id, translationKey, required, currentValue, minLen, maxLen
 
 // Nach BindAndValidate:
 name := *f.Value  // string
@@ -127,6 +132,10 @@ multi := field.NewSelectField("tags", "device.tags", false, options).
     SetSelectAll(true)  // "Alle / Keine"-Toggle über der Liste (nur mit SetMultiple;
                         // wirkt auf die aktuell sichtbaren, d. h. gefilterten Optionen)
 tags := multi.Values  // []int32
+
+// Radio-Group statt Dropdown (kleine Optionsmengen, keine Mehrfachauswahl):
+r := field.NewRadioField("mode", "device.mode", true, options)  // *SelectField mit Type "radio"
+// Parsing, Validierung und Export wie SelectField; Optionen als "list" (id/name)
 ```
 
 ## ModelField
@@ -175,6 +184,7 @@ f.MaxItems = intPtr(10)
 f.AllowEmpty = true
 f.SingleOnly = true  // Nur ein Element erlaubt
 f.SetLoaderFunc(loaderFunc)
+f.SetTree(true)      // Treeselect; braucht eine URL, die verschachtelte "children"-Arrays liefert
 
 // Nach BindAndValidate:
 deviceIDs := f.Value  // []int32

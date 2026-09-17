@@ -168,6 +168,31 @@ return wc.Component(response.NewReturnPoll(statusUrl.PrintPrefix(), 2000).
 Setter: `WithText`, `WithColor`, `WithIcon`, `WithType`, `WithHint`, `Disable()`, `Enable()`
 (alle fluent, nur gesetzte Felder landen im JSON).
 
+### ReturnFields — Feld-Patch für `SetReloadOn`
+
+```go
+response.NewReturnFields(fields map[string]interface{}) ReturnFields
+r.WithMessage(text, msgType)
+// {"fields": {"<fieldID>": {...}}} — bewusst OHNE "done": ein Patch ist keine abgeschlossene Aktion
+```
+
+Antwort eines Reload-Handlers (`builder.BindReload(c, fg)` → Werte binden, `fg.ExportPatch()` → nur die
+geänderten Feld-Definitionen). Details und Ablauf: `form-fields.md` → „Abhängige Felder — `SetReloadOn`".
+
+### ReturnInlineEdit — Antwort auf einen Inline-Edit
+
+```go
+response.NewReturnInlineEdit() ReturnInlineEdit          // {"done": true}
+r.WithUpdates(map[string]any{"price": tbl.Cell(uc, "price", row)}) // Zellen der Row patchen
+r.WithRefreshTable()                                     // "refresh": "table"
+r.WithRefreshPage()                                      // "refresh": "page"
+r.WithGoto("/Portal/Device/7")                           // "goto"
+r.WithMessage("Gespeichert", response.MessageSuccess)
+```
+
+`Updates` plus `Refresh` ist erlaubt (erst Patch, dann Reload). Zellwerte für `Updates` mit `Table.Cell`
+bauen, damit Zellobjekte `{d, v}` stimmen (siehe `tables.md` → Inline-Edit).
+
 ## Error Response
 
 Für HTTP-Fehler (400, 404, 500, etc.).
