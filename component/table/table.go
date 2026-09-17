@@ -883,6 +883,7 @@ const treeAddSubKey = "_addSub"
 //
 // Not supported (nil): link fields (GetData splits them into id and idLink) and buttons fields
 // (GetData merges per-row menu data and hints next to the cell) — patch those with a table refresh.
+// Per-row icon hints (written by GetData under "<id>Hint") are not part of Cell.
 func (t *Table[T]) Cell(ctx *core.UiContext, fieldID string, rowData T) any {
 	for _, f := range t.fields {
 		if f.id != fieldID {
