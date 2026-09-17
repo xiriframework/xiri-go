@@ -192,14 +192,14 @@ f := field.NewTimeField("start", "event.start", true, 0)
 
 f.Subtype = "datetime"  // datetime (default), date, time, yearmonth
 
-// Min/Max begrenzen nur den Datepicker im Frontend (keine Server-Validierung).
-// Tag-Offsets (|val| < 10000, z.B. -30 Tage bis +365 Tage) oder absolute Unix-Timestamps:
-f.Min = int64Ptr(-30)
-f.Max = int64Ptr(365)
-
-// MinDate/MaxDate validieren nur serverseitig, erreichen das Frontend nicht — für beides beide setzen:
+// MinDate/MaxDate (*time.Time) validieren serverseitig UND werden als min/max exportiert:
 f.MinDate = &time.Time{...}
 f.MaxDate = &time.Time{...}
+
+// Min/Max (Tag-Offset |val| < 10000, z.B. -30 bis +365 Tage, oder absoluter Unix-Timestamp)
+// begrenzen nur den Picker (keine Server-Validierung) und haben beim Export Vorrang vor MinDate/MaxDate:
+f.Min = int64Ptr(-30)
+f.Max = int64Ptr(365)
 
 // Nach BindAndValidate:
 timestamp := *f.Value  // int64 (Unix seconds)

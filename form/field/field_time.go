@@ -180,14 +180,22 @@ func (f *TimeField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 	}
 	result["subtype"] = f.Subtype
 
-	// Add min/max with day offset handling (same as TimeRangeField).
+	// min/max for the frontend picker: Min/Max (day offset or absolute) take precedence,
+	// otherwise the absolute MinDate/MaxDate used by Validate() are exported so that
+	// setting only MinDate/MaxDate limits both server and picker.
 	// One `now` for both bounds so they cannot straddle midnight.
 	now := time.Now()
-	if f.Min != nil {
+	switch {
+	case f.Min != nil:
 		result["min"] = resolveDateBound(ctx, *f.Min, now)
+	case f.MinDate != nil:
+		result["min"] = f.MinDate.Unix()
 	}
-	if f.Max != nil {
+	switch {
+	case f.Max != nil:
 		result["max"] = resolveDateBound(ctx, *f.Max, now)
+	case f.MaxDate != nil:
+		result["max"] = f.MaxDate.Unix()
 	}
 
 	return result
