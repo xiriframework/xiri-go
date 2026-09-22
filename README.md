@@ -115,6 +115,9 @@ Tools: `read_page(route)` → Seiten-JSON, `act(url, method, data)` → Xiri-Res
 (`done`/`goto`/`refresh`/`message`, bei 400 `error` + `fields`). Client-Konfiguration z. B. für
 Claude Code: `claude mcp add --transport http devices https://host/mcp`.
 
+**Vollständige Dokumentation: [MCP.md](MCP.md)** — Funktionsweise, `Options`, Agenten-Ablauf,
+Sicherheit, Grenzen, Testen, Troubleshooting.
+
 **Umfang:** Aufrufe laufen intern durch dasselbe Echo, der Agent handelt also unter der
 weitergereichten Session — und erreicht jeden Endpunkt unter `/api/`, nicht nur die Aktionen der
 zuletzt gelesenen Seite. Das entspricht den Rechten des Browsers, solange der Host jeden Endpunkt
