@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/xiriframework/xiri-go/form/field"
@@ -223,5 +224,24 @@ func TestNewFormBuilder_OnEditValueCheck(t *testing.T) {
 	}
 	if values["name"] != "modified-by-hook" {
 		t.Errorf("expected 'modified-by-hook', got %v", values["name"])
+	}
+}
+
+func TestBindFromMap_CollectsAllFieldErrors(t *testing.T) {
+	name := field.NewTextFieldWithLength("name", "NAME", true, "", 3, 10)
+	email := field.NewTextFieldWithLength("email", "EMAIL", true, "", 5, 50)
+	fg := group.NewFormGroup([]field.FormField{name, email})
+
+	err := BindFromMap(map[string]interface{}{"name": "ab", "email": "x"}, fg)
+
+	var fe group.FieldErrors
+	if !errors.As(err, &fe) {
+		t.Fatalf("expected group.FieldErrors, got %T: %v", err, err)
+	}
+	if _, ok := fe["name"]; !ok {
+		t.Errorf("missing error for name: %v", fe)
+	}
+	if _, ok := fe["email"]; !ok {
+		t.Errorf("missing error for email: %v", fe)
 	}
 }

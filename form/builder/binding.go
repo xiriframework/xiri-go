@@ -39,7 +39,8 @@ import (
 //
 //	    // Bind and validate - values stored in field instances
 //	    if err := formhelper.BindAndValidate(c, fg); err != nil {
-//	        return wc.BadRequest(err.Error())
+//	        // group.FieldErrors: every failing field lands under "fields" in the 400 body
+//	        return c.JSON(http.StatusBadRequest, response.NewErrorResponseFromError(err))
 //	    }
 //
 //	    // Type-safe access - NO type assertions!
@@ -54,7 +55,7 @@ import (
 //	}
 //
 // Returns:
-//   - error: Validation error if any field fails validation
+//   - error: group.FieldErrors with a message per failing field, or a body-parsing error
 func BindAndValidate(c echo.Context, fg *group.FormGroup) error {
 	formData, err := extractFormData(c, fg)
 	if err != nil {
@@ -131,7 +132,9 @@ func extractFormData(c echo.Context, fg *group.FormGroup) (map[string]interface{
 //   - Stores in field.Value property
 //
 // After this function returns, access values via field.Value (type-safe).
+// Every field is bound; failures are collected into group.FieldErrors keyed by field ID.
 func BindFromMap(formData map[string]interface{}, fg *group.FormGroup) error {
+	errs := group.FieldErrors{}
 	for _, f := range fg.GetFields() {
 		var rawValue interface{}
 		if f.GetForm() && !f.IsDisabled() {
@@ -140,8 +143,11 @@ func BindFromMap(formData map[string]interface{}, fg *group.FormGroup) error {
 			rawValue = f.GetDefault()
 		}
 		if err := bindFieldValue(f, rawValue); err != nil {
-			return err
+			errs[f.GetID()] = err.Error()
 		}
+	}
+	if len(errs) > 0 {
+		return errs
 	}
 	return nil
 }
