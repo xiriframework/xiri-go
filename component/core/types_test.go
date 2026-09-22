@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	typeLiteral     = regexp.MustCompile(`"type":\s*"([a-z0-9-]+)"`)
-	envelopeLiteral = regexp.MustCompile(`Envelope\(\s*"([a-z0-9-]+)"`)
+	typeLiteral     = regexp.MustCompile("\"type\":\\s*[\"`]([a-z0-9_-]+)[\"`]")
+	envelopeLiteral = regexp.MustCompile("Envelope\\(\\s*[\"`]([a-z0-9_-]+)[\"`]")
 )
 
 // scanComponentTypes sammelt alle statischen "type"-Literale unter component/ (ohne Tests).
@@ -101,12 +101,13 @@ func TestComponentTypes_MatchXiriNg(t *testing.T) {
 	}
 	// Eintragsweise: jede Objektzeile im Katalog-Array muss type und goBuilder tragen.
 	// ponytail: ein Eintrag pro Zeile ist Katalog-Konvention; fremde Schreibweisen scheitern laut statt still.
-	typeRe := regexp.MustCompile(`type:\s*'([a-z0-9-]+)'`)
+	typeRe := regexp.MustCompile(`type:\s*'([a-z0-9_-]+)'`)
 	goRe := regexp.MustCompile(`goBuilder:\s*(true|false)`)
+	commentRe := regexp.MustCompile(`/\*.*?\*/|//.*$`)
 	goBuilder := map[string]bool{}
 	inArray := false
 	for i, line := range strings.Split(string(src), "\n") {
-		trimmed := strings.TrimSpace(line)
+		trimmed := strings.TrimSpace(commentRe.ReplaceAllString(line, ""))
 		switch {
 		case strings.HasPrefix(trimmed, "export const COMPONENT_CATALOG"):
 			inArray = true
@@ -117,14 +118,15 @@ func TestComponentTypes_MatchXiriNg(t *testing.T) {
 		if !inArray || !strings.HasPrefix(trimmed, "{") {
 			continue
 		}
-		tm, gm := typeRe.FindStringSubmatch(trimmed), goRe.FindStringSubmatch(trimmed)
-		if tm == nil || gm == nil {
-			t.Fatalf("component-catalog.ts:%d: entry without parsable type/goBuilder: %s", i+1, trimmed)
+		tms, gms := typeRe.FindAllStringSubmatch(trimmed, -1), goRe.FindAllStringSubmatch(trimmed, -1)
+		if len(tms) != 1 || len(gms) != 1 {
+			t.Fatalf("component-catalog.ts:%d: entry must have exactly one type and one goBuilder: %s", i+1, trimmed)
 		}
-		if _, dup := goBuilder[tm[1]]; dup {
-			t.Fatalf("component-catalog.ts:%d: duplicate type %q", i+1, tm[1])
+		typ := tms[0][1]
+		if _, dup := goBuilder[typ]; dup {
+			t.Fatalf("component-catalog.ts:%d: duplicate type %q", i+1, typ)
 		}
-		goBuilder[tm[1]] = gm[1] == "true"
+		goBuilder[typ] = gms[0][1] == "true"
 	}
 	if len(goBuilder) == 0 {
 		t.Fatal("no catalog entries parsed; catalog format changed")
