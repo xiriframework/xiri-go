@@ -6,6 +6,8 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+
+## [0.4.2]
 ### Added
 
 - **Paket `mcp`.** `mcp.Handler(e, opts)` liefert einen MCP-Server (Streamable HTTP, offizielles
