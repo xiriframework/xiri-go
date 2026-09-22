@@ -107,7 +107,9 @@ func TestComponentTypes_MatchXiriNg(t *testing.T) {
 	lineCommentRe := regexp.MustCompile(`//.*$`)
 	goBuilder := map[string]bool{}
 	inArray := false
-	for i, line := range strings.Split(blockCommentRe.ReplaceAllString(string(src), ""), "\n") {
+	// Blockkommentare durch ihre Zeilenumbrüche ersetzen, damit Zeilennummern in Fehlermeldungen stimmen.
+	catalog := blockCommentRe.ReplaceAllStringFunc(string(src), func(m string) string { return strings.Repeat("\n", strings.Count(m, "\n")) })
+	for i, line := range strings.Split(catalog, "\n") {
 		trimmed := strings.TrimSpace(lineCommentRe.ReplaceAllString(line, ""))
 		switch {
 		case strings.HasPrefix(trimmed, "export const COMPONENT_CATALOG"):
