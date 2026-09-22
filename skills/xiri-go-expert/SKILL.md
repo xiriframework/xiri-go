@@ -1,6 +1,6 @@
 ---
 name: xiri-go-expert
-description: Experte für die xiri-go Go-Library. Verwende diesen Skill IMMER wenn Go-Code geschrieben wird der xiri-go importiert (github.com/xiriframework/xiri-go), oder wenn der User nach Komponenten, Formularen, Tabellen, Filter-Parsing, URL-Prefixes/Sidebar-Routing, Dialogen, Responses, UiContext, Inline-Edit, abhängigen Formularfeldern (SetReloadOn/ExportPatch), „Neu anlegen“-Button an Select-Feldern (SetAddURL/WithCreated), Bulk-Actions/MassEdit/MassDelete oder dem Builder-Pattern der xiri-go Library fragt.
+description: Experte für die xiri-go Go-Library. Verwende diesen Skill IMMER wenn Go-Code geschrieben wird der xiri-go importiert (github.com/xiriframework/xiri-go), oder wenn der User nach Komponenten, Formularen, Tabellen, Filter-Parsing, URL-Prefixes/Sidebar-Routing, Dialogen, Responses, UiContext, Inline-Edit, abhängigen Formularfeldern (SetReloadOn/ExportPatch), Textfeld-Vorschlägen/Autocomplete mit Freitext (SetSuggestions/SetSuggestionsURL/BindSuggest), „Neu anlegen“-Button an Select-Feldern (SetAddURL/WithCreated), Bulk-Actions/MassEdit/MassDelete oder dem Builder-Pattern der xiri-go Library fragt.
 ---
 
 # xiri-go Expert
@@ -144,6 +144,31 @@ return c.JSON(http.StatusOK, response.NewReturnFields(fg.ExportPatch()))
 Das Frontend postet **nur die Trigger-Werte**, behält Werte die es in der neuen Liste noch gibt und
 verwirft den Rest. Filter erben das. Details + Grenzen in `references/form-fields.md`.
 
+### Vorschläge für Textfelder (Autocomplete, Freitext bleibt)
+
+Ein `TextField` kann Vorschläge anbieten, ohne die Eingabe auf sie zu beschränken — anders als
+`SelectField` (Pflichtauswahl) und `ChipsField` (Mehrfachwerte). Feste Liste, Nachladen beim
+Tippen oder beides; bei `SetSuggestionsURL` gehen die aktuellen Werte anderer Felder als Kontext mit:
+
+```go
+city := field.NewTextField("city", "CITY", false, "").
+    SetSuggestions("Wien", "Graz", "Linz").                                  // list: [{id, name}], id == name
+    SetSuggestionsURL(xurl.NewUrlPrefix("/Portal/City/Suggest", "/api"), "country")  // url + searchWith
+
+// Handler hinter der URL: POST {"search": "gr", "country": 3} -> [{"id": "Graz", "name": "Graz"}]
+country := field.NewIntField("country", "COUNTRY", false, 0)
+search, err := formbuilder.BindSuggest(c, country)   // bindet NUR die übergebenen Kontextfelder, nachsichtig
+if err != nil {
+    return wc.BadRequest(err.Error())
+}
+return c.JSON(http.StatusOK, ctrl.citiesFor(*country.Value, search))   // []map[string]any{"id","name"}
+```
+
+Regeln: `search` ist im Body reserviert und wird als Kontext-ID ignoriert. Nur **enabled** Kontextfelder
+werden gesendet und gebunden. Kommen die Vorschläge erst per `SetReloadOn`, initial `SetSuggestions()`
+(leer → `list: []`) setzen — sonst rendert das Frontend erst ein normales Textfeld und tauscht das
+Element beim Patch aus. Ein Reload-Patch der Liste löscht den getippten Text nie.
+
 ### Neue Option per Dialog anlegen („+“-Button)
 
 `SetAddURL` zeigt neben Select/ModelList/Model/Chips einen „+“-Button; GET liefert den Dialog, der
@@ -233,5 +258,9 @@ core.ButtonTypeRaised | Basic | Stroked | Flat | Fab | MiniFab | Icon | IconText
   Pflichtfeldern, die mitten im Ausfüllen völlig normal sind.
 - **Abhängige `ModelListField`/Treeselects ohne `URL` bauen.** Mit URL lädt das Frontend den Baum
   selbst und ignoriert die gepatchte Liste.
+- **Kein `SelectField` oder `ChipsField`, wenn der Wert frei getippt werden darf** und die Liste nur
+  hilft — `NewTextField(...).SetSuggestions(...)` bzw. `.SetSuggestionsURL(u, kontextIDs...)`.
+- **Im Vorschlags-Handler `BindSuggest(c, kontextfelder...)`**, nicht `BindAndValidate`/`BindReload`:
+  nur die übergebenen Felder werden gebunden, der Suchtext kommt als Rückgabewert.
 - **Kein eigener „Neu anlegen“-Button neben einem Select** — `f.BaseField.SetAddURL(u)` und im
   Dialog-POST `NewReturnDone().WithCreated(id, name)` statt `RefreshPage`/`RefreshTable`.

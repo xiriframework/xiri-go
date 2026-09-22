@@ -67,6 +67,31 @@ f := field.NewTextFieldWithLength("name", "vehicle.name", true, "", 3, 100)
 name := *f.Value  // string
 ```
 
+### Vorschläge (Autocomplete mit Freitext)
+
+Das Feld bleibt Freitext; die Vorschläge helfen nur. Exportiert werden dieselben Keys wie bei
+Select/Chips (`list: [{id, name}]`, `id == name`) plus `url` und `searchWith`:
+
+```go
+f := field.NewTextField("city", "CITY", false, "")
+f.SetSuggestions("Wien", "Graz")          // feste Liste, lokal gefiltert
+f.SetSuggestions()                        // explizit leer -> list: [] (Reload-Patch kann Vorschläge abräumen)
+f.SetSuggestionsURL(u, "country", "kind") // beim Tippen: POST u {search, country, kind} -> [{id, name}]
+f.SetSuggestionsURL(nil)                  // schaltet das Nachladen ab
+```
+
+- `Suggestions == nil` exportiert keinen Key; `SetSuggestions()` ohne Argumente exportiert `list: []`.
+  Genau das braucht ein Feld, dessen Vorschläge erst per `SetReloadOn` kommen — das Frontend rendert
+  ein Textfeld nur dann von Anfang an als Vorschlagsfeld, sonst wechselt beim Patch das Input-Element.
+- `searchWith` sind IDs anderer Felder derselben `FormGroup` (flache Schlüssel); mitgeschickt wird der
+  aktuelle Wert **enabled** Felder. Die ID `search` ist reserviert und wird ignoriert.
+- `url` wird wie bei `SetReloadOn`/`SetAddURL` über `PrintPrefix()` exportiert; das Frontend stellt
+  seine API-Basis davor.
+- Frontend: 200 ms entprellt, neue Eingabe bricht den laufenden Request ab, Servertreffer werden an
+  die lokalen angehängt und nach `name` dedupliziert. Enter/Blur übernehmen nie automatisch einen
+  Vorschlag; ein Reload-Patch der `list` löscht den getippten Text nicht.
+- Handler: `formbuilder.BindSuggest(c, kontextfelder...)` — siehe `form-builder.md`.
+
 ## IntField
 
 Zahleneingabe. Value: `*int32`

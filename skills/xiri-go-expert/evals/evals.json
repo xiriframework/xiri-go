@@ -166,6 +166,18 @@
         {"name": "no_invented_api", "type": "code_check", "description": "Keine erfundene Methode wie SetElevation(0), WithFlat auf dem TableBuilder oder SetNoCard — nur SetFlat(bool)"}
       ],
       "files": []
+    },
+    {
+      "id": 11,
+      "prompt": "Ein Formular hat ein Select 'country' und ein Textfeld 'city'. Für die Stadt sollen beim Tippen Vorschläge vom Server kommen, abhängig vom gewählten Land; der Benutzer darf aber auch eine Stadt eintippen, die nicht in der Liste steht. Schreibe Felddefinition und den Echo-Handler für die Vorschläge.",
+      "expected_output": "field.NewTextField(\"city\", ...).SetSuggestionsURL(xurl.NewUrlPrefix(...), \"country\") on the text field (no SelectField/ChipsField for city); the handler uses formbuilder.BindSuggest(c, country) to get the search text and the bound country value, and returns c.JSON with a slice of {id, name}.",
+      "assertions": [
+        {"name": "uses_text_field_with_suggestions_url", "type": "contains_pattern", "description": "city ist ein NewTextField mit SetSuggestionsURL(..., \"country\") — kein SelectField oder ChipsField"},
+        {"name": "handler_uses_bind_suggest", "type": "code_check", "description": "Der Handler ruft formbuilder.BindSuggest mit dem country-Feld auf und nutzt den zurückgegebenen Suchtext"},
+        {"name": "returns_id_name_list", "type": "code_check", "description": "Antwort ist ein JSON-Array von Objekten mit id und name"},
+        {"name": "no_bind_and_validate", "type": "code_check", "description": "Kein BindAndValidate oder BindReload im Vorschlags-Handler"}
+      ],
+      "files": []
     }
   ]
 }
