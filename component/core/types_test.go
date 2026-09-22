@@ -103,11 +103,12 @@ func TestComponentTypes_MatchXiriNg(t *testing.T) {
 	// ponytail: ein Eintrag pro Zeile ist Katalog-Konvention; fremde Schreibweisen scheitern laut statt still.
 	typeRe := regexp.MustCompile(`type:\s*'([a-z0-9_-]+)'`)
 	goRe := regexp.MustCompile(`goBuilder:\s*(true|false)`)
-	commentRe := regexp.MustCompile(`/\*.*?\*/|//.*$`)
+	blockCommentRe := regexp.MustCompile(`(?s)/\*.*?\*/`)
+	lineCommentRe := regexp.MustCompile(`//.*$`)
 	goBuilder := map[string]bool{}
 	inArray := false
-	for i, line := range strings.Split(string(src), "\n") {
-		trimmed := strings.TrimSpace(commentRe.ReplaceAllString(line, ""))
+	for i, line := range strings.Split(blockCommentRe.ReplaceAllString(string(src), ""), "\n") {
+		trimmed := strings.TrimSpace(lineCommentRe.ReplaceAllString(line, ""))
 		switch {
 		case strings.HasPrefix(trimmed, "export const COMPONENT_CATALOG"):
 			inArray = true
