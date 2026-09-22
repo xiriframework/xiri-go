@@ -22,7 +22,9 @@ FormGroup/Builder → *.Print(ctx *core.UiContext) → map[string]any → JSON �
   - Dialoge: `DeleteDialog(name)`
   - Context: `UiContext()`
   - Errors: `BadRequest`, `Unauthorized`, `Forbidden`, `NotFound`, `InternalServerError`, `ServiceUnavailable` — alle `(msg)`.
-- **Ohne Wrapper** direkt über xiri-go: `response.NewReturnDone()`, `response.NewReturnGoto(url)`, `response.NewReturnRefreshPage()`, `response.NewReturnRefreshTable()`, `response.NewReturnRefreshPanel()`, `response.NewDataResponse(data)`, `response.NewErrorResponse(msg)`. Siehe `references/responses.md`.
+    `BadRequest(err.Error())` nach `BindAndValidate` verliert die Feldzuordnung — der Wrapper sollte dort
+    `c.JSON(400, response.NewErrorResponseFromError(err))` senden, damit xiri-ng die Meldungen am Feld zeigt.
+- **Ohne Wrapper** direkt über xiri-go: `response.NewReturnDone()`, `response.NewReturnGoto(url)`, `response.NewReturnRefreshPage()`, `response.NewReturnRefreshTable()`, `response.NewReturnRefreshPanel()`, `response.NewDataResponse(data)`, `response.NewErrorResponse(msg)`, `response.NewErrorResponseFromError(err)`. Siehe `references/responses.md`.
 
 ## URL-Handling — die wichtigste Regel
 
@@ -164,7 +166,10 @@ fb.AddField(nameField)
 
 fields, _ := fb.BuildAddForDisplay()   // für form.NewForm
 fg, _, _  := fb.BuildAdd()              // für BindAndValidate
-formbuilder.BindAndValidate(ctx, fg)
+if err := formbuilder.BindAndValidate(ctx, fg); err != nil {
+    // err ist group.FieldErrors (alle Felder, id → Meldung); "fields" im 400 zeigt xiri-ng am Feld
+    return ctx.JSON(http.StatusBadRequest, response.NewErrorResponseFromError(err))
+}
 // Werte direkt: if nameField.Value != nil { entity.Name = *nameField.Value }
 ```
 
