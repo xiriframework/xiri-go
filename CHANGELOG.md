@@ -8,6 +8,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 ### Added
 
+- **Textfeld-Vorschläge (mat-autocomplete).** `TextField.SetSuggestions(...string)` exportiert
+  `list: [{id, name}]` (id == name; ohne Argumente `list: []`, damit ein Reload-Patch Vorschläge
+  abräumen kann). `SetSuggestionsURL(u *url.Url, felder...)` exportiert `url` und `searchWith`; das
+  Frontend fragt beim Tippen `POST url {search, <felder>}` ab (aktuelle Werte der genannten, enabled
+  Formularfelder) und erwartet `[{id, name}]`. Neuer Handler-Helfer `builder.BindSuggest(c, kontextfelder...)`
+  liefert den Suchtext und bindet genau diese Felder lenient (Allowlist, JSON-Body). Freie Eingabe
+  bleibt gültig. Braucht xiri-ng ≥ 0.4.15.
 - **Feldgenaue Validierungsfehler.** `BindAndValidate`, `BindFromMap`, `ParseValues`, `ValidateValues`
   und `ParseAndValidate[Sparse]` liefern `group.FieldErrors` (`map[string]string`, implementiert `error`)
   mit allen fehlgeschlagenen Feldern statt nur dem ersten. `response.NewErrorResponseFromError(err)`

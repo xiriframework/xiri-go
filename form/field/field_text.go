@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/xiriframework/xiri-go/component/core"
+	"github.com/xiriframework/xiri-go/component/url"
 )
 
 // TextField represents a free-text field
@@ -19,6 +20,10 @@ type TextField struct {
 	IconSuffix string  // Suffix icon name
 	Trim       bool    // Whether to trim whitespace (default: true)
 	Value      *string // Parsed and validated value (type-safe access)
+
+	Suggestions    []string // Autocomplete suggestions; nil = none, empty = explicitly none (exports list: [])
+	SuggestionsURL string   // Endpoint for suggestions while typing: POST {search, <SearchWith...>} -> [{id, name}]
+	SearchWith     []string // IDs of other form fields whose current value is sent with the suggestion request
 }
 
 func (f *TextField) Validate(value interface{}) error {
@@ -150,7 +155,54 @@ func (f *TextField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 		result["iconSuffix"] = f.IconSuffix
 	}
 
+	// Suggestions: nil means "not configured" (no key), an empty slice means "explicitly none" -
+	// exported as list: [] so a reload patch can clear previous suggestions.
+	if f.Suggestions != nil {
+		list := make([]map[string]interface{}, len(f.Suggestions))
+		for i, s := range f.Suggestions {
+			list[i] = map[string]interface{}{"id": s, "name": s}
+		}
+		result["list"] = list
+	}
+	if f.SuggestionsURL != "" {
+		result["url"] = f.SuggestionsURL
+		if len(f.SearchWith) > 0 {
+			result["searchWith"] = f.SearchWith
+		}
+	}
+
 	return result
+}
+
+// SetSuggestions sets a fixed list of autocomplete suggestions; any other text stays valid.
+// Calling it without arguments exports an empty list (clears suggestions via reload patch).
+func (f *TextField) SetSuggestions(suggestions ...string) *TextField {
+	if suggestions == nil {
+		suggestions = []string{}
+	}
+	f.Suggestions = suggestions
+	return f
+}
+
+// SetSuggestionsURL enables server-side suggestions while typing.
+//
+// The frontend posts {search: "<input>", <id>: <current value> ...} for every enabled form
+// field named in searchWith and expects [{id, name}]; name is what gets inserted. Use
+// builder.BindSuggest in the handler. A nil url disables the feature; the reserved id "search"
+// is dropped from searchWith.
+func (f *TextField) SetSuggestionsURL(u *url.Url, searchWith ...string) *TextField {
+	if u == nil || u.PrintPrefix() == "" {
+		f.SuggestionsURL, f.SearchWith = "", nil
+		return f
+	}
+	f.SuggestionsURL = u.PrintPrefix()
+	f.SearchWith = nil
+	for _, id := range searchWith {
+		if id != "search" {
+			f.SearchWith = append(f.SearchWith, id)
+		}
+	}
+	return f
 }
 
 // ============================================================================

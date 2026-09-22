@@ -120,6 +120,8 @@ field.NewSelectField  (id, name, required, opts).SetMultiple(true)  // Values: [
 field.NewSelectField  (id, name, required, opts).SetMultiple(true).SetSelectAll(true)  // + „Alle / Keine“-Toggle
 field.NewModelField   (id, name, required, "group", 0) // Value: int32
 // Subtypes auf TextField: "email" | "tel" | "url" | "password" | "textarea"
+field.NewTextField(...).SetSuggestions("Wien", "Graz")        // feste Vorschläge (mat-autocomplete), freie Eingabe bleibt
+field.NewTextField(...).SetSuggestionsURL(u, "dept")          // Vorschläge beim Tippen: POST {search, dept} -> [{id, name}]; Handler: builder.BindSuggest
 ```
 
 ### Abhängige Felder (Optionen vom Server nachladen)

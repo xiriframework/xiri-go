@@ -146,6 +146,26 @@ err := formbuilder.BindFromMap(formData, fg)
 // formData: map[string]interface{} — bereits geparstes Formular
 ```
 
+## BindSuggest (Vorschläge für Textfelder)
+
+`TextField.SetSuggestionsURL(u, kontextfelder...)` lässt das Frontend beim Tippen `POST u` mit
+`{"search": "gr", "dept": 3}` schicken — `search` ist der getippte Text, dahinter die aktuellen Werte
+der genannten (enabled) Formularfelder. Erwartet wird `[{"id": "Graz", "name": "Graz"}]`; eingesetzt
+wird `name`, freie Eingabe bleibt immer gültig. Vorschläge, die erst per `SetReloadOn` kommen,
+brauchen initial `SetSuggestions()` (leer → `list: []`), damit das Frontend das Feld von Anfang an
+als Vorschlagsfeld rendert.
+
+```go
+func (ctrl *Controller) CitySuggest(c echo.Context) error {
+    dept := field.NewIntField("dept", "DEPT", false, 0)
+    search, err := builder.BindSuggest(c, dept)   // bindet NUR die übergebenen Kontextfelder (lenient)
+    if err != nil {
+        return wc.BadRequest(err.Error())
+    }
+    return c.JSON(http.StatusOK, ctrl.citiesFor(*dept.Value, search))  // []map{"id","name"}
+}
+```
+
 ## Vollständiges Beispiel: Add + Edit + Save
 
 ```go
