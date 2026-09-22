@@ -144,7 +144,7 @@ Sobald aktiviert, triggert der Skill automatisch, wenn du Go-Code schreibst oder
 - **Patterns**: Vollständiges CRUD, Inline-Edit-Flow, Bulk-Actions, Dashboard
 - **UiContext, Formatter, Responses, Enums** — alles was die Library exportiert
 
-Der Skill ist modular aufgebaut: **SKILL.md** (~160 Zeilen) als Navigation, plus 15 fokussierte Reference-Dateien, die nur bei Bedarf geladen werden (Progressive Disclosure) — sparsam mit Context-Tokens.
+Der Skill ist modular aufgebaut: **SKILL.md** als schlanke Navigation, plus 16 fokussierte Reference-Dateien, die nur bei Bedarf geladen werden (Progressive Disclosure) — sparsam mit Context-Tokens.
 
 ### Installation — Variante A: via `skills-lock.json`
 
@@ -213,7 +213,8 @@ skills/xiri-go-expert/
 │   ├── uicontext.md               # UiContext, TranslateFunc, Enum-Werte
 │   ├── components.md              # Nicht-Tabellen-Komponenten (Tabs, Timeline, …)
 │   ├── tachotime.md               # TachoTime (Fahrtenschreiber)
-│   └── enums.md                   # Alle Enum-Werte
+│   ├── enums.md                   # Alle Enum-Werte
+│   └── mcp.md                     # MCP-Server: App für Agenten öffnen (read_page/act)
 └── evals/
     └── evals.json                 # Test-Prompts + Assertions (für skill-creator)
 ```

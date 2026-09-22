@@ -1,6 +1,6 @@
 ---
 name: xiri-go-expert
-description: Experte für die xiri-go Go-Library. Verwende diesen Skill IMMER wenn Go-Code geschrieben wird der xiri-go importiert (github.com/xiriframework/xiri-go), oder wenn der User nach Komponenten, Formularen, Tabellen, Filter-Parsing, URL-Prefixes/Sidebar-Routing, Dialogen, Responses, UiContext, Inline-Edit, abhängigen Formularfeldern (SetReloadOn/ExportPatch), Textfeld-Vorschlägen/Autocomplete mit Freitext (SetSuggestions/SetSuggestionsURL/BindSuggest), „Neu anlegen“-Button an Select-Feldern (SetAddURL/WithCreated), Bulk-Actions/MassEdit/MassDelete oder dem Builder-Pattern der xiri-go Library fragt.
+description: Experte für die xiri-go Go-Library. Verwende diesen Skill IMMER wenn Go-Code geschrieben wird der xiri-go importiert (github.com/xiriframework/xiri-go), oder wenn der User nach Komponenten, Formularen, Tabellen, Filter-Parsing, URL-Prefixes/Sidebar-Routing, Dialogen, Responses, UiContext, Inline-Edit, abhängigen Formularfeldern (SetReloadOn/ExportPatch), Textfeld-Vorschlägen/Autocomplete mit Freitext (SetSuggestions/SetSuggestionsURL/BindSuggest), „Neu anlegen“-Button an Select-Feldern (SetAddURL/WithCreated), Bulk-Actions/MassEdit/MassDelete oder dem Builder-Pattern der xiri-go Library fragt. Ebenso wenn die App für Agenten/KI geöffnet werden soll (MCP-Server, mcp.Handler, read_page/act, „App für Agenten zugänglich machen").
 ---
 
 # xiri-go Expert
