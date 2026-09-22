@@ -8,6 +8,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 ### Added
 
+- **`core.ComponentTypes()`.** Liefert die sortierte Liste aller `type`-Werte, die xiri-go im Komponenten-JSON
+  ausgibt (als Kopie). Ein Test scannt die Literale unter `component/` dagegen und gleicht, wenn xiri-ng im
+  Workspace liegt, mit dessen `COMPONENT_CATALOG` (`goBuilder`) ab.
 - **Textfeld-Vorschläge (mat-autocomplete).** `TextField.SetSuggestions(...string)` exportiert
   `list: [{id, name}]` (id == name; ohne Argumente `list: []`, damit ein Reload-Patch Vorschläge
   abräumen kann). `SetSuggestionsURL(u *url.Url, felder...)` exportiert `url` und `searchWith`; das

@@ -4,6 +4,9 @@ Import-Basis: `"github.com/xiriframework/xiri-go/component/"`
 
 Alle Komponenten implementieren `Component.Print(ctx *core.UiContext) map[string]any`.
 
+Alle `type`-Werte, die xiri-go ausgibt: `core.ComponentTypes()` (sortierte Kopie; Vertrag, Test in
+`component/core/types_test.go`, Gegenstück `XIRI_COMPONENT_TYPES`/`COMPONENT_CATALOG` in xiri-ng).
+
 ## Page (`component/page`)
 
 Container für eine komplette Seite mit Breadcrumbs.
