@@ -19,7 +19,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   `Options.MaxResponseBytes` (Default 1 MiB); Status ≠ 200 steht als `HTTP <code>` in der ersten
   Zeile, ab 300 ist das Ergebnis `IsError`. Nicht unterstützt: Streaming, Host-basiertes Routing und
   `HTTPSRedirect`-Middleware am selben Echo; Antwort-Header inklusive `Set-Cookie` gehen verloren.
-  Neue Abhängigkeit `github.com/modelcontextprotocol/go-sdk`.
+  `url` bzw. `route` werden mit und ohne `/api`-Prefix akzeptiert — Formulare und `api`-Buttons
+  exportieren ihn (`xurl.NewUrlPrefix`), `goto` und Breadcrumbs nicht; der Agent reicht beides
+  unverändert weiter. Neue Abhängigkeit `github.com/modelcontextprotocol/go-sdk`.
 
 - **`core.ComponentTypes()`.** Liefert die sortierte Liste aller `type`-Werte, die xiri-go im Komponenten-JSON
   ausgibt (als Kopie). Ein Test scannt die Literale unter `component/` dagegen und gleicht, wenn xiri-ng im

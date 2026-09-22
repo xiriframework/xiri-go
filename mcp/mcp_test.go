@@ -227,6 +227,25 @@ func TestAct_RejectsOtherMethodsWithoutReachingHandler(t *testing.T) {
 	}
 }
 
+// Echte Xiri-Komponenten exportieren API-URLs samt Prefix ("/api/Portal/Devices/Save", via
+// xurl.NewUrlPrefix). Ein Agent reicht genau diese url an act weiter — ohne diesen Test hängt
+// dispatch den Prefix ein zweites Mal davor und jede reale App antwortet mit 404.
+func TestAct_AcceptsUrlWithAndWithoutApiPrefix(t *testing.T) {
+	sess := connect(t, newApp(t, Options{}), nil)
+	for _, url := range []string{"Test/Save", "/api/Test/Save", "api/Test/Save"} {
+		body, isErr := call(t, sess, "act", map[string]any{"url": url, "data": map[string]any{"name": "Alpha"}})
+		if isErr || !strings.Contains(body, `"done":true`) {
+			t.Fatalf("%q must reach the handler, got (isError=%v) %s", url, isErr, body)
+		}
+	}
+	// read_page bekommt Routen normalerweise ohne Prefix (aus goto), muss den Prefix aber
+	// genauso schlucken.
+	body, isErr := call(t, sess, "read_page", map[string]any{"route": "/api/Test/Page"})
+	if isErr || !strings.Contains(body, `"url":"Test/Save"`) {
+		t.Fatalf("read_page with prefix failed (isError=%v): %s", isErr, body)
+	}
+}
+
 func TestAct_RejectsTargetsOutsideApiPrefix(t *testing.T) {
 	sess := connect(t, newApp(t, Options{}), nil)
 	for _, url := range []string{"../mcp", "/../mcp", "Test/../../mcp", "%2e%2e/mcp"} {

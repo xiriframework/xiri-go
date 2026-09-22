@@ -67,7 +67,8 @@ type Options struct {
 	Version      string // Default "0"
 	Instructions string // Hinweise an den Client; Default beschreibt das Xiri-Protokoll
 	// ApiPrefix ist der Pfad, unter dem die Xiri-Handler am Echo hängen. Default "/api/";
-	// fehlende Slashes werden ergänzt. Ziele ausserhalb werden abgelehnt.
+	// fehlende Slashes werden ergänzt. Ziele ausserhalb werden abgelehnt. Eine url, die den
+	// Prefix schon trägt — so exportieren Formulare und api-Buttons ihn —, wird nicht verdoppelt.
 	ApiPrefix string
 	// ForwardHeaders werden vom MCP-Request in den internen Request kopiert. Default Cookie,
 	// Authorization. Transport- und Body-Header (siehe blockedHeaders) werden nie kopiert.
@@ -186,7 +187,14 @@ func dispatch(ctx context.Context, e *echo.Echo, opts Options, req *sdk.CallTool
 		}
 		body = bytes.NewReader(b)
 	}
-	r, err := http.NewRequestWithContext(ctx, method, opts.ApiPrefix+strings.TrimPrefix(route, "/"), body)
+	// Echte Xiri-Komponenten exportieren API-URLs samt Prefix (xurl.NewUrlPrefix → "/api/Foo/Save"),
+	// Routen aus goto und Breadcrumbs dagegen ohne. Beide Schreibweisen müssen gehen, sonst schlägt
+	// genau der Weg fehl, den ein Agent aus read_page abliest.
+	target := "/" + strings.TrimPrefix(route, "/")
+	if !strings.HasPrefix(target, opts.ApiPrefix) {
+		target = opts.ApiPrefix + strings.TrimPrefix(target, "/")
+	}
+	r, err := http.NewRequestWithContext(ctx, method, target, body)
 	if err != nil {
 		return errorResult("invalid url: " + err.Error()), nil, nil
 	}

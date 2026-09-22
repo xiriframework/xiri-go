@@ -34,6 +34,11 @@ Header, es authentifiziert nichts.
 | `ForwardHeaders` | `["Cookie", "Authorization"]` | was aus dem MCP-Request in den internen Request kopiert wird |
 | `MaxResponseBytes` | 1 MiB | ab hier bekommt der Handler einen Schreibfehler und der Aufruf wird abgelehnt |
 
+`act` und `read_page` nehmen die url **mit oder ohne** Prefix. Das ist kein Komfort, sondern nötig:
+echte Komponenten exportieren API-URLs samt Prefix (`form.NewForm` und `NewApiButton` über
+`xurl.NewUrlPrefix` → `"/api/Portal/Devices/Save"`), Routen aus `goto` und Breadcrumbs dagegen ohne
+(`"/Portal/Devices"`). Ein Agent reicht schlicht weiter, was im Seiten-JSON steht.
+
 ## Sicherheit
 
 - **Der Host schützt den Mount-Pfad.** Gleiche Middleware wie `/api`, sonst ist die App offen.
@@ -66,7 +71,8 @@ Header, es authentifiziert nichts.
    `download` wird nicht unterstützt; `close`, `return`, `debug`, `simulate` sind Client-Aktionen.
    Bei `dialog` liefert die `url` den Dialog-Inhalt: ohne `data`/`filter` per `read_page`, mit
    Filter- oder Initialdaten per `act`.
-3. `act(url, data: {<fieldId>: <wert>, …})`.
+3. `act(url, data: {<fieldId>: <wert>, …})` — die `url` unverändert aus dem JSON übernehmen, sie
+   trägt den `/api`-Prefix bereits.
 4. Antwort auswerten: `{"done":true}`, `{"goto":"/Route"}` → `read_page` auf die Route **ohne**
    führenden Slash, `{"refresh":"page|table|panel"}`, optional `message`.
 5. Bei 400 liefert die Antwort `error` und `fields` (`{"<fieldId>": "<meldung>"}`) — damit kann der
