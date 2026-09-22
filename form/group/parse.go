@@ -1,9 +1,5 @@
 package group
 
-import (
-	"fmt"
-)
-
 // ParseValues parses raw field values into typed values. Missing, non-required
 // fields receive their default value.
 func (fg *FormGroup) ParseValues(raw map[string]interface{}) (map[string]interface{}, error) {
@@ -20,6 +16,7 @@ func (fg *FormGroup) ParseValuesSparse(raw map[string]interface{}) (map[string]i
 
 func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (map[string]interface{}, error) {
 	parsed := make(map[string]interface{})
+	errs := FieldErrors{}
 
 	for _, f := range fg.fields {
 		if !f.GetForm() {
@@ -36,7 +33,8 @@ func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (
 		rawValue, exists := raw[f.GetID()]
 		if !exists {
 			if f.IsRequired() {
-				return nil, fmt.Errorf("required field %s is missing", f.GetID())
+				errs[f.GetID()] = "required field " + f.GetID() + " is missing"
+				continue
 			}
 			if def := f.GetDefault(); def != nil && useDefaults {
 				parsed[f.GetID()] = def
@@ -46,31 +44,34 @@ func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (
 
 		value, err := f.Parse(rawValue)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing field %s: %w", f.GetID(), err)
+			errs[f.GetID()] = err.Error()
+			continue
 		}
 		parsed[f.GetID()] = value
 	}
 
+	if len(errs) > 0 {
+		return nil, errs
+	}
 	return parsed, nil
 }
 
-// ValidateValues validates parsed field values
+// ValidateValues validates parsed field values and reports every failing field at once.
 func (fg *FormGroup) ValidateValues(values map[string]interface{}) error {
-	// Validate each field
+	errs := FieldErrors{}
 	for _, f := range fg.fields {
 		value, exists := values[f.GetID()]
-
-		// Check required fields
 		if !exists && f.IsRequired() && f.GetForm() {
-			return fmt.Errorf("required field %s is missing", f.GetID())
+			errs[f.GetID()] = "required field " + f.GetID() + " is missing"
+			continue
 		}
-
-		// Validate the value
 		if err := f.Validate(value); err != nil {
-			return err
+			errs[f.GetID()] = err.Error()
 		}
 	}
-
+	if len(errs) > 0 {
+		return errs
+	}
 	return nil
 }
 
@@ -97,12 +98,16 @@ func (fg *FormGroup) ParseAndValidateSparse(raw map[string]interface{}) (map[str
 	if err != nil {
 		return nil, err
 	}
+	errs := FieldErrors{}
 	for _, f := range fg.fields {
 		if v, ok := parsed[f.GetID()]; ok {
 			if err := f.Validate(v); err != nil {
-				return nil, err
+				errs[f.GetID()] = err.Error()
 			}
 		}
+	}
+	if len(errs) > 0 {
+		return nil, errs
 	}
 	return parsed, nil
 }
