@@ -99,6 +99,31 @@ shell from a single prompt — no need to read the full API by hand.
 - Go 1.25+
 - [Echo v4](https://github.com/labstack/echo) (for HTTP response helpers)
 
+## MCP: die App für Agenten öffnen
+
+Das Paket `mcp` stellt jede Xiri-App als [MCP](https://modelcontextprotocol.io)-Server bereit,
+ohne dass Handler oder JSON geändert werden. Ein Agent liest Seiten und führt API-Aktionen aus:
+
+```go
+import xirimcp "github.com/xiriframework/xiri-go/mcp"
+
+// Hinter derselben Auth-Middleware wie /api mounten; Cookie und Authorization werden weitergereicht.
+e.Any("/mcp", echo.WrapHandler(xirimcp.Handler(e, xirimcp.Options{Name: "devices", Version: "1.0"})))
+```
+
+Tools: `read_page(route)` → Seiten-JSON, `act(url, method, data)` → Xiri-Response
+(`done`/`goto`/`refresh`/`message`, bei 400 `error` + `fields`). Client-Konfiguration z. B. für
+Claude Code: `claude mcp add --transport http devices https://host/mcp`.
+
+**Umfang:** Aufrufe laufen intern durch dasselbe Echo, der Agent handelt also unter der
+weitergereichten Session — und erreicht jeden Endpunkt unter `/api/`, nicht nur die Aktionen der
+zuletzt gelesenen Seite. Das entspricht den Rechten des Browsers, solange der Host jeden Endpunkt
+anhand dieser Credentials im selben Echo autorisiert; Prüfungen am Reverse-Proxy oder an
+Request-Metadaten (Host, TLS, RemoteAddr) greifen hier nicht. Wer weniger freigeben will, mountet
+einen Echo mit weniger Routen. Nicht unterstützt: Downloads und andere Binärantworten, Streaming,
+Host-basiertes Routing und `HTTPSRedirect`-Middleware am selben Echo; Antwort-Header inklusive
+`Set-Cookie` gehen verloren (Details im Doc-Kommentar des Pakets).
+
 ## Claude Code Integration — `xiri-go-expert` Skill
 
 Dieses Repo enthält einen bundled [Claude Code](https://claude.com/claude-code) Skill unter `skills/xiri-go-expert/`, der Claude beim Schreiben von xiri-go-Code unterstützt. Der Skill wird **mit jedem Library-Release mit-versioniert**, sodass die Skill-Inhalte (API-Signaturen, Patterns, Konventionen) zum Code deiner Library-Version passen.

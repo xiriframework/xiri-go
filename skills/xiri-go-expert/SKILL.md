@@ -62,6 +62,7 @@ u.PrintPrefix()  // mit Prefix — das geben ALLE Komponenten aus (auch Link-But
 | TachoTime (Fahrtenschreiber)                             | `references/tachotime.md`                   |
 | Enum-Werte                                               | `references/enums.md`                       |
 | Field-Methoden-Details (Table-Builder-Chain)             | `references/table-builder.md`               |
+| **App für Agenten öffnen** (MCP-Server, read_page/act)   | `references/mcp.md`                         |
 
 ## Absolute Minimal-Anker (Signatur-Gerüst)
 

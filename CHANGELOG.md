@@ -8,6 +8,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 ### Added
 
+- **Paket `mcp`.** `mcp.Handler(e, opts)` liefert einen MCP-Server (Streamable HTTP, offizielles
+  Go-SDK) mit zwei generischen Tools: `read_page(route)` gibt das Seiten-JSON zurück,
+  `act(url, method, data)` führt ein Formular oder einen Button mit `action: "api"` aus. Aufrufe
+  laufen intern über `e.ServeHTTP` durch dasselbe Echo, also durch Routing und Middleware des Hosts;
+  `Cookie` und `Authorization` werden weitergereicht (`Options.ForwardHeaders`). Der Agent handelt
+  damit unter der weitergereichten Session und erreicht alles unter `/api/` — das Seiten-JSON ist der
+  Katalog, keine Schranke. Der Host mountet den Pfad hinter derselben Auth-Middleware wie `/api`.
+  Abgelehnt statt zerstört werden Binärantworten (Downloads), nicht-UTF-8-Bodies und Antworten über
+  `Options.MaxResponseBytes` (Default 1 MiB); Status ≠ 200 steht als `HTTP <code>` in der ersten
+  Zeile, ab 300 ist das Ergebnis `IsError`. Nicht unterstützt: Streaming, Host-basiertes Routing und
+  `HTTPSRedirect`-Middleware am selben Echo; Antwort-Header inklusive `Set-Cookie` gehen verloren.
+  Neue Abhängigkeit `github.com/modelcontextprotocol/go-sdk`.
+
 - **`core.ComponentTypes()`.** Liefert die sortierte Liste aller `type`-Werte, die xiri-go im Komponenten-JSON
   ausgibt (als Kopie). Ein Test scannt die Literale unter `component/` dagegen und gleicht, wenn xiri-ng im
   Workspace liegt, mit dessen `COMPONENT_CATALOG` (`goBuilder`) ab.
