@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 )
 
@@ -410,5 +411,25 @@ func TestReturnDone_WithCreated_StringIDAndChaining(t *testing.T) {
 	expected := `{"done":true,"created":{"id":"abc","name":"Neu"},"message":"Angelegt","messageType":"success"}`
 	if string(data) != expected {
 		t.Errorf("expected %s, got %s", expected, string(data))
+	}
+}
+
+type stubFieldErrors map[string]string
+
+func (s stubFieldErrors) Error() string                  { return "stub" }
+func (s stubFieldErrors) FieldErrors() map[string]string { return s }
+
+func TestNewErrorResponseFromError_WithFields(t *testing.T) {
+	resp := NewErrorResponseFromError(stubFieldErrors{"name": "zu kurz"})
+	b, _ := json.Marshal(resp)
+	if string(b) != `{"error":"stub","fields":{"name":"zu kurz"}}` {
+		t.Fatalf("unexpected JSON: %s", b)
+	}
+}
+
+func TestNewErrorResponseFromError_PlainError(t *testing.T) {
+	b, _ := json.Marshal(NewErrorResponseFromError(errors.New("boom")))
+	if string(b) != `{"error":"boom"}` {
+		t.Fatalf("fields must be omitted for plain errors, got %s", b)
 	}
 }

@@ -1,6 +1,8 @@
 // Package response provides type-safe API response structs that serialize directly to JSON.
 package response
 
+import "errors"
+
 // SuccessResponse is a marker interface for all success response types.
 // Use this for type-safe function parameters that accept any success response.
 //
@@ -450,8 +452,10 @@ func NewReturnError(text string) ReturnMessage {
 // that set the appropriate HTTP status code.
 //
 // JSON output: {"error": "message"}
+// With field errors: {"error": "name: …; email: …", "fields": {"name": "…", "email": "…"}}
 type ErrorResponse struct {
-	Error string `json:"error"`
+	Error  string            `json:"error"`
+	Fields map[string]string `json:"fields,omitempty"` // Validierungsfehler pro Feld-ID (group.FieldErrors)
 }
 
 // NewErrorResponse creates an error response with the given message.
@@ -459,6 +463,24 @@ type ErrorResponse struct {
 // Returns: ErrorResponse{"error": message}
 func NewErrorResponse(message string) ErrorResponse {
 	return ErrorResponse{Error: message}
+}
+
+// NewErrorResponseFromError builds the error body from a Go error. If the error carries
+// per-field messages (form/group.FieldErrors from BindAndValidate/ParseAndValidate), they are
+// exposed under "fields" so the frontend can show them at the field.
+//
+// Typical use:
+//
+//	if err := builder.BindAndValidate(c, fg); err != nil {
+//	    return c.JSON(http.StatusBadRequest, response.NewErrorResponseFromError(err))
+//	}
+func NewErrorResponseFromError(err error) ErrorResponse {
+	resp := ErrorResponse{Error: err.Error()}
+	var fe interface{ FieldErrors() map[string]string }
+	if errors.As(err, &fe) {
+		resp.Fields = fe.FieldErrors()
+	}
+	return resp
 }
 
 // NewDataResponse wraps any value in the standard Ajax data envelope.

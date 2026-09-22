@@ -113,9 +113,15 @@ Extrahiert Form-Daten aus Echo-Request und bindet sie an FormGroup-Fields.
 
 ```go
 if err := formbuilder.BindAndValidate(c, fg); err != nil {
-    return c.JSON(http.StatusBadRequest, response.NewErrorResponse(err.Error()))
+    return c.JSON(http.StatusBadRequest, response.NewErrorResponseFromError(err))
 }
 ```
+
+Schlägt die Validierung fehl, ist `err` ein `group.FieldErrors` (`map[string]string`, Feld-ID → Meldung)
+mit **allen** fehlgeschlagenen Feldern, nicht nur dem ersten. `response.NewErrorResponseFromError` gibt
+sie als `fields` in der 400-Antwort aus, xiri-form zeigt jede Meldung am betroffenen Feld. `err.Error()`
+liefert weiterhin einen Text (`id: msg; id2: msg2`), bestehende `wc.BadRequest(err.Error())`-Aufrufer
+laufen also unverändert — verlieren aber die Feldzuordnung.
 
 Nach dem Binding sind die Werte direkt auf den Fields verfügbar:
 
@@ -234,7 +240,7 @@ func HandleVehicleSave(c echo.Context) error {
     }
 
     if err := formbuilder.BindAndValidate(c, fg); err != nil {
-        return c.JSON(http.StatusBadRequest, response.NewErrorResponse(err.Error()))
+        return c.JSON(http.StatusBadRequest, response.NewErrorResponseFromError(err))
     }
 
     nameF, _ := fg.GetField("name")

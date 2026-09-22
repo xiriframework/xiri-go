@@ -204,6 +204,15 @@ resp := response.NewErrorResponse("Ungültige Eingabe")
 // Typischer Einsatz:
 return c.JSON(http.StatusBadRequest, response.NewErrorResponse(err.Error()))
 return c.JSON(http.StatusNotFound, response.NewErrorResponse("Nicht gefunden"))
+
+// Validierungsfehler aus BindAndValidate/ParseAndValidate: NewErrorResponseFromError liest
+// group.FieldErrors aus und gibt jede Feldmeldung unter "fields" aus — xiri-form zeigt sie am Feld.
+if err := formbuilder.BindAndValidate(c, fg); err != nil {
+    return c.JSON(http.StatusBadRequest, response.NewErrorResponseFromError(err))
+}
+// → {"error": "email: text field email must be at least 5 characters; name: text field name must be at least 3 characters",
+//    "fields": {"name": "text field name must be at least 3 characters", "email": "text field email must be at least 5 characters"}}
+// Ohne Feldfehler (z. B. ungültiger Body) fehlt "fields": {"error": "..."}
 ```
 
 ## Data Response
@@ -293,7 +302,7 @@ func HandleSave(c echo.Context) error {
     // ... Validierung, DB-Operation ...
 
     if err != nil {
-        return c.JSON(http.StatusBadRequest, response.NewErrorResponse(err.Error()))
+        return c.JSON(http.StatusBadRequest, response.NewErrorResponseFromError(err))
     }
 
     return c.JSON(http.StatusOK,

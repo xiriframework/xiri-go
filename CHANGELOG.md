@@ -6,6 +6,14 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Added
+
+- **Feldgenaue Validierungsfehler.** `BindAndValidate`, `BindFromMap`, `ParseValues`, `ValidateValues`
+  und `ParseAndValidate[Sparse]` liefern `group.FieldErrors` (`map[string]string`, implementiert `error`)
+  mit allen fehlgeschlagenen Feldern statt nur dem ersten. `response.NewErrorResponseFromError(err)`
+  gibt sie als `fields` in der 400-Antwort aus; xiri-ng zeigt sie ab dem gleichzeitig veröffentlichten
+  Release am Feld. `err.Error()` bleibt ein Text (`id: msg; id2: msg2`), bestehende Aufrufer laufen
+  unverändert.
 
 ## [0.4.1]
 ### Fixed
