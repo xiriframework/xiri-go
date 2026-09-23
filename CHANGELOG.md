@@ -35,9 +35,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   Request-Wert nach `int32` gewandelt. Ein `ModelListField`-Default als `[]int32` (statt
   `ModelListValue`) ließ `Parse` paniken und wird jetzt angenommen; andere Typen (auch beim
   Multi-`SelectField`) liefern einen Fehler statt eines Panics. Das gilt für `BindAndValidate`,
-  `BindFromMap` und `BindReload`. **Nicht** für `FormGroup.ParseValues`/`ParseAndValidate(Sparse)`
-  (auch Tabellenfilter): dort geht der Default weiter unverändert durch, ein `[]int32`-Default wird
-  von `Validate` abgelehnt. Defaults daher über den Konstruktor setzen.
+  `BindFromMap` und `BindReload` und ebenso für `FormGroup.ParseValues`/`ParseAndValidate(Sparse)`
+  (auch Tabellenfilter): dort läuft der Default jetzt durch `Parse`, wie beim Binden.
+  **Verhaltensänderung** in diesen Group-Pfaden: ein `TextField`-Default wird wie beim Binden
+  getrimmt, ein ungültiger Default ist ein Feldfehler statt eines durchgereichten Rohwerts.
 
 - **`GeoformField`/`TimeLimitField` prüfen Zahlen-Strings vollständig.** `Validate` las per
   `fmt.Sscanf` nur den Anfang: `"45 ,0)) UNION…"`, `"NaN"` oder `"7abc"` gingen durch und kamen

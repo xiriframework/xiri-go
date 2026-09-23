@@ -95,8 +95,8 @@ Struct-Literal gebautes `TextField{}` hat `Trim == false`.
   Browser an `[a-z]+`, auf dem Server nicht.
 - **Email:** In xiri-ng *ersetzt* ein Pattern den Email-Validator (`subtype: email`).
 - **Defaults werden mitgeprüft:** Ein Default, das nicht zum Pattern passt (z. B. Altwert eines per
-  showWhen versteckten Feldes), blockiert das Speichern. `FormGroup.ParseValues` übernimmt Defaults
-  ungetrimmt.
+  showWhen versteckten Feldes), blockiert das Speichern. `FormGroup.ParseValues` trimmt Defaults
+  wie das Binden.
 - **Kein Pattern per Reload:** xiri-ng übernimmt `pattern` nicht aus Reload-Patches — statisch setzen.
 
 ### Vorschläge (Autocomplete mit Freitext)
