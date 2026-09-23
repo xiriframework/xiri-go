@@ -79,7 +79,7 @@ func (f *ModelListField) Validate(value interface{}) error {
 		return fmt.Errorf("modellist %s can only have one item", f.ID)
 	}
 
-	def, _ := f.GetDefault().(ModelListValue)
+	def, _ := parseModelListValue(nil, f.GetDefault())
 	for _, id := range list {
 		if !slices.Contains(def, id) &&
 			!modelIDAllowed(f.URL, f.LoaderFunc != nil, f.Options, f.List, f.Sub, int64(id)) {

@@ -114,7 +114,10 @@ func modelIDAllowed(url string, hasLoader bool, options, list []ModelOption, sub
 
 func (f *ModelField) Parse(raw interface{}) (interface{}, error) {
 	if raw == nil {
-		return f.GetDefault(), nil
+		// The default may be set directly as int/int64; normalize it like a request value.
+		if raw = f.GetDefault(); raw == nil {
+			return nil, nil
+		}
 	}
 
 	// Parse to int32 (model ID) — a truncated or wrapped ID would select

@@ -164,3 +164,43 @@ func TestModelListField_Validate_Cases(t *testing.T) {
 		})
 	}
 }
+
+// Ein direkt gesetzter Default (int statt int32) muss als int32 gebunden werden, sonst bleibt
+// Value still auf 0 und überschreibt beim Speichern den aktuellen Wert.
+func TestModelField_BindValue_DirectIntDefault(t *testing.T) {
+	f := loadedModelField(0, 1)
+	f.Default = 42
+	if err := f.BindValue(nil); err != nil {
+		t.Fatalf("BindValue(nil): %v", err)
+	}
+	if f.Value != 42 {
+		t.Errorf("Value = %d, want 42", f.Value)
+	}
+}
+
+// Ein direkt als []int32 gesetzter Default darf weder paniken noch die Default-Ausnahme verlieren.
+func TestModelListField_DirectSliceDefault(t *testing.T) {
+	f := NewModelListField("devices", "DEVICES", false, "device", nil)
+	f.Default = []int32{9}
+	f.SetLoaderFunc(loaderOf(1))
+	if err := f.LoadOptions(&core.UiContext{}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.BindValue(nil); err != nil {
+		t.Fatalf("BindValue(nil): %v", err)
+	}
+	if len(f.Value) != 1 || f.Value[0] != 9 {
+		t.Errorf("Value = %v, want [9]", f.Value)
+	}
+	if err := f.Validate(ModelListValue{1, 9}); err != nil {
+		t.Errorf("unchanged default id 9 rejected: %v", err)
+	}
+}
+
+func TestModelListField_UnsupportedDefaultFails(t *testing.T) {
+	f := NewModelListField("devices", "DEVICES", false, "device", nil)
+	f.Default = []int{9}
+	if err := f.BindValue(nil); err == nil {
+		t.Fatalf("expected error for []int default, got Value %v", f.Value)
+	}
+}

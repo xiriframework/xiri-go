@@ -8,6 +8,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 ### Fixed
 
+- **Direkt gesetzte Defaults an `ModelField`/`ModelListField`.** Ein per `f.Default = 42` (`int`
+  statt `int32`) gesetzter Default wurde von `BindValue` nicht übernommen, `Value` blieb still `0`
+  und überschrieb beim Speichern den aktuellen Wert. Jetzt wird er wie ein Request-Wert nach
+  `int32` gewandelt. Ein `ModelListField`-Default als `[]int32` (statt `ModelListValue`) ließ
+  `Parse` paniken und wird jetzt angenommen; andere Typen (auch beim Multi-`SelectField`) liefern
+  einen Fehler statt eines Panics.
+
 - **`GeoformField`/`TimeLimitField` prüfen Zahlen-Strings vollständig.** `Validate` las per
   `fmt.Sscanf` nur den Anfang: `"45 ,0)) UNION…"`, `"NaN"` oder `"7abc"` gingen durch und kamen
   unverändert bei der App an. Jetzt müssen Koordinaten und Radius ganze, endliche Dezimalzahlen sein,

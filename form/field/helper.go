@@ -124,10 +124,17 @@ type ModelListValue []int32
 // parseModelListValue parses ModelListValue from various formats
 func parseModelListValue(raw interface{}, defaultValue interface{}) (ModelListValue, error) {
 	if raw == nil {
-		if defaultValue != nil {
-			return defaultValue.(ModelListValue), nil
+		switch d := defaultValue.(type) {
+		case nil:
+			return ModelListValue{}, nil
+		case ModelListValue:
+			return d, nil
+		case []int32:
+			return ModelListValue(d), nil
+		default:
+			// An empty list here would silently clear the stored value on save.
+			return nil, fmt.Errorf("unsupported modellist default type %T", d)
 		}
-		return ModelListValue{}, nil
 	}
 
 	// Handle different input formats
