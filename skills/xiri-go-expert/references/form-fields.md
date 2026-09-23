@@ -52,7 +52,7 @@ f := field.NewTextField("name", "vehicle.name", true, "")
 f.Subtype = "textarea"  // text (default), textarea, html, email, url, tel, password
 f.MinLength = 3
 f.MaxLength = 100
-f.Pattern = `^[a-zA-Z]+$`
+f.SetPattern(`[a-zA-Z]+`)  // ganzer Wert muss matchen; Browser + Validate
 f.TextPrefix = "€"
 f.TextSuffix = "kg"
 f.IconPrefix = "euro"
@@ -73,6 +73,31 @@ textarea nur die Ränder); nach `BindAndValidate`/`BindReload` sind `f.Value` un
 Min/Max-Prüfung also getrimmt — auch ein gebundenes Default. `SetTrim(false)` schaltet das
 ab; Subtype `password` wird nie getrimmt (anders als im PHP-Vorbild). Ein per
 Struct-Literal gebautes `TextField{}` hat `Trim == false`.
+
+### Pattern
+
+`SetPattern(p)` exportiert `pattern` ans Frontend (Angular `Validators.pattern`) und prüft in
+`Validate` — damit auch über MCP `act`/curl und für Filter-Textfelder (`ParseAndValidateSparse`).
+
+- **Verankerung wie Angular:** `^` wird vorangestellt, wenn `p` nicht damit beginnt, `$` angehängt,
+  wenn `p` nicht damit endet. Achtung: `a|b` wird zu `^a|b$`, also „beginnt mit a ODER endet mit b"
+  (`"ax"` ist gültig). Alternationen immer klammern: `(?:a|b)`.
+- **Leere Werte** prüft Pattern nicht, das ist Sache von `required`. `pattern: ""` wird nicht exportiert.
+- **Nur die gemeinsame Teilmenge von RE2 und JavaScript verwenden.** `SetPattern` paniert bei
+  ungültigem Pattern und bei Go-only-Syntax, die im Browser wirft oder anders matcht: Inline-Flags
+  `(?i)`, `(?P<name>`, `\A`, `\z`, `\Q`, `\p`/`\P`, `\x{…}`, `[[:alpha:]]` (Sperrliste, nicht vollständig).
+  Lookarounds und Backreferences kompilieren in Go nicht. Wer `f.Pattern` direkt setzt, bekommt
+  denselben Check als `Validate`-Fehler (auch bei leerem Wert), und der Export lässt `pattern` weg.
+- **Gemessene Abweichungen (Node vs. Go):** `\s` matcht in JS auch NBSP/Unicode-Whitespace, in Go
+  nur ASCII. `.` matcht in Go ein Emoji (eine Rune), `\r` und U+2028; in JS keins davon. `\d`/`\w`
+  sind in beiden ASCII. Für Nicht-ASCII explizite Klassen schreiben.
+- **Trim:** Der Server prüft den getrimmten Wert, der Browser den rohen — `" abc"` scheitert im
+  Browser an `[a-z]+`, auf dem Server nicht.
+- **Email:** In xiri-ng *ersetzt* ein Pattern den Email-Validator (`subtype: email`).
+- **Defaults werden mitgeprüft:** Ein Default, das nicht zum Pattern passt (z. B. Altwert eines per
+  showWhen versteckten Feldes), blockiert das Speichern. `FormGroup.ParseValues` übernimmt Defaults
+  ungetrimmt.
+- **Kein Pattern per Reload:** xiri-ng übernimmt `pattern` nicht aus Reload-Patches — statisch setzen.
 
 ### Vorschläge (Autocomplete mit Freitext)
 

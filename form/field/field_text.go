@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/xiriframework/xiri-go/component/core"
@@ -28,6 +29,15 @@ type TextField struct {
 }
 
 func (f *TextField) Validate(value interface{}) error {
+	// Vor jedem Leerwert-Rücksprung, sonst fällt ein kaputtes Pattern an optionalen Feldern nie auf.
+	var re *regexp.Regexp
+	if f.Pattern != "" {
+		var err error
+		if re, err = compilePattern(f.Pattern); err != nil {
+			return fmt.Errorf("text field %s: %w", f.ID, err)
+		}
+	}
+
 	if value == nil {
 		if f.Required {
 			return fmt.Errorf("text field %s is required", f.ID)
@@ -52,7 +62,31 @@ func (f *TextField) Validate(value interface{}) error {
 		return fmt.Errorf("text field %s must be at most %d characters", f.ID, f.MaxLength)
 	}
 
+	if re != nil && str != "" && !re.MatchString(str) {
+		return fmt.Errorf("text field %s has invalid format", f.ID)
+	}
+
 	return nil
+}
+
+// goOnlySyntax lists RE2 constructs that make the browser's new RegExp throw or match something else.
+// ponytail: substring blocklist, not a JS parser - incomplete, and an escaped backslash before e.g. A
+// ("\\A") is a false positive. Replace with a real shared-subset parser if patterns get fancier.
+var goOnlySyntax = regexp.MustCompile(`\(\?[^:]|\\[AzQpP]|\\x\{|\[\[:`)
+
+// compilePattern compiles p the way Angular's Validators.pattern does: "^" is prepended unless p starts
+// with it, "$" appended unless p ends with it - so "a|b" becomes "^a|b$", not "^(?:a|b)$".
+func compilePattern(p string) (*regexp.Regexp, error) {
+	if m := goOnlySyntax.FindString(p); m != "" {
+		return nil, fmt.Errorf("pattern %q uses %q, which browsers do not support the same way", p, m)
+	}
+	if !strings.HasPrefix(p, "^") {
+		p = "^" + p
+	}
+	if !strings.HasSuffix(p, "$") {
+		p += "$"
+	}
+	return regexp.Compile(p)
 }
 
 func (f *TextField) Parse(raw interface{}) (interface{}, error) {
@@ -153,6 +187,13 @@ func (f *TextField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 	}
 	if f.MaxLength > 0 {
 		result["max"] = f.MaxLength
+	}
+
+	// An invalid pattern is left out so it cannot break the browser form; Validate rejects it anyway.
+	if f.Pattern != "" {
+		if _, err := compilePattern(f.Pattern); err == nil {
+			result["pattern"] = f.Pattern
+		}
 	}
 
 	// Add prefix/suffix text and icons
@@ -269,5 +310,18 @@ func (f *TextField) SetForm(form bool) *TextField {
 // Subtype "password" is never trimmed.
 func (f *TextField) SetTrim(trim bool) *TextField {
 	f.Trim = trim
+	return f
+}
+
+// SetPattern sets a regex the whole value must match, checked in the browser and in Validate.
+// Anchoring follows Angular (see compilePattern). Use only syntax both Go (RE2) and JavaScript
+// understand; SetPattern panics on invalid or Go-only patterns, since that is a programming error.
+func (f *TextField) SetPattern(pattern string) *TextField {
+	if pattern != "" {
+		if _, err := compilePattern(pattern); err != nil {
+			panic(err)
+		}
+	}
+	f.Pattern = pattern
 	return f
 }

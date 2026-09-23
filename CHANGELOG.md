@@ -6,6 +6,19 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Fixed
+
+- **`TextField.Pattern` wird exportiert und geprüft.** Das Feld stand seit jeher im Struct und in
+  der Doku, wurde aber nie gelesen: weder kam `pattern` beim Frontend an, noch prüfte `Validate`.
+  Jetzt geht `pattern` ans Frontend, und `Validate` verlangt einen Match des ganzen Werts. Das gilt
+  für `BindAndValidate`, `BindReload` und Filter; der Fehler lautet `text field <id> has invalid
+  format` und steht unter `fields.<id>`. Verankert wird wie in Angulars `Validators.pattern`
+  (`a|b` → `^a|b$`). Leere Werte werden nicht geprüft. Neuer Setter `SetPattern(string)`: er paniert
+  bei ungültigem Pattern und bei Syntax, die nur Go versteht (`(?i)`, `\A`, `\p{…}`, `[[:alpha:]]` …).
+  Ein direkt gesetztes solches `Pattern` wird nicht exportiert und lässt `Validate` scheitern.
+  **Verhaltensänderung:** Apps, die `Pattern` schon setzen, bekommen es jetzt im Browser und auf dem
+  Server durchgesetzt. Auch Defaults werden geprüft: Ein Altwert, der nicht passt, blockiert das
+  Speichern, selbst an einem per showWhen versteckten Feld. In `BindReload` bleibt `Value` dann `nil`.
 
 ## [0.5.0]
 ### Changed

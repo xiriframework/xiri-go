@@ -141,3 +141,80 @@ func TestTextField_BindValue_Trim(t *testing.T) {
 		t.Errorf("expected default trimmed to \"x\", got %v (err %v)", def.Value, err)
 	}
 }
+
+func patternField(p string) *TextField {
+	f := NewTextField("code", "Code", false, "")
+	f.Pattern = p
+	return f
+}
+
+func TestTextField_Export_Pattern(t *testing.T) {
+	if got := patternField("[a-z]+").ExportForFrontend(nil, nil)["pattern"]; got != "[a-z]+" {
+		t.Errorf("expected pattern [a-z]+, got %#v", got)
+	}
+	// "" darf nicht exportiert werden: xiri-ng prüft pattern !== undefined und ersetzt damit den Email-Validator.
+	for _, p := range []string{"", "(?i)abc"} {
+		if _, ok := patternField(p).ExportForFrontend(nil, nil)["pattern"]; ok {
+			t.Errorf("pattern %q must not be exported", p)
+		}
+	}
+}
+
+func TestTextField_Validate_Pattern(t *testing.T) {
+	cases := []struct {
+		pattern, value string
+		ok             bool
+	}{
+		{"[a-z]+", "abc", true},
+		{"[a-z]+", "ab1", false},
+		{"[a-z]+", "", true}, // leer übernimmt required, wie Angular
+		{"a|b", "ax", true},  // Angular verankert zu ^a|b$, nicht ^(?:a|b)$
+		{"a|b", "xa", false},
+		{"a|b", "xb", true},
+		{"^a$", "a", true}, // nicht doppelt verankert
+		{"(?=x)", "x", false},
+	}
+	for _, c := range cases {
+		err := patternField(c.pattern).Validate(c.value)
+		if (err == nil) != c.ok {
+			t.Errorf("pattern %q value %q: expected ok=%v, got %v", c.pattern, c.value, c.ok, err)
+		}
+	}
+}
+
+func TestTextField_Validate_BrowserIncompatiblePatternFailsEvenWhenEmpty(t *testing.T) {
+	for _, v := range []interface{}{nil, "", "abc"} {
+		if err := patternField("(?i)abc").Validate(v); err == nil {
+			t.Errorf("value %#v: expected error for browser-incompatible pattern", v)
+		}
+	}
+}
+
+func TestTextField_BindValue_PatternChecksTrimmedValue(t *testing.T) {
+	// Bewusste Abweichung: der Browser prüft ungetrimmt und lehnt " abc" ab, der Server trimmt zuerst.
+	f := patternField("[a-z]+")
+	if err := f.BindValue(" abc"); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.Value == nil || *f.Value != "abc" {
+		t.Errorf("expected abc, got %v", f.Value)
+	}
+}
+
+func TestTextField_SetPattern(t *testing.T) {
+	if f := NewTextField("code", "Code", false, "").SetPattern("[a-z]+"); f.Pattern != "[a-z]+" {
+		t.Errorf("expected pattern set, got %q", f.Pattern)
+	}
+	for _, p := range []string{"(", "(?=x)", "(?i)abc", "(?P<n>a)", `\Aa`, `a\z`, `\Qa`, `\pL`, `\PL`, `\x{41}`, "[[:alpha:]]+"} {
+		func() {
+			defer func() {
+				if recover() == nil {
+					t.Errorf("SetPattern(%q) must panic", p)
+				}
+			}()
+			NewTextField("code", "Code", false, "").SetPattern(p)
+		}()
+	}
+	// (?: ist in beiden Engines gleich und bleibt erlaubt.
+	NewTextField("code", "Code", false, "").SetPattern("(?:a|b)c")
+}
