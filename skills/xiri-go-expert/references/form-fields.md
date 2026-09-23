@@ -235,10 +235,14 @@ f.Params = map[string]interface{}{"active": true}  // wird als "params" exportie
 groupID := f.Value  // int32
 ```
 
-**Serverseitige Prüfung** (`Validate`, gilt für `BindAndValidate`, `BindReload` und Tabellenfilter):
+**Serverseitige Prüfung** (`Validate`, gilt für `BindAndValidate` und Tabellenfilter; `BindReload`
+meldet keinen Fehler, sondern verwirft die ID und behält den Default):
 - Erlaubt ist, was exportiert wird: `Options` (aus `LoaderFunc`), sonst `List`, jeweils ohne `Sub`.
   `Add` zählt nicht. Fremde IDs → `model field <id>: id <n> is not an allowed option`.
 - `0` („nichts gewählt") und der unveränderte Default (aktueller Wert des Datensatzes) gehen immer durch.
+  **Den Default daher nur aus serverseitig autorisierten Daten setzen**, nie aus Request-Input
+  (`?group=…`, Route-Parameter): sonst schickt ein Angreifer dieselbe fremde ID im Body und sie gilt
+  als „unverändert".
 - `LoaderFunc` gesetzt, Liste aber leer — auch wenn das Formular ohne `UiContext` gebaut wurde
   (`NewFormBuilder(nil)`, `NewFormGroup`) und `LoadOptions` nie lief → jede andere ID wird abgelehnt.
 - **Mit `URL`** (Server-Suche, Treeselect) ist `list` nur der Sockel; der Server kennt die Menge
@@ -265,7 +269,8 @@ f.SetTree(true)      // Treeselect; braucht eine URL, die verschachtelte "childr
 deviceIDs := f.Value  // []int32
 ```
 
-Serverseitige Prüfung wie bei `ModelField`: jede ID der Liste muss angeboten oder Teil des
+Serverseitige Prüfung wie bei `ModelField` (auch die Warnung zum Default), außer dass `0` hier eine
+normale ID ist und keine Ausnahme bekommt: jede ID der Liste muss angeboten oder Teil des
 unveränderten Defaults sein (Alteinträge, die der User nicht mehr sieht, blockieren das Speichern
 also nicht). Fehler: `modellist field <id>: id <n> is not an allowed option`.
 

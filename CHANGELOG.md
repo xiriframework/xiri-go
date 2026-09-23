@@ -12,8 +12,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   den Typ; wer am Frontend vorbei postete (curl, MCP `act`), konnte jede Datensatz-ID binden,
   auch fremde (IDOR), in Formularen wie in Tabellenfiltern. Jetzt muss die ID in `Options`
   (aus `LoaderFunc`), sonst in `List` stehen und darf nicht in `Sub` sein — dieselbe Menge, die
-  exportiert wird. `0` und der unveränderte Default (aktueller Wert des Datensatzes) gehen immer
-  durch. Ist ein `LoaderFunc` gesetzt und die Liste leer — auch weil das Formular ohne
+  exportiert wird. Der unveränderte Default (aktueller Wert des Datensatzes) und bei `ModelField`
+  die `0` („nichts gewählt") gehen immer durch — den Default daher nur aus serverseitig
+  autorisierten Daten setzen, nie aus Request-Input. Ist ein `LoaderFunc` gesetzt und die Liste leer — auch weil das Formular ohne
   `UiContext` gebaut wurde und `LoadOptions` nie lief —, wird jede andere ID abgelehnt.
   **Nicht geprüft** (nur `Sub`) wird bei gesetzter `URL` (Server-Suche/Treeselect liefert IDs
   außerhalb der Liste) und bei Feldern ohne Loader und ohne `List` (z. B. Optionen erst per
