@@ -6,6 +6,19 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Added
+
+- **`SetAllowedFunc` an `ModelField`/`ModelListField`: serverseitige Autorisierung gewählter IDs.**
+  `func(ids []int32) bool` ersetzt die Prüfung gegen die angebotene Liste — gedacht für Felder
+  mit `URL` (Server-Suche, Treeselect), deren IDs der Server sonst nicht kennt. Der Hook sieht
+  weder IDs aus `Sub` (immer abgelehnt) noch den unveränderten Default noch bei `ModelField` die
+  `0`; `ModelListField` ruft ihn einmal mit allen übrigen IDs auf, bei keiner übrigen ID gar nicht.
+  `false` lehnt ab (`… is not an allowed option`, bei `ModelListField` ohne konkrete ID). Eigene
+  Fehler (DB) loggt die App selbst und gibt `false` zurück — der Validierungstext geht an den
+  Client. Den Benutzer bindet die App per Closure, `UiContext` kennt ihn nicht. Empfehlung: bei
+  jeder `URL` setzen. Greift in `BindAndValidate`, Tabellenfiltern und `BindReload` (dort bleibt
+  der Default).
+
 ### Security
 
 - **Doku: HTML-Komponenten escapen Record-Daten.** Die Beispiele für `HtmlField` und
@@ -37,13 +50,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   den Typ; wer am Frontend vorbei postete (curl, MCP `act`), konnte jede Datensatz-ID binden,
   auch fremde (IDOR), in Formularen wie in Tabellenfiltern. Jetzt muss die ID in `Options`
   (aus `LoaderFunc`), sonst in `List` stehen und darf nicht in `Sub` sein — dieselbe Menge, die
-  exportiert wird. Der unveränderte Default (aktueller Wert des Datensatzes) und bei `ModelField`
+  exportiert wird. Der unveränderte Default (aktueller Wert des Datensatzes, sofern nicht in `Sub`) und bei `ModelField`
   die `0` („nichts gewählt") gehen immer durch — den Default daher nur aus serverseitig
   autorisierten Daten setzen, nie aus Request-Input. Ist ein `LoaderFunc` gesetzt und die Liste leer — auch weil das Formular ohne
   `UiContext` gebaut wurde und `LoadOptions` nie lief —, wird jede andere ID abgelehnt.
   **Nicht geprüft** (nur `Sub`) wird bei gesetzter `URL` (Server-Suche/Treeselect liefert IDs
   außerhalb der Liste) und bei Feldern ohne Loader und ohne `List` (z. B. Optionen erst per
-  `SetReloadOn`): dort muss die App die ID selbst autorisieren. Der Fehler lautet
+  `SetReloadOn`): dort muss die App die ID selbst autorisieren, am einfachsten per `SetAllowedFunc`
+  (siehe Added). Eine `int64`-ID außerhalb des int32-Bereichs wird abgelehnt. Der Fehler lautet
   `model field <id>: id <n> is not an allowed option` (bzw. `modellist field …`).
 
 - **Disabled-Felder in `FormGroup.ParseValues`/`ParseAndValidate(Sparse)` sind nicht mehr vom

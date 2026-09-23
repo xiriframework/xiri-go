@@ -229,6 +229,14 @@ f.List = []field.ModelOption{
 
 f.AllowSearch = true
 f.URL = "/api/groups/search"  // Live-Suche via API
+// Mit URL kennt der Server die erlaubte Menge nicht → IDs selbst autorisieren (User per Closure):
+f.SetAllowedFunc(func(ids []int32) bool {
+    ok, err := db.UserOwnsGroups(user.ID, ids)
+    if err != nil {
+        slog.Error("group check", "err", err) // Fehlertext nicht an den Client
+    }
+    return err == nil && ok
+})
 f.Params = map[string]interface{}{"active": true}  // wird als "params" exportiert (f.Filter ist deprecated/wirkungslos, Params verwenden)
 
 // Nach BindAndValidate:
@@ -238,8 +246,10 @@ groupID := f.Value  // int32
 **Serverseitige Prüfung** (`Validate`, gilt für `BindAndValidate` und Tabellenfilter; `BindReload`
 meldet keinen Fehler, sondern verwirft die ID und behält den Default):
 - Erlaubt ist, was exportiert wird: `Options` (aus `LoaderFunc`), sonst `List`, jeweils ohne `Sub`.
-  `Add` zählt nicht. Fremde IDs → `model field <id>: id <n> is not an allowed option`.
-- `0` („nichts gewählt") und der unveränderte Default (aktueller Wert des Datensatzes) gehen immer durch.
+  `Add` zählt nicht. Mit `SetAllowedFunc` entscheidet stattdessen der Hook (siehe unten).
+  IDs in `Sub` werden immer abgelehnt, auch als Default. Fremde IDs → `model field <id>: id <n> is not an allowed option`.
+- `0` („nichts gewählt") und der unveränderte Default (aktueller Wert des Datensatzes) gehen immer
+  durch (außer der Default steht in `Sub`).
   **Den Default daher nur aus serverseitig autorisierten Daten setzen**, nie aus Request-Input
   (`?group=…`, Route-Parameter): sonst schickt ein Angreifer dieselbe fremde ID im Body und sie gilt
   als „unverändert".
@@ -247,7 +257,12 @@ meldet keinen Fehler, sondern verwirft die ID und behält den Default):
   (`NewFormBuilder(nil)`, `NewFormGroup`) und `LoadOptions` nie lief → jede andere ID wird abgelehnt.
 - **Mit `URL`** (Server-Suche, Treeselect) ist `list` nur der Sockel; der Server kennt die Menge
   nicht und prüft nur `Sub`. Gleiches gilt ohne Loader und ohne `List`. **Dann muss die App die ID
-  selbst autorisieren**, z. B. nach `BindAndValidate` per DB-Abfrage mit User-Scope.
+  selbst autorisieren** — per `SetAllowedFunc` (empfohlen) oder nach `BindAndValidate` per
+  DB-Abfrage mit User-Scope.
+- **`SetAllowedFunc(func(ids []int32) bool)`** ersetzt die Listenprüfung (auch ohne `URL`). Der Hook
+  bekommt weder `0` noch den unveränderten Default noch `Sub`-IDs; `false` → Ablehnung. Eigene Fehler
+  loggen und `false` liefern, der Validierungstext geht an den Client. `UiContext` kennt den User
+  nicht — ihn per Closure binden.
 
 ## ModelListField
 
@@ -264,6 +279,11 @@ f.AllowEmpty = true
 f.SingleOnly = true  // Nur ein Element erlaubt
 f.SetLoaderFunc(loaderFunc)
 f.SetTree(true)      // Treeselect; braucht eine URL, die verschachtelte "children"-Arrays liefert
+f.URL = "/api/devices/tree"
+f.SetAllowedFunc(func(ids []int32) bool {  // einmal pro Submit mit allen neuen IDs
+    ok, err := db.UserOwnsDevices(user.ID, ids)
+    return err == nil && ok
+})
 
 // Nach BindAndValidate:
 deviceIDs := f.Value  // []int32
@@ -272,7 +292,10 @@ deviceIDs := f.Value  // []int32
 Serverseitige Prüfung wie bei `ModelField` (auch die Warnung zum Default), außer dass `0` hier eine
 normale ID ist und keine Ausnahme bekommt: jede ID der Liste muss angeboten oder Teil des
 unveränderten Defaults sein (Alteinträge, die der User nicht mehr sieht, blockieren das Speichern
-also nicht). Fehler: `modellist field <id>: id <n> is not an allowed option`.
+also nicht). Fehler: `modellist field <id>: id <n> is not an allowed option`. `SetAllowedFunc` wird
+einmal pro `Validate` mit allen IDs aufgerufen, die weder in `Sub` noch im Default stehen (auch `0`),
+bei keiner solchen ID gar nicht; lehnt er ab, lautet der Fehler `modellist field <id>: contains an id
+that is not an allowed option` (ohne ID, der Hook sagt nicht welche).
 
 ## TimeField
 
@@ -682,7 +705,7 @@ Regeln und Grenzen:
   Die neue Entität muss dort enthalten sein — bei aus der DB geladenen Listen automatisch, bei
   statischen `SelectOption`-Listen nicht. **`ModelField`/`ModelListField` ebenso** (siehe
   „Serverseitige Prüfung" bei `ModelField`): mit `LoaderFunc` automatisch, mit statischer `List` nicht
-  — dort Loader verwenden. Mit `URL` wird nicht gegen die Liste geprüft, die App autorisiert selbst.
+  — dort Loader verwenden. Mit `URL` wird nicht gegen die Liste geprüft, die App autorisiert selbst (`SetAllowedFunc`).
 - `ModelListField` mit `URL` lädt den Baum nach dem Anlegen selbst neu; der Server muss die Entität
   dann sofort liefern.
 - Ein späterer `SetReloadOn`-Patch ersetzt die Liste; liefert der Server die neue Option nicht mit,
