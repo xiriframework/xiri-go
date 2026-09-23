@@ -20,6 +20,19 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   Server durchgesetzt. Auch Defaults werden geprüft: Ein Altwert, der nicht passt, blockiert das
   Speichern, selbst an einem per showWhen versteckten Feld. In `BindReload` bleibt `Value` dann `nil`.
 
+- **`IntField` mit `Subtype "pint"` lehnt negative Werte serverseitig ab.** Bisher ging nur `min=0`
+  ans Frontend; wer am Frontend vorbei postet (MCP `act`, curl), konnte negative Werte speichern.
+  Jetzt meldet `Validate` `int field <id> must be >= 0` (Formular, Reload, Filter). Ein negatives
+  `Min` wird bei `pint` auf 0 angehoben, im Export wie in der Prüfung. **Verhaltensänderung:** Ein
+  negativer Default an einem `pint`-Feld blockiert jetzt das Speichern, auch wenn das Feld disabled ist.
+
+### Removed
+
+- **`IntField.Pattern`.** Das Feld wurde nie gelesen, weder exportiert noch geprüft; eine Zuweisung
+  tat still nichts und ist jetzt ein Compile-Fehler. Bereiche über `Min`/`Max`, formatierte
+  Kennungen (feste Stellenzahl, führende Nullen) über `TextField` mit `Pattern`, sonstige
+  Zahlenregeln in der App nach `BindAndValidate`.
+
 ## [0.5.0]
 ### Changed
 

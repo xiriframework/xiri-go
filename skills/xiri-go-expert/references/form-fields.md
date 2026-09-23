@@ -140,9 +140,9 @@ f, err := field.NewNumberField("price", "device.price", true, 42.0)
 // in int32 passt (Bruchzahl oder außerhalb des int32-Bereichs).
 
 // Optionale Konfiguration:
-f.Subtype = "pint"    // einzig wirksamer Subtype: exportiert min=0. Andere Werte (float, bigint, real)
-                      // werden nicht exportiert (Export-Subtype ist immer "number"); das Feld akzeptiert
-                      // grundsätzlich nur ganzzahlige int32-Werte.
+f.Subtype = "pint"    // einzig wirksamer Subtype: Werte >= 0, in Export (min) und Server-Validierung;
+                      // ein negatives Min wird auf 0 angehoben. Andere Werte (float, bigint, real) wirken
+                      // nicht (Export-Subtype ist immer "number"); das Feld akzeptiert nur int32-Ganzzahlen.
 f.TextPrefix = "€"
 f.TextSuffix = "Stück"
 

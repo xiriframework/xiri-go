@@ -257,3 +257,19 @@ func TestBindFromMap_DisabledTextFieldDefaultTrimmed(t *testing.T) {
 		t.Errorf("expected \"x\", got %v", name.Value)
 	}
 }
+
+func TestBindFromMap_PintRejectsNegative(t *testing.T) {
+	n := field.NewIntField("n", "N", false, 0)
+	n.Subtype = "pint"
+	fg := group.NewFormGroup([]field.FormField{n})
+
+	err := BindFromMap(map[string]interface{}{"n": float64(-1)}, fg)
+
+	var fe group.FieldErrors
+	if !errors.As(err, &fe) {
+		t.Fatalf("expected group.FieldErrors, got %T: %v", err, err)
+	}
+	if _, ok := fe["n"]; !ok {
+		t.Errorf("missing error for n: %v", fe)
+	}
+}

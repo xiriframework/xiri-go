@@ -11,8 +11,7 @@ type IntField struct {
 	*BaseField
 	Min        *int
 	Max        *int
-	Pattern    string // Validation pattern (regex)
-	Subtype    string // Number subtype: "int", "pint" (positive int), "float", "bigint", "real"
+	Subtype    string // "pint": value must be >= 0 (other values have no effect)
 	TextPrefix string // Prefix text (e.g., "$")
 	TextSuffix string // Suffix text (e.g., "km")
 	IconPrefix string // Prefix icon name
@@ -42,8 +41,8 @@ func (f *IntField) Validate(value interface{}) error {
 		return fmt.Errorf("invalid int value type for %s", f.ID)
 	}
 
-	if f.Min != nil && num < *f.Min {
-		return fmt.Errorf("int field %s must be >= %d", f.ID, *f.Min)
+	if lower := f.effectiveMin(); lower != nil && num < *lower {
+		return fmt.Errorf("int field %s must be >= %d", f.ID, *lower)
 	}
 
 	if f.Max != nil && num > *f.Max {
@@ -51,6 +50,16 @@ func (f *IntField) Validate(value interface{}) error {
 	}
 
 	return nil
+}
+
+// effectiveMin is the lower bound checked by Validate and exported to the frontend:
+// Min, raised to 0 for subtype "pint".
+func (f *IntField) effectiveMin() *int {
+	if f.Subtype != "pint" || (f.Min != nil && *f.Min >= 0) {
+		return f.Min
+	}
+	zero := 0
+	return &zero
 }
 
 func (f *IntField) Parse(raw interface{}) (interface{}, error) {
@@ -157,11 +166,8 @@ func (f *IntField) ExportForFrontend(ctx *core.UiContext, value interface{}) map
 	result["subtype"] = "number"
 
 	// Add min/max if specified
-	if f.Min != nil {
-		result["min"] = *f.Min
-	} else if f.Subtype == "pint" {
-		// Positive int has implicit min of 0
-		result["min"] = 0
+	if lower := f.effectiveMin(); lower != nil {
+		result["min"] = *lower
 	}
 	if f.Max != nil {
 		result["max"] = *f.Max

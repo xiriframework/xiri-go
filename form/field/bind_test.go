@@ -433,3 +433,35 @@ func intPtrString(v *int32) string {
 	}
 	return strconv.FormatInt(int64(*v), 10)
 }
+
+func TestIntFieldBindValue_Pint(t *testing.T) {
+	intPtr := func(v int) *int { return &v }
+	tests := []struct {
+		name       string
+		min        *int
+		value      float64
+		wantErr    bool
+		wantExport int
+	}{
+		{"negative rejected", nil, -1, true, 0},
+		{"zero allowed", nil, 0, false, 0},
+		{"negative Min raised to 0", intPtr(-3), -2, true, 0},
+		{"positive Min kept", intPtr(5), 3, true, 5},
+		{"positive Min satisfied", intPtr(5), 5, false, 5},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			f := NewIntField("n", "N", false, 0)
+			f.Subtype = "pint"
+			f.Min = tt.min
+
+			err := f.BindValue(tt.value)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("BindValue(%v): err = %v, wantErr %v", tt.value, err, tt.wantErr)
+			}
+			if got := f.ExportForFrontend(nil, nil)["min"]; got != tt.wantExport {
+				t.Errorf("export min = %v, want %d", got, tt.wantExport)
+			}
+		})
+	}
+}
