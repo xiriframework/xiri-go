@@ -77,7 +77,8 @@ func (f *ModelField) Validate(value interface{}) error {
 	default:
 		return fmt.Errorf("invalid model value type for %s, expected int", f.ID)
 	}
-	if def, _ := f.GetDefault().(int32); id != 0 && id != int64(def) &&
+	// The default may be set directly as int/int64 instead of via the constructor.
+	if def, err := toInt32(f.GetDefault()); id != 0 && (err != nil || id != int64(def)) &&
 		!modelIDAllowed(f.URL, f.LoaderFunc != nil, f.Options, f.List, f.Sub, id) {
 		return fmt.Errorf("model field %s: id %d is not an allowed option", f.ID, id)
 	}

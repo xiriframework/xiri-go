@@ -73,6 +73,16 @@ func TestModelField_Validate_OnlyOfferedIDs(t *testing.T) {
 			return NewModelField("g", "G", false, "group", 0)
 		}, int32(7), true},
 		{"int64 value", func() *ModelField { return loadedModelField(0, 1) }, int64(999), false},
+		{"unchanged default set directly as int", func() *ModelField {
+			f := loadedModelField(0, 1)
+			f.Default = 42
+			return f
+		}, 42, true},
+		{"unchanged default set directly as int64", func() *ModelField {
+			f := loadedModelField(0, 1)
+			f.Default = int64(42)
+			return f
+		}, int32(42), true},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
