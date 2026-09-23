@@ -68,7 +68,7 @@ func (f *IntField) Parse(raw interface{}) (interface{}, error) {
 	}
 
 	// Value is stored as *int32, so every input must fit losslessly.
-	// Returns int (not int32) — BindValue asserts parsed.(int).
+	// Returns int (not int32) for request values; the group paths hand this on to the app.
 	num, err := toInt32(raw)
 	if err != nil {
 		return nil, fmt.Errorf("invalid int value for %s: %w", f.ID, err)
@@ -88,8 +88,8 @@ func (f *IntField) BindValue(raw interface{}) error {
 	}
 
 	if parsed != nil {
-		if num, ok := parsed.(int); ok {
-			val := int32(num)
+		// Parse returns int for request values, the default unparsed (int32 from the constructor).
+		if val, err := toInt32(parsed); err == nil {
 			f.Value = &val
 		}
 	} else {

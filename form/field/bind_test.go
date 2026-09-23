@@ -4,6 +4,7 @@ import (
 	"math"
 	"strconv"
 	"testing"
+	"time"
 )
 
 func TestTextFieldBindValue(t *testing.T) {
@@ -463,5 +464,32 @@ func TestIntFieldBindValue_Pint(t *testing.T) {
 				t.Errorf("export min = %v, want %d", got, tt.wantExport)
 			}
 		})
+	}
+}
+
+// BindValue(nil) binds the default as Parse(nil) returns it, unparsed types included.
+func TestIntFieldBindValueNilUsesDefault(t *testing.T) {
+	for name, def := range map[string]interface{}{"int32": int32(7), "int": 7, "int64": int64(7)} {
+		f := NewIntField("n", "N", false, 0)
+		f.Default = def
+		if err := f.BindValue(nil); err != nil {
+			t.Fatalf("%s: unexpected error: %v", name, err)
+		}
+		if f.Value == nil || *f.Value != 7 {
+			t.Errorf("%s: Value = %v, want 7", name, f.Value)
+		}
+	}
+}
+
+func TestTimeFieldBindValueNilUsesDefault(t *testing.T) {
+	for name, def := range map[string]interface{}{"int": 1700000000, "time.Time": time.Unix(1700000000, 0)} {
+		f := NewTimeField("t", "T", false, 0)
+		f.Default = def
+		if err := f.BindValue(nil); err != nil {
+			t.Fatalf("%s: unexpected error: %v", name, err)
+		}
+		if f.Value == nil || *f.Value != 1700000000 {
+			t.Errorf("%s: Value = %v, want 1700000000", name, f.Value)
+		}
 	}
 }

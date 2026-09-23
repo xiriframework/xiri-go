@@ -68,7 +68,12 @@ func (f *TimeField) Validate(value interface{}) error {
 
 func (f *TimeField) Parse(raw interface{}) (interface{}, error) {
 	if raw == nil {
-		return f.GetDefault(), nil
+		def := f.GetDefault()
+		if def == nil {
+			return nil, nil
+		}
+		// A directly set default (int, time.Time) is normalized to int64 like a request value.
+		return f.Parse(def)
 	}
 
 	// Parse various time formats
