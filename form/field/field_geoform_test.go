@@ -245,3 +245,44 @@ func TestGeoformField_Parse_InvalidInput(t *testing.T) {
 		t.Errorf("expected 'expects map' in error, got: %v", err)
 	}
 }
+
+func TestGeoformField_Validate_RejectsTrailingGarbage(t *testing.T) {
+	f := NewGeoformField("geo", "GEO", true)
+	bad := []map[string]string{
+		{"lat": "45 ,0)) UNION SELECT--", "lng": "16.3", "radius": "500"},
+		{"lat": "48.2", "lng": "NaN", "radius": "500"},
+		{"lat": "48.2", "lng": "16.3", "radius": "100 999999999"},
+		{"lat": "48.2", "lng": "16.3", "radius": "0x1p9"},
+		{"lat": "48.2", "lng": "1_6", "radius": "500"},
+		{"lat": " 48.2", "lng": "16.3", "radius": "500"},
+	}
+	for _, p := range bad {
+		if err := f.Validate(&GeoformValue{Type: 2, Path: p}); err == nil {
+			t.Errorf("circle %v: expected error", p)
+		}
+	}
+
+	poly := []map[string]string{
+		{"lat": "48.2082 x", "lng": "16.3738"},
+		{"lat": "48.2100", "lng": "16.3800"},
+		{"lat": "48.2050", "lng": "16.3700"},
+	}
+	if err := f.Validate(&GeoformValue{Type: 1, Path: poly}); err == nil {
+		t.Error("polygon with trailing garbage: expected error")
+	}
+}
+
+func TestGeoformField_ParseValidate_FrontendNumbersRoundTrip(t *testing.T) {
+	f := NewGeoformField("geo", "GEO", true)
+	raw := map[string]interface{}{
+		"type": float64(2),
+		"path": map[string]interface{}{"lat": 48.2082, "lng": 1e-07, "radius": float64(500)},
+	}
+	v, err := f.Parse(raw)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	if err := f.Validate(v); err != nil {
+		t.Fatalf("validate: %v", err)
+	}
+}

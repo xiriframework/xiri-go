@@ -2,6 +2,8 @@ package field
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/xiriframework/xiri-go/component/core"
 )
@@ -52,12 +54,12 @@ func (f *GeoformField) Validate(value interface{}) error {
 				return fmt.Errorf("polygon point %d must have lat and lng fields", i)
 			}
 
-			// Parse lat/lng from string
-			var lat, lng float64
-			if _, err := fmt.Sscanf(latStr, "%f", &lat); err != nil {
+			lat, err := parseCoord(latStr)
+			if err != nil {
 				return fmt.Errorf("polygon point %d: invalid latitude: %w", i, err)
 			}
-			if _, err := fmt.Sscanf(lngStr, "%f", &lng); err != nil {
+			lng, err := parseCoord(lngStr)
+			if err != nil {
 				return fmt.Errorf("polygon point %d: invalid longitude: %w", i, err)
 			}
 
@@ -82,15 +84,16 @@ func (f *GeoformField) Validate(value interface{}) error {
 			return fmt.Errorf("circle path must have lat, lng, and radius fields")
 		}
 
-		// Parse from strings
-		var lat, lng, radius float64
-		if _, err := fmt.Sscanf(latStr, "%f", &lat); err != nil {
+		lat, err := parseCoord(latStr)
+		if err != nil {
 			return fmt.Errorf("circle: invalid latitude: %w", err)
 		}
-		if _, err := fmt.Sscanf(lngStr, "%f", &lng); err != nil {
+		lng, err := parseCoord(lngStr)
+		if err != nil {
 			return fmt.Errorf("circle: invalid longitude: %w", err)
 		}
-		if _, err := fmt.Sscanf(radiusStr, "%f", &radius); err != nil {
+		radius, err := parseCoord(radiusStr)
+		if err != nil {
 			return fmt.Errorf("circle: invalid radius: %w", err)
 		}
 
@@ -220,6 +223,16 @@ func (f *GeoformField) Parse(raw interface{}) (interface{}, error) {
 	}
 
 	return gv, nil
+}
+
+// parseCoord accepts only plain decimal numbers. fmt.Sscanf("%f") stopped at the first non-number and
+// accepted NaN, so "45 ,0)) UNION…" passed Validate and reached the app unchanged. The whitelist also
+// keeps out what ParseFloat alone would take: NaN, Inf, hex floats, underscores.
+func parseCoord(s string) (float64, error) {
+	if s == "" || strings.Trim(s, "0123456789.eE+-") != "" {
+		return 0, fmt.Errorf("%q is not a decimal number", s)
+	}
+	return strconv.ParseFloat(s, 64)
 }
 
 // ExportForFrontend exports the field for frontend rendering
