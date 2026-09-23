@@ -6,6 +6,8 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+
+## [0.5.0]
 ### Changed
 
 - **`TextField` trimmt Werte standardmäßig.** `Trim` stand seit jeher im Struct, wurde aber nie
