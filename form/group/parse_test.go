@@ -80,3 +80,101 @@ func TestParseValuesSparse_DisabledFieldKeepsDefaultWhenMissing(t *testing.T) {
 		t.Errorf("owner = %#v, want default int32(7)", got["owner"])
 	}
 }
+
+// Direkt gesetzte Defaults laufen durch Parse wie in den Bind-Pfaden.
+func TestParseValues_ModelIntDefaultIsNormalized(t *testing.T) {
+	m := field.NewModelField("m", "M", false, "device", 0)
+	m.Default = 42
+	fg := NewFormGroup([]field.FormField{m})
+
+	got, err := fg.ParseValues(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got["m"] != int32(42) {
+		t.Errorf("m = %#v, want int32(42)", got["m"])
+	}
+}
+
+func TestParseValues_ModelListInt32SliceDefault(t *testing.T) {
+	ml := field.NewModelListField("ml", "ML", false, "device", nil)
+	ml.Default = []int32{9}
+	fg := NewFormGroup([]field.FormField{ml})
+
+	got, err := fg.ParseAndValidate(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if v, ok := got["ml"].(field.ModelListValue); !ok || len(v) != 1 || v[0] != 9 {
+		t.Errorf("ml = %#v, want ModelListValue{9}", got["ml"])
+	}
+}
+
+func TestParseValuesSparse_DisabledModelIntDefault(t *testing.T) {
+	m := field.NewModelField("m", "M", false, "device", 0)
+	m.Default = 42
+	m.SetDisabled(true)
+	fg := NewFormGroup([]field.FormField{m})
+
+	got, err := fg.ParseValuesSparse(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got["m"] != int32(42) {
+		t.Errorf("m = %#v, want int32(42)", got["m"])
+	}
+}
+
+func TestParseValues_InvalidDefaultIsFieldError(t *testing.T) {
+	ml := field.NewModelListField("ml", "ML", false, "device", nil)
+	ml.Default = []int{9}
+	fg := NewFormGroup([]field.FormField{ml})
+
+	_, err := fg.ParseValues(map[string]interface{}{})
+
+	var fe FieldErrors
+	if !errors.As(err, &fe) || fe["ml"] == "" {
+		t.Fatalf("expected FieldErrors with key ml, got %T: %v", err, err)
+	}
+}
+
+func TestParseValues_TextDefaultIsTrimmed(t *testing.T) {
+	fg := NewFormGroup([]field.FormField{field.NewTextField("t", "T", false, " x ")})
+
+	got, err := fg.ParseValues(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got["t"] != "x" {
+		t.Errorf("t = %#v, want trimmed \"x\"", got["t"])
+	}
+}
+
+func TestParseValues_MissingArrayWithoutDefaultStaysMissing(t *testing.T) {
+	// Default explizit nil: der Konstruktor speichert ein typisiertes nil-Slice (≠ nil).
+	a := field.NewArrayField("a", "A", false, "string", nil)
+	a.Default = nil
+	fg := NewFormGroup([]field.FormField{a})
+
+	got, err := fg.ParseValues(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := got["a"]; ok {
+		t.Errorf("a = %#v, want missing", got["a"])
+	}
+}
+
+func TestParseValuesSparse_MissingFilterStaysMissing(t *testing.T) {
+	m := field.NewModelField("m", "M", false, "device", 0)
+	m.Default = 42
+	fg := NewFormGroup([]field.FormField{m})
+
+	got, err := fg.ParseValuesSparse(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, ok := got["m"]; ok {
+		t.Errorf("m = %#v, want missing", got["m"])
+	}
+}

@@ -1,5 +1,7 @@
 package group
 
+import "github.com/xiriframework/xiri-go/form/field"
+
 // ParseValues parses raw field values into typed values. Missing, non-required
 // fields receive their default value.
 func (fg *FormGroup) ParseValues(raw map[string]interface{}) (map[string]interface{}, error) {
@@ -24,9 +26,7 @@ func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (
 			// setzen (wie BindFromMap). In beiden Fällen ist der Default die einzige Quelle und
 			// gilt auch im Sparse-Pfad — sonst verliert ein serverseitig gesetzter oder
 			// gesperrter Filter (Einzelobjekt-Ansicht, eigener Mandant) seinen Wert.
-			if def := f.GetDefault(); def != nil {
-				parsed[f.GetID()] = def
-			}
+			parseDefault(f, parsed, errs)
 			continue
 		}
 
@@ -36,8 +36,8 @@ func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (
 				errs[f.GetID()] = "required field " + f.GetID() + " is missing"
 				continue
 			}
-			if def := f.GetDefault(); def != nil && useDefaults {
-				parsed[f.GetID()] = def
+			if useDefaults {
+				parseDefault(f, parsed, errs)
 			}
 			continue
 		}
@@ -54,6 +54,22 @@ func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (
 		return nil, errs
 	}
 	return parsed, nil
+}
+
+// parseDefault runs the default through Parse like the bind paths do, so directly set
+// defaults (int instead of int32, []int32 instead of ModelListValue) come out normalized.
+func parseDefault(f field.FormField, parsed map[string]interface{}, errs FieldErrors) {
+	if f.GetDefault() == nil {
+		return
+	}
+	v, err := f.Parse(nil)
+	if err != nil {
+		errs[f.GetID()] = err.Error()
+		return
+	}
+	if v != nil {
+		parsed[f.GetID()] = v
+	}
 }
 
 // ValidateValues validates parsed field values and reports every failing field at once.
