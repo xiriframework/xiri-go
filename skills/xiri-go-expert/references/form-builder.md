@@ -185,6 +185,7 @@ func vehicleFields(ctx *core.UiContext, v *Vehicle) *builder.FormBuilder {
 
     fb.AddField(field.NewTextField("name", "vehicle.name", true, name))
 
+    // group_id wird gegen loadGroups(ctx) geprüft — nur angebotene IDs (oder der unveränderte Wert) gehen durch
     mf := field.NewModelField("group_id", "vehicle.group", true, "group", groupID)
     mf.SetLoaderFunc(func(ctx *core.UiContext, modelType string) ([]field.ModelOption, error) {
         return loadGroups(ctx)

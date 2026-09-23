@@ -235,6 +235,16 @@ f.Params = map[string]interface{}{"active": true}  // wird als "params" exportie
 groupID := f.Value  // int32
 ```
 
+**Serverseitige Prüfung** (`Validate`, gilt für `BindAndValidate`, `BindReload` und Tabellenfilter):
+- Erlaubt ist, was exportiert wird: `Options` (aus `LoaderFunc`), sonst `List`, jeweils ohne `Sub`.
+  `Add` zählt nicht. Fremde IDs → `model field <id>: id <n> is not an allowed option`.
+- `0` („nichts gewählt") und der unveränderte Default (aktueller Wert des Datensatzes) gehen immer durch.
+- `LoaderFunc` gesetzt, Liste aber leer — auch wenn das Formular ohne `UiContext` gebaut wurde
+  (`NewFormBuilder(nil)`, `NewFormGroup`) und `LoadOptions` nie lief → jede andere ID wird abgelehnt.
+- **Mit `URL`** (Server-Suche, Treeselect) ist `list` nur der Sockel; der Server kennt die Menge
+  nicht und prüft nur `Sub`. Gleiches gilt ohne Loader und ohne `List`. **Dann muss die App die ID
+  selbst autorisieren**, z. B. nach `BindAndValidate` per DB-Abfrage mit User-Scope.
+
 ## ModelListField
 
 Mehrfach-Modell-Auswahl. Value: `ModelListValue` (= `[]int32`)
@@ -254,6 +264,10 @@ f.SetTree(true)      // Treeselect; braucht eine URL, die verschachtelte "childr
 // Nach BindAndValidate:
 deviceIDs := f.Value  // []int32
 ```
+
+Serverseitige Prüfung wie bei `ModelField`: jede ID der Liste muss angeboten oder Teil des
+unveränderten Defaults sein (Alteinträge, die der User nicht mehr sieht, blockieren das Speichern
+also nicht). Fehler: `modellist field <id>: id <n> is not an allowed option`.
 
 ## TimeField
 
@@ -550,6 +564,22 @@ func (ctrl *Controller) FormReload(c echo.Context) error {
 `buildThingForm` muss **dieselbe** Funktion sein, die auch die normale Form-Action benutzt, und
 die typisierten Feld-Pointer mit zurückgeben — sonst laufen Formular und Reload auseinander.
 
+**Speichern abhängiger Model-Felder:** Die Save-Action muss die Optionen für den *gebundenen*
+Trigger-Wert setzen und nachprüfen, denn `buildThingForm` kennt ihn beim Aufbau noch nicht:
+
+```go
+if err := formbuilder.BindAndValidate(c, fg); err != nil { /* ... */ }
+tags.Options = ctrl.tagsForStatus(status.Value)
+if err := tags.Validate(tags.Value); err != nil {
+    return wc.BadRequest(err.Error())
+}
+```
+
+Deshalb in `buildThingForm` für abhängige Model-Felder **keine** statische Start-Liste setzen: sie
+gilt nur für den Default-Trigger, und `BindAndValidate` würde nach einem Trigger-Wechsel gültige
+IDs ablehnen. Ohne Loader und ohne `List` prüft `BindAndValidate` nur `Sub`, der Nach-Check oben
+übernimmt die eigentliche Prüfung.
+
 - `formbuilder.BindReload(c, fg)` — wie `BindAndValidate`, aber ohne Validierungsfehler. Jedes Feld
   wird zuerst auf seinen Default gebunden; scheitert der Request-Wert, bleibt der Default stehen.
   Nur ein unlesbarer Request-Body ist ein Fehler. Der Overposting-Schutz gilt unverändert.
@@ -645,8 +675,9 @@ Regeln und Grenzen:
   `ModelField`, `ChipsField`). Chips lösen Labels nur für numerische IDs auf.
 - **`SelectField` und `ChipsField` (numerische IDs) validieren beim Submit gegen ihre Optionsliste.**
   Die neue Entität muss dort enthalten sein — bei aus der DB geladenen Listen automatisch, bei
-  statischen `SelectOption`-Listen nicht. **`ModelField`/`ModelListField` prüfen nur Typ bzw. Anzahl**,
-  keine Listenmitgliedschaft; fremde IDs müssen dort wie bisher anwendungsseitig geprüft werden.
+  statischen `SelectOption`-Listen nicht. **`ModelField`/`ModelListField` ebenso** (siehe
+  „Serverseitige Prüfung" bei `ModelField`): mit `LoaderFunc` automatisch, mit statischer `List` nicht
+  — dort Loader verwenden. Mit `URL` wird nicht gegen die Liste geprüft, die App autorisiert selbst.
 - `ModelListField` mit `URL` lädt den Baum nach dem Anlegen selbst neu; der Server muss die Entität
   dann sofort liefern.
 - Ein späterer `SetReloadOn`-Patch ersetzt die Liste; liefert der Server die neue Option nicht mit,

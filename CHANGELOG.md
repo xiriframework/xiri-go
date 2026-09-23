@@ -8,6 +8,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 ### Fixed
 
+- **`ModelField`/`ModelListField` akzeptieren nur angebotene IDs.** Bisher prüfte `Validate` nur
+  den Typ; wer am Frontend vorbei postete (curl, MCP `act`), konnte jede Datensatz-ID binden,
+  auch fremde (IDOR), in Formularen wie in Tabellenfiltern. Jetzt muss die ID in `Options`
+  (aus `LoaderFunc`), sonst in `List` stehen und darf nicht in `Sub` sein — dieselbe Menge, die
+  exportiert wird. `0` und der unveränderte Default (aktueller Wert des Datensatzes) gehen immer
+  durch. Ist ein `LoaderFunc` gesetzt und die Liste leer — auch weil das Formular ohne
+  `UiContext` gebaut wurde und `LoadOptions` nie lief —, wird jede andere ID abgelehnt.
+  **Nicht geprüft** (nur `Sub`) wird bei gesetzter `URL` (Server-Suche/Treeselect liefert IDs
+  außerhalb der Liste) und bei Feldern ohne Loader und ohne `List` (z. B. Optionen erst per
+  `SetReloadOn`): dort muss die App die ID selbst autorisieren. Der Fehler lautet
+  `model field <id>: id <n> is not an allowed option` (bzw. `modellist field …`).
+
 - **Disabled-Felder in `FormGroup.ParseValues`/`ParseAndValidate(Sparse)` sind nicht mehr vom
   Client setzbar.** Bisher ignorierte nur `BindAndValidate` den Client-Wert eines disabled Felds;
   der Group-Pfad und damit jeder Tabellenfilter (`LoadFilterData`) übernahm ihn. Ein gesperrter
