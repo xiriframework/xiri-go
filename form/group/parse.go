@@ -8,8 +8,8 @@ func (fg *FormGroup) ParseValues(raw map[string]interface{}) (map[string]interfa
 
 // ParseValuesSparse is ParseValues without defaults: a key that is missing from raw
 // stays missing in the result. Used for filters, where "not sent" means "no filter".
-// Exception: fields with Form=false are never sent by a client, so their default is
-// kept — that is how a server-set single-object filter transports its value.
+// Exception: fields with Form=false or Disabled=true are never taken from the client,
+// so their default is kept — that is how a server-set or locked filter transports its value.
 func (fg *FormGroup) ParseValuesSparse(raw map[string]interface{}) (map[string]interface{}, error) {
 	return fg.parseValues(raw, false)
 }
@@ -19,11 +19,11 @@ func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (
 	errs := FieldErrors{}
 
 	for _, f := range fg.fields {
-		if !f.GetForm() {
-			// Form=false heisst: das Feld steht nicht im Formular, der Client sendet es also
-			// nie. Sein Default ist damit die einzige Quelle und gilt auch im Sparse-Pfad —
-			// sonst verliert ein serverseitig gesetzter Filter (Einzelobjekt-Ansicht: ein
-			// Fahrer, ein Gerät) seinen Wert.
+		if !f.GetForm() || f.IsDisabled() {
+			// Form=false: der Client sendet das Feld nie. Disabled: der Client darf es nicht
+			// setzen (wie BindFromMap). In beiden Fällen ist der Default die einzige Quelle und
+			// gilt auch im Sparse-Pfad — sonst verliert ein serverseitig gesetzter oder
+			// gesperrter Filter (Einzelobjekt-Ansicht, eigener Mandant) seinen Wert.
 			if def := f.GetDefault(); def != nil {
 				parsed[f.GetID()] = def
 			}

@@ -47,3 +47,36 @@ func TestParseAndValidateSparse_CollectsAllFieldErrors(t *testing.T) {
 		t.Fatalf("expected 2 field errors, got %T: %v", err, err)
 	}
 }
+
+func TestParseValues_DisabledFieldIgnoresClientValue(t *testing.T) {
+	owner := field.NewIntField("owner", "OWNER", true, 7)
+	owner.SetDisabled(true)
+	fg := NewFormGroup([]field.FormField{owner})
+
+	for name, parse := range map[string]func(map[string]interface{}) (map[string]interface{}, error){
+		"ParseAndValidate":       fg.ParseAndValidate,
+		"ParseAndValidateSparse": fg.ParseAndValidateSparse,
+	} {
+		got, err := parse(map[string]interface{}{"owner": float64(999)})
+		if err != nil {
+			t.Fatalf("%s: unexpected error: %v", name, err)
+		}
+		if got["owner"] != int32(7) {
+			t.Errorf("%s: owner = %#v, want default int32(7)", name, got["owner"])
+		}
+	}
+}
+
+func TestParseValuesSparse_DisabledFieldKeepsDefaultWhenMissing(t *testing.T) {
+	owner := field.NewIntField("owner", "OWNER", true, 7)
+	owner.SetDisabled(true)
+	fg := NewFormGroup([]field.FormField{owner})
+
+	got, err := fg.ParseAndValidateSparse(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got["owner"] != int32(7) {
+		t.Errorf("owner = %#v, want default int32(7)", got["owner"])
+	}
+}

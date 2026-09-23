@@ -76,3 +76,23 @@ func TestLoadFilterDataMissingKeyHasNoDefault(t *testing.T) {
 		t.Errorf("present key must be parsed, got %v", filters["status"])
 	}
 }
+
+// Ein gesperrter (disabled) Filter darf nicht per Request-Body überschrieben werden.
+func TestLoadFilterDataDisabledFilterIgnoresClient(t *testing.T) {
+	type row struct{}
+	owner := field.NewIntField("owner", "Owner", false, 7)
+	owner.SetDisabled(true)
+	fg := group.NewFormGroup([]field.FormField{owner})
+
+	b := table.NewBuilder[row]()
+	b.SetFilter(fg)
+	tbl := b.Build()
+
+	filters, err := tbl.LoadFilterData(newJSONContext(`{"owner": 999}`))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if filters["owner"] != int32(7) {
+		t.Errorf("owner = %#v, want int32(7)", filters["owner"])
+	}
+}
