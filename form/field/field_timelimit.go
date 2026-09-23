@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/xiriframework/xiri-go/component/core"
 )
@@ -60,25 +61,20 @@ func (f *TimeLimitField) Validate(value interface{}) error {
 		return fmt.Errorf("invalid timelimit value type for %s", f.ID)
 	}
 
-	// Validate hour/minute ranges if check is enabled
-	if tl.Check {
-		// Validate from hour/min
-		fromHour := parseHourMin(tl.FromHour)
-		fromMin := parseHourMin(tl.FromMin)
-		toHour := parseHourMin(tl.ToHour)
-		toMin := parseHourMin(tl.ToMin)
-
-		if fromHour < 0 || fromHour > 23 {
-			return fmt.Errorf("timelimit %s: fromhour must be 0-23", f.ID)
-		}
-		if fromMin < 0 || fromMin > 55 {
-			return fmt.Errorf("timelimit %s: frommin must be 0-55", f.ID)
-		}
-		if toHour < 0 || toHour > 24 {
-			return fmt.Errorf("timelimit %s: tohour must be 0-24", f.ID)
-		}
-		if toMin < 0 || toMin > 55 {
-			return fmt.Errorf("timelimit %s: tomin must be 0-55", f.ID)
+	// Always validate, not only when Check is set: the strings reach the app unchanged.
+	for _, p := range []struct {
+		name     string
+		val      string
+		min, max int
+	}{
+		{"fromhour", tl.FromHour, 0, 23},
+		{"frommin", tl.FromMin, 0, 55},
+		{"tohour", tl.ToHour, 0, 24},
+		{"tomin", tl.ToMin, 0, 55},
+	} {
+		n, err := parseHourMin(p.val)
+		if err != nil || n < p.min || n > p.max {
+			return fmt.Errorf("timelimit %s: %s must be %d-%d", f.ID, p.name, p.min, p.max)
 		}
 	}
 
@@ -243,11 +239,18 @@ func (f *TimeLimitField) ToMultiDb(value interface{}) map[string]interface{} {
 	}
 }
 
-// parseHourMin converts string to int for validation
-func parseHourMin(s string) int {
-	var val int
-	_, _ = fmt.Sscanf(s, "%d", &val)
-	return val
+// parseHourMin accepts only one or two ASCII digits. fmt.Sscanf("%d") read "7abc" as 7 and "x"
+// as 0, so arbitrary strings passed Validate and reached the app.
+func parseHourMin(s string) (int, error) {
+	if len(s) == 0 || len(s) > 2 {
+		return 0, fmt.Errorf("%q is not a 1-2 digit number", s)
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return 0, fmt.Errorf("%q is not a 1-2 digit number", s)
+		}
+	}
+	return strconv.Atoi(s)
 }
 
 // ============================================================================
