@@ -8,6 +8,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 ### Fixed
 
+- **Disabled-Felder in `FormGroup.ParseValues`/`ParseAndValidate(Sparse)` sind nicht mehr vom
+  Client setzbar.** Bisher ignorierte nur `BindAndValidate` den Client-Wert eines disabled Felds;
+  der Group-Pfad und damit jeder Tabellenfilter (`LoadFilterData`) übernahm ihn. Ein gesperrter
+  Filter (z. B. eigener Mandant) ließ sich per curl oder MCP `act` überschreiben. Jetzt gilt wie
+  bei `Form=false` immer der Default, auch im Sparse-Pfad. **Verhaltensänderung:** Ein ungültiger
+  Default an einem disabled Filter lässt den Filter-Request jetzt scheitern.
+
 - **`TextField.Pattern` wird exportiert und geprüft.** Das Feld stand seit jeher im Struct und in
   der Doku, wurde aber nie gelesen: weder kam `pattern` beim Frontend an, noch prüfte `Validate`.
   Jetzt geht `pattern` ans Frontend, und `Validate` verlangt einen Match des ganzen Werts. Das gilt
