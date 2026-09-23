@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/xiriframework/xiri-go/component/core"
 )
@@ -76,6 +77,14 @@ func (f *ModelListField) Validate(value interface{}) error {
 
 	if f.SingleOnly && len(list) > 1 {
 		return fmt.Errorf("modellist %s can only have one item", f.ID)
+	}
+
+	def, _ := f.GetDefault().(ModelListValue)
+	for _, id := range list {
+		if !slices.Contains(def, id) &&
+			!modelIDAllowed(f.URL, f.LoaderFunc != nil, f.Options, f.List, f.Sub, int64(id)) {
+			return fmt.Errorf("modellist field %s: id %d is not an allowed option", f.ID, id)
+		}
 	}
 
 	return nil

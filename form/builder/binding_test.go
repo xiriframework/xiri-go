@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/form/field"
 	"github.com/xiriframework/xiri-go/form/group"
 )
@@ -271,5 +272,23 @@ func TestBindFromMap_PintRejectsNegative(t *testing.T) {
 	}
 	if _, ok := fe["n"]; !ok {
 		t.Errorf("missing error for n: %v", fe)
+	}
+}
+
+func TestBindFromMap_ModelFieldRejectsForeignID(t *testing.T) {
+	g := field.NewModelField("group_id", "GROUP", true, "group", 0)
+	g.SetLoaderFunc(func(*core.UiContext, string) ([]field.ModelOption, error) {
+		return []field.ModelOption{{ID: 1, Name: "Mine"}}, nil
+	})
+	fg, err := group.NewFormGroupWithContext([]field.FormField{g}, &core.UiContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = BindFromMap(map[string]interface{}{"group_id": float64(999)}, fg)
+
+	var fe group.FieldErrors
+	if !errors.As(err, &fe) || fe["group_id"] == "" {
+		t.Fatalf("expected FieldErrors for group_id, got %T: %v", err, err)
 	}
 }

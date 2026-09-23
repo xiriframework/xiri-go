@@ -66,13 +66,49 @@ func (f *ModelField) Validate(value interface{}) error {
 		return nil
 	}
 
-	// Accept int, int32, int64 for model ID
-	switch value.(type) {
-	case int, int32, int64:
-		return nil
+	var id int64
+	switch v := value.(type) {
+	case int:
+		id = int64(v)
+	case int32:
+		id = int64(v)
+	case int64:
+		id = v
 	default:
 		return fmt.Errorf("invalid model value type for %s, expected int", f.ID)
 	}
+	if def, _ := f.GetDefault().(int32); id != 0 && id != int64(def) &&
+		!modelIDAllowed(f.URL, f.LoaderFunc != nil, f.Options, f.List, f.Sub, id) {
+		return fmt.Errorf("model field %s: id %d is not an allowed option", f.ID, id)
+	}
+	return nil
+}
+
+// modelIDAllowed reports whether id is among the options the frontend was offered: the loaded
+// Options, else List, minus Sub - the same set ExportForFrontend sends. With a URL the list is only
+// the base for server-side search, and without loader and List the set is unknown; then only Sub
+// is enforced and the app must authorize the ID itself. With a LoaderFunc an empty set allows nothing.
+func modelIDAllowed(url string, hasLoader bool, options, list []ModelOption, sub []int32, id int64) bool {
+	for _, s := range sub {
+		if int64(s) == id {
+			return false
+		}
+	}
+	if url != "" {
+		return true
+	}
+	if len(options) == 0 {
+		options = list
+	}
+	if len(options) == 0 {
+		return !hasLoader
+	}
+	for _, o := range options {
+		if int64(o.ID) == id {
+			return true
+		}
+	}
+	return false
 }
 
 func (f *ModelField) Parse(raw interface{}) (interface{}, error) {

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
+	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/component/table"
 	"github.com/xiriframework/xiri-go/form/field"
 	"github.com/xiriframework/xiri-go/form/group"
@@ -94,5 +95,23 @@ func TestLoadFilterDataDisabledFilterIgnoresClient(t *testing.T) {
 	}
 	if filters["owner"] != int32(7) {
 		t.Errorf("owner = %#v, want int32(7)", filters["owner"])
+	}
+}
+
+// Ein Model-Filter darf nur IDs aus der geladenen Optionsliste annehmen.
+func TestLoadFilterDataModelFilterRejectsForeignID(t *testing.T) {
+	type row struct{}
+	dev := field.NewModelField("device", "Device", false, "device", 0)
+	dev.SetLoaderFunc(func(*core.UiContext, string) ([]field.ModelOption, error) {
+		return []field.ModelOption{{ID: 1, Name: "Mine"}}, nil
+	})
+	fg, err := group.NewFormGroupWithContext([]field.FormField{dev}, &core.UiContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tbl := table.NewBuilder[row]().SetFilter(fg).Build()
+
+	if _, err := tbl.LoadFilterData(newJSONContext(`{"device": 999}`)); err == nil {
+		t.Fatal("expected error for foreign device id 999")
 	}
 }
