@@ -153,6 +153,14 @@ count := *f.Value  // int32
 Parsing ist verlustfrei: `1.9`, `"1.9"` und `"3000000000"` werden abgelehnt, nicht trunkiert oder
 gewrappt. Gleiches gilt für Model-IDs (`ModelField`, `ModelListField`) und `SelectField`-Optionen.
 
+`Min`/`Max` (und `pint`) werden exportiert **und** serverseitig geprüft; greift auch bei Posts am
+Frontend vorbei (MCP `act`, curl). Auch die Defaults von disabled- und `Form=false`-Feldern werden geprüft:
+ein negativer Default an einem `pint`-Feld blockiert das Speichern.
+
+Kein `Pattern` am IntField (entfernt, war nie wirksam). Formatierte Kennungen (feste Stellenzahl,
+führende Nullen) sind Text → `TextField` mit `Pattern`; sonstige Zahlenregeln („endet auf 0") in der
+App nach `BindAndValidate` prüfen.
+
 ## BoolField
 
 Checkbox. Value: `*bool`

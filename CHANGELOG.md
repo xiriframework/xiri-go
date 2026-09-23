@@ -22,7 +22,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 - **`IntField` mit `Subtype "pint"` lehnt negative Werte serverseitig ab.** Bisher ging nur `min=0`
   ans Frontend; wer am Frontend vorbei postet (MCP `act`, curl), konnte negative Werte speichern.
-  Jetzt meldet `Validate` `int field <id> must be >= 0` (Formular, Reload, Filter). Ein negatives
+  Jetzt meldet `Validate` `int field <id> must be >= 0` (`BindAndValidate` unter `fields.<id>`,
+  Filter); `BindReload` verwirft den Wert und behält den Default. Ein negatives
   `Min` wird bei `pint` auf 0 angehoben, im Export wie in der Prüfung. **Verhaltensänderung:** Ein
   negativer Default an einem `pint`-Feld blockiert jetzt das Speichern, auch wenn das Feld disabled ist.
 
