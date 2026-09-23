@@ -93,7 +93,12 @@ func (f *SelectField) Parse(raw interface{}) (interface{}, error) {
 	}
 
 	if raw == nil {
-		return f.GetDefault(), nil
+		def := f.GetDefault()
+		if def == nil {
+			return nil, nil
+		}
+		// A directly set default (int instead of int32) is normalized like a request value.
+		return f.Parse(def)
 	}
 
 	// Try to match against options

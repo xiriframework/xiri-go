@@ -178,3 +178,44 @@ func TestParseValuesSparse_MissingFilterStaysMissing(t *testing.T) {
 		t.Errorf("m = %#v, want missing", got["m"])
 	}
 }
+
+func TestParseValues_SelectIntDefault(t *testing.T) {
+	s := field.NewSelectField("s", "S", false, []field.SelectOption{{Value: int32(1), Label: "1"}, {Value: int32(2), Label: "2"}})
+	s.Default = 2
+	fg := NewFormGroup([]field.FormField{s})
+
+	got, err := fg.ParseAndValidate(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got["s"] != int32(2) {
+		t.Errorf("s = %#v, want int32(2)", got["s"])
+	}
+}
+
+func TestParseValues_SelectDefaultWithoutOption(t *testing.T) {
+	s := field.NewSelectField("s", "S", false, []field.SelectOption{{Value: int32(1), Label: "1"}})
+	s.Default = 9
+	fg := NewFormGroup([]field.FormField{s})
+
+	_, err := fg.ParseValues(map[string]interface{}{})
+
+	var fe FieldErrors
+	if !errors.As(err, &fe) || fe["s"] == "" {
+		t.Fatalf("expected FieldErrors with key s, got %T: %v", err, err)
+	}
+}
+
+func TestParseValues_ChipsStringSliceDefault(t *testing.T) {
+	c := field.NewChipsField("c", "C", false)
+	c.Default = []string{"a", "b"}
+	fg := NewFormGroup([]field.FormField{c})
+
+	got, err := fg.ParseAndValidate(map[string]interface{}{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if v, ok := got["c"].([]interface{}); !ok || len(v) != 2 || v[0] != "a" || v[1] != "b" {
+		t.Errorf("c = %#v, want []interface{}{\"a\", \"b\"}", got["c"])
+	}
+}

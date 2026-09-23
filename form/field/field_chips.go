@@ -79,7 +79,12 @@ func (f *ChipsField) Validate(value interface{}) error {
 // (free text). Numeric elements are normalized to int64.
 func (f *ChipsField) Parse(raw interface{}) (interface{}, error) {
 	if raw == nil {
-		return f.GetDefault(), nil
+		def := f.GetDefault()
+		if def == nil {
+			return nil, nil
+		}
+		// A directly set default ([]string instead of []interface{}) is normalized like a request value.
+		return f.Parse(def)
 	}
 
 	var items []interface{}
