@@ -47,6 +47,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   `int64` und werden gegen die Optionen geprüft; ein Select-Default ohne passende Option ist schon in
   `ParseValues` ein Feldfehler.
 
+- **`TimeRangeField`/`TimeLimitField`/`GeoformField` mit Default ließen sich nicht binden,** wenn
+  das Feld im Request fehlte (z. B. per `showWhen` versteckt) — bei disabled oder `Form=false`
+  **immer**: `BindAndValidate`/`BindFromMap` schickten den typisierten Default als Request-Wert
+  durch `Parse` (`timerange field expects map with start/end`, beim `NewTimeLimitField` schon mit
+  dem Konstruktor-Default), `BindReload` ließ `Value` still `nil`. Die Bind-Pfade (auch
+  `BindSuggest`) binden den Default jetzt wie `FormGroup.ParseValues` über `Parse(nil)`.
+  `IntField` bindet dabei `int`-, `int32`- und `int64`-Defaults. **Verhaltensänderung:** ein
+  direkt gesetzter `int`- oder `time.Time`-Default am `TimeField` kommt in `ParseValues` und
+  Tabellenfiltern als `int64` (wie ein Request-Wert).
+
 - **`GeoformField`/`TimeLimitField` prüfen Zahlen-Strings vollständig.** `Validate` las per
   `fmt.Sscanf` nur den Anfang: `"45 ,0)) UNION…"`, `"NaN"` oder `"7abc"` gingen durch und kamen
   unverändert bei der App an. Jetzt müssen Koordinaten und Radius ganze, endliche Dezimalzahlen sein,
