@@ -348,3 +348,71 @@ func TestBindReloadFromMap_ModelFieldAllowedFunc(t *testing.T) {
 		t.Errorf("Value = %d, want default 1", g.Value)
 	}
 }
+
+// Typisierte Defaults (TimeRangeValue, TimeLimitValue, *GeoformValue) sind kein Request-Wert:
+// ein fehlendes oder gesperrtes Feld bindet sie über Parse(nil), nicht über Parse(default).
+func typedDefaultFields() (*field.TimeRangeField, *field.TimeLimitField, *field.GeoformField) {
+	geo := field.NewGeoformField("geo", "GEO", false)
+	geo.Default = &field.GeoformValue{Type: 2, Path: map[string]string{"lat": "1", "lng": "2", "radius": "3"}}
+	return field.NewTimeRangeFieldWithDefault("tr", "TR", false, 7), field.NewTimeLimitField("tl", "TL", false), geo
+}
+
+func TestBindFromMap_MissingTypedDefaults(t *testing.T) {
+	tr, tl, geo := typedDefaultFields()
+	fg := group.NewFormGroup([]field.FormField{tr, tl, geo})
+
+	if err := BindFromMap(map[string]interface{}{}, fg); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if tr.Value != tr.Default {
+		t.Errorf("tr.Value = %v, want default %v", tr.Value, tr.Default)
+	}
+}
+
+func TestBindFromMap_DisabledTimeRangeKeepsDefault(t *testing.T) {
+	tr := field.NewTimeRangeFieldWithDefault("tr", "TR", false, 7)
+	tr.SetDisabled(true)
+	fg := group.NewFormGroup([]field.FormField{tr})
+
+	err := BindFromMap(map[string]interface{}{"tr": map[string]interface{}{"start": "2026-01-01", "end": "2026-01-02"}}, fg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if tr.Value != tr.Default {
+		t.Errorf("tr.Value = %v, want default %v", tr.Value, tr.Default)
+	}
+}
+
+func TestBindReloadFromMap_MissingTypedDefaults(t *testing.T) {
+	tr, tl, geo := typedDefaultFields()
+	fg := group.NewFormGroup([]field.FormField{tr, tl, geo})
+
+	if err := BindReloadFromMap(map[string]interface{}{}, fg); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if tr.Value != tr.Default {
+		t.Errorf("tr.Value = %v, want default %v", tr.Value, tr.Default)
+	}
+}
+
+func TestBindFromMap_MissingDefaultsStillBind(t *testing.T) {
+	n := field.NewIntField("n", "N", false, 7)
+	m := field.NewModelField("m", "M", false, "device", 0)
+	m.Default = 42
+	txt := field.NewTextField("t", "T", false, " x ")
+	chips := field.NewChipsField("c", "C", false)
+	chips.Default = []string{"a"}
+	req := field.NewTextField("r", "R", true, "")
+	req.Default = nil
+	fg := group.NewFormGroup([]field.FormField{n, m, txt, chips, req})
+
+	err := BindFromMap(map[string]interface{}{}, fg)
+
+	var fe group.FieldErrors
+	if !errors.As(err, &fe) || len(fe) != 1 || fe["r"] == "" {
+		t.Fatalf("expected only a required error for r, got %T: %v", err, err)
+	}
+	if n.Value == nil || *n.Value != 7 || m.Value != 42 || txt.Value == nil || *txt.Value != "x" || len(chips.Value) != 1 {
+		t.Errorf("defaults not bound: n=%v m=%v t=%v c=%v", n.Value, m.Value, txt.Value, chips.Value)
+	}
+}

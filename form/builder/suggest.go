@@ -32,7 +32,7 @@ func BindSuggest(c echo.Context, contextFields ...field.FormField) (string, erro
 	search, _ := raw["search"].(string)
 	for _, f := range contextFields {
 		// Default first: a failed bind leaves the field on a usable value (like BindReloadFromMap).
-		_ = bindFieldValue(f, f.GetDefault())
+		_ = bindFieldValue(f, nil)
 		if f.IsDisabled() || f.GetID() == "search" {
 			continue
 		}

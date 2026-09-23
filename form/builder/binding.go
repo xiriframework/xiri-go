@@ -136,11 +136,11 @@ func extractFormData(c echo.Context, fg *group.FormGroup) (map[string]interface{
 func BindFromMap(formData map[string]interface{}, fg *group.FormGroup) error {
 	errs := group.FieldErrors{}
 	for _, f := range fg.GetFields() {
+		// nil binds the default via Parse(nil): a typed default (TimeRangeValue, …) is no
+		// request value and would fail Parse(default).
 		var rawValue interface{}
 		if f.GetForm() && !f.IsDisabled() {
-			rawValue = resolveFieldValue(f, formData)
-		} else {
-			rawValue = f.GetDefault()
+			rawValue = formData[f.GetID()]
 		}
 		if err := bindFieldValue(f, rawValue); err != nil {
 			errs[f.GetID()] = err.Error()
@@ -185,7 +185,7 @@ func BindReload(c echo.Context, fg *group.FormGroup) error {
 func BindReloadFromMap(formData map[string]interface{}, fg *group.FormGroup) error {
 	for _, f := range fg.GetFields() {
 		// Default first: a later failure leaves the field on a usable value.
-		_ = bindFieldValue(f, f.GetDefault())
+		_ = bindFieldValue(f, nil)
 
 		if !f.GetForm() || f.IsDisabled() {
 			continue
@@ -195,16 +195,6 @@ func BindReloadFromMap(formData map[string]interface{}, fg *group.FormGroup) err
 		}
 	}
 	return nil
-}
-
-// resolveFieldValue extracts the raw value for a field from form data,
-// falling back to the field's default if the field is not present.
-func resolveFieldValue(field field.FormField, formData map[string]interface{}) interface{} {
-	rawValue, exists := formData[field.GetID()]
-	if !exists {
-		return field.GetDefault()
-	}
-	return rawValue
 }
 
 // bindFieldValue binds a single raw value to a field instance.
