@@ -40,6 +40,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   **Verhaltensänderung** in diesen Group-Pfaden: ein `TextField`-Default wird wie beim Binden
   getrimmt, ein ungültiger Default ist ein Feldfehler statt eines durchgereichten Rohwerts.
 
+- **Direkt gesetzte Defaults an `SelectField` (single, auch Radio) und `ChipsField`.** Ein
+  `f.Default = 2` (`int` bei `int32`-Optionen) bzw. `[]string{…}` wurde von `ParseAndValidate` und
+  Tabellenfiltern als ungültig abgelehnt, obwohl das Binden ihn annahm. `Parse` normalisiert den
+  Default jetzt wie einen Request-Wert. **Verhaltensänderung:** numerische Chips-Defaults kommen als
+  `int64` und werden gegen die Optionen geprüft; ein Select-Default ohne passende Option ist schon in
+  `ParseValues` ein Feldfehler.
+
 - **`GeoformField`/`TimeLimitField` prüfen Zahlen-Strings vollständig.** `Validate` las per
   `fmt.Sscanf` nur den Anfang: `"45 ,0)) UNION…"`, `"NaN"` oder `"7abc"` gingen durch und kamen
   unverändert bei der App an. Jetzt müssen Koordinaten und Radius ganze, endliche Dezimalzahlen sein,
