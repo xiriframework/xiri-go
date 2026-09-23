@@ -101,3 +101,56 @@ func TestModelListField_Validate_OnlyOfferedIDs(t *testing.T) {
 		t.Error("expected error for id 4242 not among options")
 	}
 }
+
+func TestModelListField_Validate_Cases(t *testing.T) {
+	loaded := func(ids ...int32) *ModelListField {
+		f := NewModelListField("devices", "DEVICES", false, "device", nil)
+		f.SetLoaderFunc(loaderOf(ids...))
+		if err := f.LoadOptions(&core.UiContext{}); err != nil {
+			panic(err)
+		}
+		return f
+	}
+	cases := []struct {
+		name  string
+		field func() *ModelListField
+		value ModelListValue
+		ok    bool
+	}{
+		{"url: search hit outside list", func() *ModelListField {
+			f := loaded(1)
+			f.URL = "/api/devices"
+			return f
+		}, ModelListValue{1, 999}, true},
+		{"url: sub still enforced", func() *ModelListField {
+			f := loaded(1, 3)
+			f.URL = "/api/devices"
+			f.Sub = []int32{3}
+			return f
+		}, ModelListValue{1, 3}, false},
+		{"loader returned nothing", func() *ModelListField { return loaded() }, ModelListValue{1}, false},
+		{"loader never ran (no context)", func() *ModelListField {
+			f := NewModelListField("d", "D", false, "device", nil)
+			f.SetLoaderFunc(loaderOf(1))
+			return f
+		}, ModelListValue{1}, false},
+		{"static List", func() *ModelListField {
+			f := NewModelListField("d", "D", false, "device", nil)
+			f.List = []ModelOption{{ID: 5}}
+			return f
+		}, ModelListValue{5, 6}, false},
+		{"no loader, no list, no url (reload-dependent)", func() *ModelListField {
+			return NewModelListField("d", "D", false, "device", nil)
+		}, ModelListValue{7}, true},
+		{"zero is a regular id", func() *ModelListField { return loaded(1) }, ModelListValue{0}, false},
+		{"empty list", func() *ModelListField { return loaded(1) }, ModelListValue{}, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			err := c.field().Validate(c.value)
+			if (err == nil) != c.ok {
+				t.Errorf("Validate(%v): err = %v, want ok=%v", c.value, err, c.ok)
+			}
+		})
+	}
+}

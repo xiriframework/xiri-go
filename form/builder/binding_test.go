@@ -292,3 +292,22 @@ func TestBindFromMap_ModelFieldRejectsForeignID(t *testing.T) {
 		t.Fatalf("expected FieldErrors for group_id, got %T: %v", err, err)
 	}
 }
+
+// BindReloadFromMap meldet keine Feldfehler: eine fremde ID wird verworfen, der Default bleibt.
+func TestBindReloadFromMap_ModelFieldForeignIDKeepsDefault(t *testing.T) {
+	g := field.NewModelField("group_id", "GROUP", false, "group", 1)
+	g.SetLoaderFunc(func(*core.UiContext, string) ([]field.ModelOption, error) {
+		return []field.ModelOption{{ID: 1, Name: "Mine"}, {ID: 2, Name: "Also mine"}}, nil
+	})
+	fg, err := group.NewFormGroupWithContext([]field.FormField{g}, &core.UiContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := BindReloadFromMap(map[string]interface{}{"group_id": float64(999)}, fg); err != nil {
+		t.Fatalf("BindReloadFromMap: %v", err)
+	}
+	if g.Value != 1 {
+		t.Errorf("Value = %d, want default 1", g.Value)
+	}
+}

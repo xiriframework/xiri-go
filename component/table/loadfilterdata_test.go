@@ -115,3 +115,26 @@ func TestLoadFilterDataModelFilterRejectsForeignID(t *testing.T) {
 		t.Fatal("expected error for foreign device id 999")
 	}
 }
+
+// Ein gesperrter Filter (z. B. Einzelobjekt-Ansicht) behält seinen Default, auch wenn der nicht
+// unter den Optionen steht — der Default kommt vom Server, nicht vom Client.
+func TestLoadFilterDataDisabledModelFilterKeepsUnofferedDefault(t *testing.T) {
+	type row struct{}
+	dev := field.NewModelField("device", "Device", false, "device", 42).SetDisabled(true)
+	dev.SetLoaderFunc(func(*core.UiContext, string) ([]field.ModelOption, error) {
+		return []field.ModelOption{{ID: 1, Name: "Mine"}}, nil
+	})
+	fg, err := group.NewFormGroupWithContext([]field.FormField{dev}, &core.UiContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tbl := table.NewBuilder[row]().SetFilter(fg).Build()
+
+	filters, err := tbl.LoadFilterData(newJSONContext(`{"device": 999}`))
+	if err != nil {
+		t.Fatalf("LoadFilterData: %v", err)
+	}
+	if filters["device"] != int32(42) {
+		t.Errorf("device = %#v, want int32(42)", filters["device"])
+	}
+}
