@@ -65,9 +65,9 @@ b.IconFieldFromSet("status", "device.status", func(d Device) *table.IconRef {
     return statusIcons.Resolve(d.Status)
 }, statusIcons)
 
-// HTML
+// HTML — Record-Daten immer escapen (html.EscapeString); das Frontend entfernt nur Scripts/Handler, kein Markup
 b.HtmlField("badge", "device.badge", func(d Device) string {
-    return fmt.Sprintf(`<span class="badge">%s</span>`, d.Status)
+    return fmt.Sprintf(`<span class="badge">%s</span>`, html.EscapeString(d.Status))
 })
 
 // Input (inline editierbar)

@@ -458,6 +458,7 @@ dl.Columns(2)
 dl.Add("Name", "Device 1")
 dl.Add("Status", "Online").Color(core.ColorSuccess).Type("badge")
 dl.Add("IP", "192.168.1.1").Icon("lan")
+dl.Add("Notiz", "<b>"+html.EscapeString(d.Note)+"</b>").Type("html")  // rohes HTML: Nutzerdaten escapen
 dl.Print(ctx)
 ```
 
@@ -1105,6 +1106,8 @@ info.NewInfoText("Hinweis: Dieses Feature ist Beta.", nil)   // display *string
 info.NewInfoPoint("192.168.1.1", "lan", string(core.ColorPrimary), nil, nil, nil, nil, nil, nil)
 info.NewInfoText("Hinweis: <b>Beta</b>", nil).WithHtml()  // Text als HTML rendern (opt-in, auch auf InfoPoint)
 ```
+
+Mit `WithHtml()` sind Text und Subtext rohes HTML: Nutzerdaten mit `html.EscapeString` escapen. xiri-ng sanitisiert (ab der nächsten Version), `style`, `id` und `data-*` werden dabei entfernt.
 
 ## TachoTime (`component/tachotime`)
 

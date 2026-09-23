@@ -49,7 +49,7 @@ Alle Field-Konstruktoren haben die **gleiche Signatur**: `(id, name string, acce
 | `DistanceField`                        | `float64` (km)    | Distanz (km/mi je nach UiContext)      |
 | `SpeedField`                           | `float64` (km/h)  | Geschwindigkeit (km/h, mph, kn je UiContext) |
 | `PressureField`                        | `float64` (bar)   | Druck, konvertiert nach bar/psi/kPa je UiContext |
-| `HtmlField`                            | `string`          | RAW HTML (keine Escape-Logik!)         |
+| `HtmlField`                            | `string`          | RAW HTML — Nutzerdaten mit `html.EscapeString` escapen; xiri-ng sanitisiert Scripts/Handler |
 | `HeaderField`                          | `string`          | Gruppierungs-Header in der Zeile       |
 
 ### Text2-Typen (zwei Werte übereinander in einer Zelle)

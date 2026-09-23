@@ -6,6 +6,14 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Security
+
+- **Doku: HTML-Komponenten escapen Record-Daten.** Die Beispiele für `HtmlField` und
+  `layout.NewHtml` (Adress-Dialog) betteten Record-Daten ungeescaped ein. Sie nutzen jetzt
+  `html.EscapeString`, und `descriptionlist` `Type("html")` sowie `info.WithHtml()` warnen jetzt
+  ebenfalls. xiri-ng sanitisiert HTML ab der nächsten Version selbst: Scripts, Handler, `style`,
+  `id` und `data-*` fallen dabei weg.
+
 ### Fixed
 
 - **Direkt gesetzte Defaults an `ModelField`/`ModelListField` beim Binden.** Ein per

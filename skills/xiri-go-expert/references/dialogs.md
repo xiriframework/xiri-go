@@ -287,6 +287,8 @@ func (c *Controller) OrderDetails(ctx echo.Context) error {
 }
 ```
 
+`renderAddress` muss jedes Adressfeld mit `html.EscapeString` escapen — Adressen sind Kundeneingaben.
+
 GET liefert `{header, type:"component", content:{type:"expansion", display, data:{panels:[…]}}, buttons:[close]}`. Da der Inhalt read-only ist, gibt es i. d. R. keinen POST-Submit — nur der Close-Button.
 
 > **Tipp:** Mehrere aufklappbare Abschnitte als gestapelte, unabhängige Panels gehören in eine `expansion` (echtes Akkordeon). Mehrere collapsible `HeaderField` in *einem Formular* erzeugen ebenfalls gestapelte Sektionen (jeder Header startet seine eigene Section bis zum nächsten Header) — aber ohne nestbare Inhalte. Für reine Detail-Ansichten im Dialog ist `NewDialogComponent` + `expansion` der direkte Weg.
