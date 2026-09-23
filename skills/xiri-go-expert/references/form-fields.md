@@ -57,7 +57,7 @@ f.TextPrefix = "€"
 f.TextSuffix = "kg"
 f.IconPrefix = "euro"
 f.IconSuffix = "weight"
-f.Trim = true
+f.SetTrim(false)  // Default true (Konstruktoren); password wird nie getrimmt
 
 // Kurzform mit Längen-Grenzen:
 f := field.NewTextFieldWithLength("name", "vehicle.name", true, "", 3, 100)
@@ -68,7 +68,11 @@ name := *f.Value  // string
 ```
 
 `required` heißt beim TextField „nicht leer": `""` und reiner Whitespace scheitern in `Validate`
-genauso wie ein fehlender Wert. `f.Value` enthält den Wert trotzdem ungetrimmt.
+genauso wie ein fehlender Wert. `Parse` trimmt Werte standardmäßig (`strings.TrimSpace`, bei
+textarea nur die Ränder); nach `BindAndValidate`/`BindReload` sind `f.Value` und die
+Min/Max-Prüfung also getrimmt — auch ein gebundenes Default. `SetTrim(false)` schaltet das
+ab; Subtype `password` wird nie getrimmt (anders als im PHP-Vorbild). Ein per
+Struct-Literal gebautes `TextField{}` hat `Trim == false`.
 
 ### Vorschläge (Autocomplete mit Freitext)
 

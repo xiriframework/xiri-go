@@ -6,6 +6,19 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Changed
+
+- **`TextField` trimmt Werte standardmäßig.** `Trim` stand seit jeher im Struct, wurde aber nie
+  ausgewertet. Jetzt entfernt `Parse` führenden und nachgestellten Whitespace (`strings.TrimSpace`).
+  Das wirkt in `BindAndValidate`, `BindReload`, für die Kontextfelder von `BindSuggest` (der
+  zurückgegebene Suchtext bleibt roh) und für gesendete Werte in `FormGroup.ParseValues`/
+  `ParseAndValidate`; `Validate` (Min/Max/Required) prüft dort den getrimmten Wert. Auch Defaults
+  werden beim Binden getrimmt (disabled/Form=false-Felder, fehlender Wert). Roh bleiben der
+  Export ans Frontend und Defaults, die `FormGroup.ParseValues` bei fehlendem Key oder
+  Form=false direkt übernimmt. `NewTextField` und `NewTextFieldWithLength` setzen `Trim: true`,
+  neuer Setter `SetTrim(bool)`. Subtype `password` wird nie getrimmt.
+  **Verhaltensänderung:** Apps bekommen Werte ab jetzt getrimmt; wer Whitespace braucht, setzt
+  `SetTrim(false)`. Per Struct-Literal gebaute Felder bleiben ungetrimmt (Zero-Value).
 
 ## [0.4.3]
 ### Fixed

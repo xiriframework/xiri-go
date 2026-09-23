@@ -89,3 +89,55 @@ func TestTextField_Validate_RequiredRejectsBlank(t *testing.T) {
 		t.Errorf("Validate(\"\") on optional field: want nil, got %v", err)
 	}
 }
+
+func TestTextField_Parse_TrimsByDefault(t *testing.T) {
+	cases := []struct {
+		name    string
+		subtype string
+		in, out string
+	}{
+		{"spaces", "", "  a  ", "a"},
+		{"newlines and tabs", "", "\n a \t\n", "a"},
+		{"textarea keeps inner lines", "textarea", " a\n b ", "a\n b"},
+	}
+	for _, c := range cases {
+		f := NewTextField("t", "T", false, "")
+		f.Subtype = c.subtype
+		got, _ := f.Parse(c.in)
+		if got != c.out {
+			t.Errorf("%s: expected %q, got %q", c.name, c.out, got)
+		}
+	}
+}
+
+func TestTextField_Parse_NoTrim(t *testing.T) {
+	f := NewTextField("t", "T", false, "").SetTrim(false)
+	if got, _ := f.Parse("  a  "); got != "  a  " {
+		t.Errorf("SetTrim(false): expected untrimmed, got %q", got)
+	}
+
+	pw := NewTextField("pw", "PW", false, "")
+	pw.Subtype = "password"
+	if got, _ := pw.Parse(" pw "); got != " pw " {
+		t.Errorf("password must never be trimmed, got %q", got)
+	}
+}
+
+func TestTextField_BindValue_Trim(t *testing.T) {
+	f := NewTextField("t", "T", false, "")
+	if err := f.BindValue("  x  "); err != nil || f.Value == nil || *f.Value != "x" {
+		t.Errorf("expected \"x\", got %v (err %v)", f.Value, err)
+	}
+
+	// MinLength is checked against the trimmed value.
+	short := NewTextFieldWithLength("t", "T", false, "", 3, 10)
+	if err := short.BindValue(" ab "); err == nil {
+		t.Errorf("expected min length error for trimmed \"ab\"")
+	}
+
+	// The default is trimmed too when it is bound.
+	def := NewTextField("t", "T", false, " x ")
+	if err := def.BindValue(nil); err != nil || def.Value == nil || *def.Value != "x" {
+		t.Errorf("expected default trimmed to \"x\", got %v (err %v)", def.Value, err)
+	}
+}

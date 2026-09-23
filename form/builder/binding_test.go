@@ -245,3 +245,15 @@ func TestBindFromMap_CollectsAllFieldErrors(t *testing.T) {
 		t.Errorf("missing error for email: %v", fe)
 	}
 }
+
+func TestBindFromMap_DisabledTextFieldDefaultTrimmed(t *testing.T) {
+	name := field.NewTextField("name", "NAME", false, " x ").SetDisabled(true)
+	fg := group.NewFormGroup([]field.FormField{name})
+
+	if err := BindFromMap(map[string]interface{}{}, fg); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if name.Value == nil || *name.Value != "x" {
+		t.Errorf("expected \"x\", got %v", name.Value)
+	}
+}

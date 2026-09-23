@@ -19,7 +19,7 @@ type TextField struct {
 	TextSuffix string  // Suffix text
 	IconPrefix string  // Prefix icon name
 	IconSuffix string  // Suffix icon name
-	Trim       bool    // Whether to trim whitespace (default: true)
+	Trim       bool    // Parse trims surrounding whitespace; true via constructors, false in a struct literal; never for "password"
 	Value      *string // Parsed and validated value (type-safe access)
 
 	Suggestions    []string // Autocomplete suggestions; nil = none, empty = explicitly none (exports list: [])
@@ -57,14 +57,21 @@ func (f *TextField) Validate(value interface{}) error {
 
 func (f *TextField) Parse(raw interface{}) (interface{}, error) {
 	if raw == nil {
-		return f.GetDefault(), nil
+		raw = f.GetDefault()
+		if raw == nil {
+			return nil, nil
+		}
 	}
 
-	if str, ok := raw.(string); ok {
-		return str, nil
+	str, ok := raw.(string)
+	if !ok {
+		str = fmt.Sprintf("%v", raw)
 	}
 
-	return fmt.Sprintf("%v", raw), nil
+	if f.Trim && f.Subtype != "password" {
+		str = strings.TrimSpace(str)
+	}
+	return str, nil
 }
 
 // BindValue parses, validates, and stores the value in the field
@@ -104,6 +111,7 @@ func NewTextField(id, name string, required bool, currentValue string) *TextFiel
 			Default:  currentValue,
 			Form:     true,
 		},
+		Trim: true,
 	}
 }
 
@@ -120,6 +128,7 @@ func NewTextFieldWithLength(id, name string, required bool, currentValue string,
 		},
 		MinLength: minLen,
 		MaxLength: maxLen,
+		Trim:      true,
 	}
 }
 
@@ -253,5 +262,12 @@ func (f *TextField) SetScenario(scenario []string) *TextField {
 // SetForm sets whether to show in form
 func (f *TextField) SetForm(form bool) *TextField {
 	f.BaseField.SetForm(form)
+	return f
+}
+
+// SetTrim sets whether Parse trims surrounding whitespace (constructors default to true).
+// Subtype "password" is never trimmed.
+func (f *TextField) SetTrim(trim bool) *TextField {
+	f.Trim = trim
 	return f
 }
