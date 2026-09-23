@@ -8,12 +8,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 ### Fixed
 
-- **Direkt gesetzte Defaults an `ModelField`/`ModelListField`.** Ein per `f.Default = 42` (`int`
-  statt `int32`) gesetzter Default wurde von `BindValue` nicht übernommen, `Value` blieb still `0`
-  und überschrieb beim Speichern den aktuellen Wert. Jetzt wird er wie ein Request-Wert nach
-  `int32` gewandelt. Ein `ModelListField`-Default als `[]int32` (statt `ModelListValue`) ließ
-  `Parse` paniken und wird jetzt angenommen; andere Typen (auch beim Multi-`SelectField`) liefern
-  einen Fehler statt eines Panics.
+- **Direkt gesetzte Defaults an `ModelField`/`ModelListField` beim Binden.** Ein per
+  `f.Default = 42` (`int` statt `int32`) gesetzter Default wurde von `BindValue` nicht übernommen,
+  `Value` blieb still `0` und überschrieb beim Speichern den aktuellen Wert. Jetzt wird er wie ein
+  Request-Wert nach `int32` gewandelt. Ein `ModelListField`-Default als `[]int32` (statt
+  `ModelListValue`) ließ `Parse` paniken und wird jetzt angenommen; andere Typen (auch beim
+  Multi-`SelectField`) liefern einen Fehler statt eines Panics. Das gilt für `BindAndValidate`,
+  `BindFromMap` und `BindReload`. **Nicht** für `FormGroup.ParseValues`/`ParseAndValidate(Sparse)`
+  (auch Tabellenfilter): dort geht der Default weiter unverändert durch, ein `[]int32`-Default wird
+  von `Validate` abgelehnt. Defaults daher über den Konstruktor setzen.
 
 - **`GeoformField`/`TimeLimitField` prüfen Zahlen-Strings vollständig.** `Validate` las per
   `fmt.Sscanf` nur den Anfang: `"45 ,0)) UNION…"`, `"NaN"` oder `"7abc"` gingen durch und kamen
