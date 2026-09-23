@@ -77,3 +77,15 @@ func TestTextField_Suggestions_FreeTextStillBinds(t *testing.T) {
 		t.Errorf("expected Klagenfurt, got %v", f.Value)
 	}
 }
+
+func TestTextField_Validate_RequiredRejectsBlank(t *testing.T) {
+	f := NewTextField("name", "Name", true, "")
+	for _, v := range []string{"", "   "} {
+		if err := f.Validate(v); err == nil {
+			t.Errorf("Validate(%q) on required field: want error, got nil", v)
+		}
+	}
+	if err := NewTextField("name", "Name", false, "").Validate(""); err != nil {
+		t.Errorf("Validate(\"\") on optional field: want nil, got %v", err)
+	}
+}

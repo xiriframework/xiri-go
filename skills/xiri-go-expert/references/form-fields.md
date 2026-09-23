@@ -67,6 +67,9 @@ f := field.NewTextFieldWithLength("name", "vehicle.name", true, "", 3, 100)
 name := *f.Value  // string
 ```
 
+`required` heißt beim TextField „nicht leer": `""` und reiner Whitespace scheitern in `Validate`
+genauso wie ein fehlender Wert. `f.Value` enthält den Wert trotzdem ungetrimmt.
+
 ### Vorschläge (Autocomplete mit Freitext)
 
 Das Feld bleibt Freitext; die Vorschläge helfen nur. Exportiert werden dieselben Keys wie bei
@@ -517,7 +520,8 @@ die typisierten Feld-Pointer mit zurückgeben — sonst laufen Formular und Relo
   Zwei Feinheiten: Das gilt, weil alle mitgelieferten Felder in `BindValue` erst validieren und
   dann zuweisen — ein eigenes Feld, das umgekehrt vorgeht, ließe den ungültigen Request-Wert
   stehen. Und ein Default, der selbst die Validierung nicht besteht (z. B. ein required
-  Multi-Select ohne Vorauswahl), wird auch nicht gesetzt; dort bleibt der Nullwert.
+  Multi-Select ohne Vorauswahl oder ein required TextField mit Default `""`), wird auch nicht
+  gesetzt; dort bleibt der Nullwert — beim TextField also `Value == nil`, vor `*f.Value` prüfen.
 - `fg.ExportPatch()` — exportiert genau die Felder mit `ReloadOn` **und** `ReloadURL`, gekeyed nach
   Feld-ID. `Form=false`-Felder werden übersprungen.
 - `response.NewReturnFields(...)` — `{"fields": {...}}`, bewusst ohne `done`. Mit

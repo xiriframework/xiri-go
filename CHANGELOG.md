@@ -6,6 +6,15 @@ Format nach [Keep a Changelog](https://keepachangelog.com/de/1.1.0/),
 Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
+### Fixed
+
+- **Pflicht-`TextField` lehnt leere Werte ab.** `Validate` prüfte `Required` nur auf `nil`; `""` und
+  reiner Whitespace gingen durch. Wer am Frontend vorbei postet (MCP `act`, curl), konnte so
+  Datensätze ohne Pflichtwert anlegen. Jetzt meldet `BindAndValidate` das Feld wie ein fehlendes
+  (`text field <id> is required`, unter `fields.<id>` via `response.NewErrorResponseFromError`).
+  Betrifft alle Subtypes (text, textarea, email, …). Nebenwirkung in `BindReload`: ein Pflicht-
+  `TextField` mit leerem Default und leerem Request-Wert hat danach `Value == nil` statt `""` —
+  Reload-Handler, die `*f.Value` lesen, müssen auf `nil` prüfen.
 
 ## [0.4.2]
 ### Added

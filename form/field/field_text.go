@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/component/url"
@@ -37,6 +38,10 @@ func (f *TextField) Validate(value interface{}) error {
 	str, ok := value.(string)
 	if !ok {
 		return fmt.Errorf("invalid text value type for %s", f.ID)
+	}
+
+	if f.Required && strings.TrimSpace(str) == "" {
+		return fmt.Errorf("text field %s is required", f.ID)
 	}
 
 	if f.MinLength > 0 && len(str) < f.MinLength {

@@ -29,10 +29,9 @@ func TestTextFieldBindValue_Nil(t *testing.T) {
 
 func TestTextFieldBindValue_RequiredNil(t *testing.T) {
 	f := NewTextField("name", "NAME", true, "")
-	err := f.BindValue(nil)
-	// nil with default "" should bind to ""
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
+	// nil falls back to default "", which is blank and therefore fails Required
+	if err := f.BindValue(nil); err == nil {
+		t.Fatal("expected required error")
 	}
 }
 
