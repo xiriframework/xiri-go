@@ -458,7 +458,7 @@ dl.Columns(2)
 dl.Add("Name", "Device 1")
 dl.Add("Status", "Online").Color(core.ColorSuccess).Type("badge")
 dl.Add("IP", "192.168.1.1").Icon("lan")
-dl.Add("Notiz", "<b>"+html.EscapeString(d.Note)+"</b>").Type("html")  // rohes HTML: Nutzerdaten escapen
+dl.Add("Notiz", "<b>"+html.EscapeString(note)+"</b>").Type("html")  // rohes HTML: Nutzerdaten escapen (import "html")
 dl.Print(ctx)
 ```
 
