@@ -1,6 +1,8 @@
 package field
 
 import (
+	"slices"
+	"strings"
 	"testing"
 
 	"github.com/xiriframework/xiri-go/component/core"
@@ -202,5 +204,106 @@ func TestModelListField_UnsupportedDefaultFails(t *testing.T) {
 	f.Default = []int{9}
 	if err := f.BindValue(nil); err == nil {
 		t.Fatalf("expected error for []int default, got Value %v", f.Value)
+	}
+}
+
+// AllowedFunc ersetzt die Listenprüfung, sieht aber weder 0, den unveränderten Default noch Sub.
+func TestModelField_Validate_AllowedFunc(t *testing.T) {
+	var calls [][]int32
+	field := func(def int32) *ModelField {
+		f := loadedModelField(def, 1, 2)
+		f.URL = "/api/groups/search"
+		f.Sub = []int32{5}
+		f.SetAllowedFunc(func(ids []int32) bool {
+			calls = append(calls, ids)
+			return ids[0] == 7
+		})
+		return f
+	}
+	cases := []struct {
+		name  string
+		def   int32
+		value interface{}
+		ok    bool
+		calls int
+	}{
+		{"search hit outside list", 0, int32(7), true, 1},
+		{"hook replaces list", 0, int32(1), false, 1},
+		{"zero means none", 0, int32(0), true, 0},
+		{"unchanged default", 42, int32(42), true, 0},
+		{"sub", 0, int32(5), false, 0},
+		{"int64 value", 0, int64(7), true, 1},
+		{"int64 overflow", 0, int64(1 << 40), false, 0},
+		{"string rejected", 0, "7", false, 0},
+		{"float rejected", 0, float64(7), false, 0},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			calls = nil
+			err := field(c.def).Validate(c.value)
+			if (err == nil) != c.ok {
+				t.Errorf("Validate(%v): err = %v, want ok=%v", c.value, err, c.ok)
+			}
+			if len(calls) != c.calls {
+				t.Errorf("hook calls = %v, want %d", calls, c.calls)
+			}
+		})
+	}
+}
+
+// Sub ist eine harte Sperre, auch für den unveränderten Default.
+func TestModelField_Validate_SubBeatsDefault(t *testing.T) {
+	f := loadedModelField(3, 1, 3)
+	f.Sub = []int32{3}
+	if err := f.Validate(int32(3)); err == nil {
+		t.Error("default in Sub accepted")
+	}
+}
+
+func TestModelListField_Validate_AllowedFunc(t *testing.T) {
+	var calls [][]int32
+	f := NewModelListField("devices", "DEVICES", false, "device", []int32{3})
+	f.URL = "/api/devices"
+	f.Tree = true
+	f.SetAllowedFunc(func(ids []int32) bool {
+		calls = append(calls, ids)
+		for _, id := range ids {
+			if id != 7 && id != 8 {
+				return false
+			}
+		}
+		return true
+	})
+
+	calls = nil
+	if err := f.Validate(ModelListValue{3, 7, 8}); err != nil {
+		t.Errorf("[3,7,8] rejected: %v", err)
+	}
+	if len(calls) != 1 || !slices.Equal(calls[0], []int32{7, 8}) {
+		t.Errorf("calls = %v, want one call with [7 8]", calls)
+	}
+
+	err := f.Validate(ModelListValue{3, 7, 9})
+	if err == nil {
+		t.Fatal("[3,7,9] accepted")
+	}
+	if strings.Contains(err.Error(), "7") || strings.Contains(err.Error(), "9") {
+		t.Errorf("error names an id, but the hook does not say which: %v", err)
+	}
+
+	calls = nil
+	if err := f.Validate(ModelListValue{3}); err != nil || len(calls) != 0 {
+		t.Errorf("[3]: err = %v, calls = %v, want ok without call", err, calls)
+	}
+
+	calls = nil
+	if err := f.Validate(ModelListValue{0}); err == nil || len(calls) != 1 {
+		t.Errorf("[0]: err = %v, calls = %v, want rejection by hook", err, calls)
+	}
+
+	f.Sub = []int32{3}
+	calls = nil
+	if err := f.Validate(ModelListValue{3}); err == nil || len(calls) != 0 {
+		t.Errorf("default in Sub: err = %v, calls = %v, want rejection without call", err, calls)
 	}
 }

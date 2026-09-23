@@ -138,3 +138,27 @@ func TestLoadFilterDataDisabledModelFilterKeepsUnofferedDefault(t *testing.T) {
 		t.Errorf("device = %#v, want int32(42)", filters["device"])
 	}
 }
+
+// Treeselect-Filter (Server-Suche) ohne Context: nur AllowedFunc kann fremde IDs ablehnen.
+func TestLoadFilterDataTreeFilterAllowedFunc(t *testing.T) {
+	type row struct{}
+	dev := field.NewModelListField("devices", "Devices", false, "device", nil)
+	dev.URL = "/api/devices/tree"
+	dev.Tree = true
+	dev.SetAllowedFunc(func(ids []int32) bool {
+		for _, id := range ids {
+			if id != 1 {
+				return false
+			}
+		}
+		return true
+	})
+	tbl := table.NewBuilder[row]().SetFilter(group.NewFormGroup([]field.FormField{dev})).Build()
+
+	if _, err := tbl.LoadFilterData(newJSONContext(`{"devices": [1]}`)); err != nil {
+		t.Fatalf("own device rejected: %v", err)
+	}
+	if _, err := tbl.LoadFilterData(newJSONContext(`{"devices": [1, 999]}`)); err == nil {
+		t.Fatal("expected error for foreign device id 999")
+	}
+}

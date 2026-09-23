@@ -311,3 +311,40 @@ func TestBindReloadFromMap_ModelFieldForeignIDKeepsDefault(t *testing.T) {
 		t.Errorf("Value = %d, want default 1", g.Value)
 	}
 }
+
+// Dokumentiertes Muster: Loader + Server-Suche, abgesichert per AllowedFunc.
+func TestBindFromMap_ModelFieldAllowedFunc(t *testing.T) {
+	g := field.NewModelField("group_id", "GROUP", true, "group", 0)
+	g.SetLoaderFunc(func(*core.UiContext, string) ([]field.ModelOption, error) {
+		return []field.ModelOption{{ID: 1, Name: "Mine"}}, nil
+	})
+	g.URL = "/api/groups/search"
+	g.SetAllowedFunc(func(ids []int32) bool { return ids[0] == 1 || ids[0] == 2 })
+	fg, err := group.NewFormGroupWithContext([]field.FormField{g}, &core.UiContext{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := BindFromMap(map[string]interface{}{"group_id": float64(2)}, fg); err != nil {
+		t.Fatalf("search hit 2 rejected: %v", err)
+	}
+	err = BindFromMap(map[string]interface{}{"group_id": float64(999)}, fg)
+	var fe group.FieldErrors
+	if !errors.As(err, &fe) || fe["group_id"] == "" {
+		t.Fatalf("expected FieldErrors for group_id, got %T: %v", err, err)
+	}
+}
+
+func TestBindReloadFromMap_ModelFieldAllowedFunc(t *testing.T) {
+	g := field.NewModelField("group_id", "GROUP", false, "group", 1)
+	g.URL = "/api/groups/search"
+	g.SetAllowedFunc(func(ids []int32) bool { return false })
+	fg := group.NewFormGroup([]field.FormField{g})
+
+	if err := BindReloadFromMap(map[string]interface{}{"group_id": float64(999)}, fg); err != nil {
+		t.Fatalf("BindReloadFromMap: %v", err)
+	}
+	if g.Value != 1 {
+		t.Errorf("Value = %d, want default 1", g.Value)
+	}
+}

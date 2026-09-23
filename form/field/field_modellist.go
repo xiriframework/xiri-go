@@ -11,21 +11,22 @@ import (
 // This is used to select multiple objects from a list
 type ModelListField struct {
 	*BaseField
-	ModelType  string                 // Type of model (e.g., "device", "driver", "group")
-	URL        string                 // API endpoint to fetch options (for frontend)
-	List       []ModelOption          // Predefined list of options
-	Filter     map[string]interface{} // Additional filter parameters
-	Add        []ModelOption          // Additional options to add to the list
-	Sub        []int32                // Subtract/remove specific IDs from list
-	MinItems   *int                   // Minimum number of selections
-	MaxItems   *int                   // Maximum number of selections
-	Params     map[string]interface{} // Additional parameters for API call
-	LoaderFunc ModelLoaderFunc        // Function to load options from database
-	Options    []ModelOption          // Loaded options (populated by LoadOptions)
-	AllowEmpty bool                   // If true, empty selection is allowed
-	SingleOnly bool                   // If true, only one item can be selected
-	Tree       bool                   // If true, export type as "treeselect" instead of "multiselect"
-	Value      ModelListValue         // Parsed and validated value (type-safe access)
+	ModelType   string                 // Type of model (e.g., "device", "driver", "group")
+	URL         string                 // API endpoint to fetch options (for frontend)
+	List        []ModelOption          // Predefined list of options
+	Filter      map[string]interface{} // Additional filter parameters
+	Add         []ModelOption          // Additional options to add to the list
+	Sub         []int32                // Subtract/remove specific IDs from list
+	MinItems    *int                   // Minimum number of selections
+	MaxItems    *int                   // Maximum number of selections
+	Params      map[string]interface{} // Additional parameters for API call
+	LoaderFunc  ModelLoaderFunc        // Function to load options from database
+	AllowedFunc ModelAllowedFunc       // Authorizes chosen IDs server-side (needed with URL)
+	Options     []ModelOption          // Loaded options (populated by LoadOptions)
+	AllowEmpty  bool                   // If true, empty selection is allowed
+	SingleOnly  bool                   // If true, only one item can be selected
+	Tree        bool                   // If true, export type as "treeselect" instead of "multiselect"
+	Value       ModelListValue         // Parsed and validated value (type-safe access)
 }
 
 // LoadOptions implements FieldOptionsLoader interface
@@ -48,6 +49,12 @@ func (f *ModelListField) LoadOptions(ctx *core.UiContext) error {
 // SetLoaderFunc sets the function used to load options from database
 func (f *ModelListField) SetLoaderFunc(loader ModelLoaderFunc) {
 	f.LoaderFunc = loader
+}
+
+// SetAllowedFunc sets the server-side authorization for chosen IDs (see ModelAllowedFunc).
+// It is called once per Validate with all IDs that are neither in Sub nor in the unchanged default.
+func (f *ModelListField) SetAllowedFunc(allowed ModelAllowedFunc) {
+	f.AllowedFunc = allowed
 }
 
 func (f *ModelListField) Validate(value interface{}) error {
@@ -80,11 +87,22 @@ func (f *ModelListField) Validate(value interface{}) error {
 	}
 
 	def, _ := parseModelListValue(nil, f.GetDefault())
+	var check []int32
 	for _, id := range list {
-		if !slices.Contains(def, id) &&
-			!modelIDAllowed(f.URL, f.LoaderFunc != nil, f.Options, f.List, f.Sub, int64(id)) {
+		if slices.Contains(f.Sub, id) {
 			return fmt.Errorf("modellist field %s: id %d is not an allowed option", f.ID, id)
 		}
+		if slices.Contains(def, id) {
+			continue
+		}
+		if f.AllowedFunc == nil && !modelIDAllowed(f.URL, f.LoaderFunc != nil, f.Options, f.List, id) {
+			return fmt.Errorf("modellist field %s: id %d is not an allowed option", f.ID, id)
+		}
+		check = append(check, id)
+	}
+	// The hook only says yes or no for the whole batch, so the message names no ID.
+	if f.AllowedFunc != nil && len(check) > 0 && !f.AllowedFunc(check) {
+		return fmt.Errorf("modellist field %s: contains an id that is not an allowed option", f.ID)
 	}
 
 	return nil

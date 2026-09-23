@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/xiriframework/xiri-go/component/core"
 )
@@ -16,6 +17,11 @@ type ModelOption struct {
 // ModelLoaderFunc is a function type for loading model options.
 // The loader implementation is project-specific (e.g., database-backed).
 type ModelLoaderFunc func(ctx *core.UiContext, modelType string) ([]ModelOption, error)
+
+// ModelAllowedFunc authorizes model IDs server-side and replaces the check against the offered
+// options. It receives only IDs that are not in Sub, not the unchanged default and (ModelField
+// only) not 0. Return false to reject; log own errors, the validation message goes to the client.
+type ModelAllowedFunc func(ids []int32) bool
 
 // ModelField represents a single model/object selection form field
 // This is used to select a single object from a list (dropdown/autocomplete)
@@ -32,6 +38,7 @@ type ModelField struct {
 	AllowSearch bool                   // If true, search/autocomplete is enabled
 	Params      map[string]interface{} // Additional parameters for API call
 	LoaderFunc  ModelLoaderFunc        // Function to load options from database
+	AllowedFunc ModelAllowedFunc       // Authorizes chosen IDs server-side (needed with URL)
 	Options     []ModelOption          // Loaded options (populated by LoadOptions)
 	Value       int32                  // Parsed and validated value (type-safe access - always has value)
 }
@@ -58,6 +65,11 @@ func (f *ModelField) SetLoaderFunc(loader ModelLoaderFunc) {
 	f.LoaderFunc = loader
 }
 
+// SetAllowedFunc sets the server-side authorization for chosen IDs (see ModelAllowedFunc)
+func (f *ModelField) SetAllowedFunc(allowed ModelAllowedFunc) {
+	f.AllowedFunc = allowed
+}
+
 func (f *ModelField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
@@ -66,35 +78,44 @@ func (f *ModelField) Validate(value interface{}) error {
 		return nil
 	}
 
-	var id int64
-	switch v := value.(type) {
-	case int:
-		id = int64(v)
-	case int32:
-		id = int64(v)
-	case int64:
-		id = v
+	switch value.(type) {
+	case int, int32, int64:
 	default:
 		return fmt.Errorf("invalid model value type for %s, expected int", f.ID)
 	}
+	id, err := toInt32(value)
+	if err != nil {
+		return fmt.Errorf("model field %s: %w", f.ID, err)
+	}
+	if id == 0 {
+		return nil
+	}
+	notAllowed := fmt.Errorf("model field %s: id %d is not an allowed option", f.ID, id)
+	if slices.Contains(f.Sub, id) {
+		return notAllowed
+	}
 	// The default may be set directly as int/int64 instead of via the constructor.
-	if def, err := toInt32(f.GetDefault()); id != 0 && (err != nil || id != int64(def)) &&
-		!modelIDAllowed(f.URL, f.LoaderFunc != nil, f.Options, f.List, f.Sub, id) {
-		return fmt.Errorf("model field %s: id %d is not an allowed option", f.ID, id)
+	if def, err := toInt32(f.GetDefault()); err == nil && id == def {
+		return nil
+	}
+	if f.AllowedFunc != nil {
+		if !f.AllowedFunc([]int32{id}) {
+			return notAllowed
+		}
+		return nil
+	}
+	if !modelIDAllowed(f.URL, f.LoaderFunc != nil, f.Options, f.List, id) {
+		return notAllowed
 	}
 	return nil
 }
 
 // modelIDAllowed reports whether id is among the options the frontend was offered: the loaded
-// Options, else List, minus Sub - the same set ExportForFrontend sends. With a URL the list is only
-// the base for server-side search, and without loader and List the set is unknown; then only Sub
-// is enforced and the app must authorize the ID itself. With a LoaderFunc an empty set allows nothing.
-func modelIDAllowed(url string, hasLoader bool, options, list []ModelOption, sub []int32, id int64) bool {
-	for _, s := range sub {
-		if int64(s) == id {
-			return false
-		}
-	}
+// Options, else List - the set ExportForFrontend sends (Sub is checked by the callers). With a URL
+// the list is only the base for server-side search, and without loader and List the set is unknown;
+// then everything passes and the app must authorize the ID itself (AllowedFunc). With a LoaderFunc
+// an empty set allows nothing.
+func modelIDAllowed(url string, hasLoader bool, options, list []ModelOption, id int32) bool {
 	if url != "" {
 		return true
 	}
@@ -105,7 +126,7 @@ func modelIDAllowed(url string, hasLoader bool, options, list []ModelOption, sub
 		return !hasLoader
 	}
 	for _, o := range options {
-		if int64(o.ID) == id {
+		if o.ID == id {
 			return true
 		}
 	}
