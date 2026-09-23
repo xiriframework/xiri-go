@@ -8,6 +8,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ## [Unreleased]
 ### Fixed
 
+- **`GeoformField`/`TimeLimitField` prüfen Zahlen-Strings vollständig.** `Validate` las per
+  `fmt.Sscanf` nur den Anfang: `"45 ,0)) UNION…"`, `"NaN"` oder `"7abc"` gingen durch und kamen
+  unverändert bei der App an. Jetzt müssen Koordinaten und Radius ganze, endliche Dezimalzahlen sein,
+  Stunden/Minuten 1–2 Ziffern. Timelimit prüft das auch bei `check: false`. **Verhaltensänderung:**
+  Koordinaten als String mit Leerzeichen oder Hex werden abgelehnt; ein Timelimit-Wert der App
+  außerhalb von 1–2 Ziffern blockiert das Speichern jetzt auch bei `check: false`.
+
 - **`ModelField`/`ModelListField` akzeptieren nur angebotene IDs.** Bisher prüfte `Validate` nur
   den Typ; wer am Frontend vorbei postete (curl, MCP `act`), konnte jede Datensatz-ID binden,
   auch fremde (IDOR), in Formularen wie in Tabellenfiltern. Jetzt muss die ID in `Options`
