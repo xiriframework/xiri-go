@@ -757,6 +757,13 @@ default:
 }
 ```
 
+**Zahlen im Export:**
+- Integer, Float, Distance, Pressure und Speed werden automatisch als Zahl exportiert.
+  - CSV: Die Datei beginnt mit der UTF-8-BOM. Das Dezimalzeichen folgt dem Locale (`de` → `1234,57`), ohne Tausendertrenner und ohne Einheit.
+  - Excel: Die Werte sind numerische Zellen mit dem Format `#,##0` bzw. `#,##0.00`.
+- Eigene CSV-/Excel-Formatter geben für eine Zahlenzelle `table.ExportNumber{Value: v, Decimals: 2}` oder eine native Zahl zurück. Ein String wird als Text exportiert. Text, der mit `=`, `+`, `-` oder `@` beginnt, bekommt dabei ein vorangestelltes `'` als Formel-Schutz.
+- Text2-Felder und die Mehrfachwerte-Felder (IntNField, FloatNField …) bleiben Text. Datum und DateTime werden als Text exportiert (`2006-01-02` bzw. `2006-01-02 15:04:05`).
+
 Für Exports macht man typischerweise **keine** Pagination (alle Zeilen) — die App muss selbst entscheiden, ob das erlaubt ist oder ob ein Limit nötig ist.
 
 ## Eigene Renderer — `GetFieldMetas()`

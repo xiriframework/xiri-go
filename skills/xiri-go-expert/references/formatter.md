@@ -94,6 +94,9 @@ Für Fälle, wo du eine Locale hast, aber keinen `*UiContext` (z.B. in Tools ode
 formatter.FormatNumberLocale(value float64, decimals int, loc locale.Locale) string
   // z.B. FormatNumberLocale(3.14159, 3, locale.De) → "3,142"
 
+formatter.UsesCommaDecimal(loc locale.Locale) bool
+  // true für Locales mit Dezimalkomma (de, fr, …), false für en, ja, zh, ar
+
 formatter.FormatDistanceLocaleWithDecimals(
     km        float64,
     distUnit  distance.Distance,  // Kilometer/Miles/Seemiles
@@ -158,7 +161,8 @@ Liefert einen lesbaren String, der die Regel zusammenfasst (z.B. "Mo-Fr 08:00-17
 | PageHeader-Subtitle mit Datum                   | `FormatDate(someTime, uc)`                     |
 | Stat-Value mit großer Zahl                      | `FormatBigNumber(v, uc)` → "1,2M"              |
 | Card-Content-Line mit Distanz                   | `FormatDistanceLocaleWithDecimals(km, …)`      |
-| Export-CSV mit Zahlen (keine `*UiContext` da)   | `FormatNumberLocale(v, 2, locale.De)`          |
+| Zahl in Table-CSV/Excel-Export (eigener Formatter) | `table.ExportNumber{Value: v, Decimals: 2}` — kein String |
+| Formatierte Zahl ohne `*UiContext` (Tools, Reports) | `FormatNumberLocale(v, 2, locale.De)`        |
 | Zeitdauer (Dauer einer Tour, Downtime)          | `FormatTimeLengthHM(seconds, uc)`              |
 | Unix-Timestamp von DB → Display                 | `FormatTimestampDate(ts, uc)`                  |
 | `time.Time` von GORM → Display                  | `FormatDateTime(t, uc)`                        |

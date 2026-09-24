@@ -22,7 +22,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   `FormGroup.WrapFieldErrors`.
 - **`table.ExportNumber{Value, Decimals}`** für Zahlenzellen in CSV/Excel. Eigene CSV-/Excel-Formatter
   können `ExportNumber` oder eine native Zahl (`int`, `int64`, `float64` …) liefern, dann wird
-  die Zelle als Zahl ausgegeben. Damit lässt sich z. B. eine `TextField`-Spalte mit der Anzeige `€ 1.234,56` als Zahl exportieren.
+  die Zelle als Zahl ausgegeben. Damit lässt sich z. B. eine `TextField`-Spalte mit der Anzeige
+  `€ 1.234,56` als Zahl exportieren.
+- **`formatter.UsesCommaDecimal(loc)`** ist jetzt öffentlich (bisher paketintern).
 
 ### Changed
 
@@ -32,10 +34,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
     Tausendertrenner und nie in Exponentialschreibweise.
   - Excel: Die Werte sind numerische Zellen mit dem Format `#,##0` bzw. `#,##0.00`.
   - Negative Zahlen bekommen kein `'` mehr. Der Formel-Schutz für Text bleibt.
-  - Ist der Wert `nil`, bleibt die Zelle leer.
-  - Die CSV beginnt jetzt mit der UTF-8-BOM.
+  - Ist der Wert `nil`, bleibt die Zelle leer. `NaN`/`±Inf` werden als Text mit Formel-Schutz
+    ausgegeben. Integer außerhalb ±2^53 bleiben exakt (natives `int64`, Excel ohne Zahlenformat).
+  - Die CSV beginnt jetzt mit der UTF-8-BOM, sofern sie nicht leer ist.
   - Wer maschinell einliest und einen Punkt erwartet, liefert per `WithCSVFormatter` einen String.
-
 - **Banner nennt die Feldbeschriftung statt der ID**, sobald der `UiContext` eine `TranslateFunc`
   hat: `err.Error()` lautet dann `Ort: Höchstens 50 Zeichen` statt `ort: …`. Der konkrete
   Fehlertyp ist in diesem Fall ein Wrapper um `group.FieldErrors`; `errors.As(err, &fe)` und
