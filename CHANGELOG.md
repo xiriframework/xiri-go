@@ -20,8 +20,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   `BindAndValidate`/`BindFromMap`, `ParseValues(Sparse)`, `ValidateValues`,
   `ParseAndValidate(Sparse)` und damit auch in Tabellenfiltern. Neu: `FormGroup.FieldErrorMessage`,
   `FormGroup.WrapFieldErrors`.
+- **`table.ExportNumber{Value, Decimals}`** für Zahlenzellen in CSV/Excel. Eigene CSV-/Excel-Formatter
+  können `ExportNumber` oder eine native Zahl (`int`, `int64`, `float64` …) liefern, dann wird
+  die Zelle als Zahl ausgegeben. Damit lässt sich z. B. eine `TextField`-Spalte mit der Anzeige `€ 1.234,56` als Zahl exportieren.
 
 ### Changed
+
+- **CSV-/Excel-Export liefert Excel-taugliche Zahlen.** Integer, Float, Distance, Pressure und
+  Speed kommen als `ExportNumber` aus dem Formatter.
+  - CSV: Das Dezimalzeichen folgt dem Locale (`de`: `1234,57`, `en`: `1234.57`), ohne
+    Tausendertrenner und nie in Exponentialschreibweise.
+  - Excel: Die Werte sind numerische Zellen mit dem Format `#,##0` bzw. `#,##0.00`.
+  - Negative Zahlen bekommen kein `'` mehr. Der Formel-Schutz für Text bleibt.
+  - Ist der Wert `nil`, bleibt die Zelle leer.
+  - Die CSV beginnt jetzt mit der UTF-8-BOM.
+  - Wer maschinell einliest und einen Punkt erwartet, liefert per `WithCSVFormatter` einen String.
 
 - **Banner nennt die Feldbeschriftung statt der ID**, sobald der `UiContext` eine `TranslateFunc`
   hat: `err.Error()` lautet dann `Ort: Höchstens 50 Zeichen` statt `ort: …`. Der konkrete

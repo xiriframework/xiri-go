@@ -132,6 +132,8 @@ b.TextField("name", "device.name", accessor).
 b.TextField(...).WithWebFormatter(webFmt).WithCSVFormatter(csvFmt).WithExcelFormatter(excelFmt)
 ```
 
+CSV/Excel: Liefert ein Formatter einen String, wird der Wert als Text exportiert, mit Formel-Schutz über ein vorangestelltes `'`. Liefert er `table.ExportNumber{Value: 1234.56, Decimals: 2}` oder eine native Zahl, entsteht eine Zahl: im CSV mit dem Dezimalzeichen des Locale, im Excel als numerische Zelle, bei `ExportNumber` mit dem Format `#,##0.00`. Die eingebauten Zahlentypen liefern bereits `ExportNumber`.
+
 ## Inline Editing
 
 Felder können direkt in der Tabelle editiert werden. Das Frontend sendet `POST { id, field, value }` an die `editUrl`.

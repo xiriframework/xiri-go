@@ -28,7 +28,13 @@ func createIntegerFormatter() OutputFormatter {
 		if output == OutputWeb || output == OutputPDF {
 			return formatter.FormatInteger(num, ctx)
 		}
-		return fmt.Sprint(num)
+		if value == nil {
+			return nil
+		}
+		if num > 1<<53 || num < -(1<<53) {
+			return num // not exact as float64: native int64 keeps every digit (numeric cell, no number format)
+		}
+		return ExportNumber{Value: float64(num)}
 	})
 }
 
@@ -38,8 +44,7 @@ func createFloatFormatter(decimals int) OutputFormatter {
 		if output == OutputWeb || output == OutputPDF {
 			return formatter.FormatNumberLocale(num, decimals, ctx.SafeLocale())
 		}
-		format := "%." + strconv.Itoa(decimals) + "f"
-		return fmt.Sprintf(format, num)
+		return exportNumber(value, num, decimals)
 	})
 }
 
@@ -825,9 +830,7 @@ func createDistanceFormatter(decimals int) OutputFormatter {
 		if output == OutputWeb || output == OutputPDF {
 			return formatter.FormatDistanceLocaleWithDecimals(km, distanceUnit, ctx.SafeLocale(), decimals)
 		}
-		converted := convertDistanceValue(km, distanceUnit)
-		format := "%." + strconv.Itoa(decimals) + "f"
-		return fmt.Sprintf(format, converted)
+		return exportNumber(value, convertDistanceValue(km, distanceUnit), decimals)
 	})
 }
 
@@ -847,9 +850,7 @@ func createPressureFormatter(decimals int) OutputFormatter {
 			}
 			return formatter.FormatNumberLocale(converted, decimals, ctx.SafeLocale()) + unit
 		}
-		converted := convertPressureValue(bar, pressureUnit)
-		format := "%." + strconv.Itoa(decimals) + "f"
-		return fmt.Sprintf(format, converted)
+		return exportNumber(value, convertPressureValue(bar, pressureUnit), decimals)
 	})
 }
 
@@ -869,15 +870,21 @@ func createSpeedFormatter(decimals int) OutputFormatter {
 			}
 			return formatter.FormatNumberLocale(converted, decimals, ctx.SafeLocale()) + unit
 		}
-		converted := convertDistanceValue(kmh, distanceUnit)
-		format := "%." + strconv.Itoa(decimals) + "f"
-		return fmt.Sprintf(format, converted)
+		return exportNumber(value, convertDistanceValue(kmh, distanceUnit), decimals)
 	})
 }
 
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+// exportNumber wraps a converted numeric value for CSV/Excel; nil stays an empty cell.
+func exportNumber(raw any, v float64, decimals int) any {
+	if raw == nil {
+		return nil
+	}
+	return ExportNumber{Value: v, Decimals: decimals}
+}
 
 // convertDistanceValue converts km to the target distance unit
 func convertDistanceValue(km float64, unit distance.Distance) float64 {

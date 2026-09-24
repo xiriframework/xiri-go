@@ -8,10 +8,10 @@ import (
 	"github.com/xiriframework/xiri-go/types/pressure"
 )
 
-// usesCommaDecimal returns true if the locale uses comma as decimal separator
+// UsesCommaDecimal returns true if the locale uses comma as decimal separator
 // and dot as thousands separator (continental European convention).
 // Returns false for locales using dot as decimal separator (English, Japanese, Chinese, Arabic).
-func usesCommaDecimal(loc locale.Locale) bool {
+func UsesCommaDecimal(loc locale.Locale) bool {
 	switch loc {
 	case locale.EnGB, locale.EnUS, locale.Ja, locale.ZhCN, locale.ArAE:
 		return false
@@ -27,7 +27,7 @@ func FormatNumberLocale(value float64, decimals int, loc locale.Locale) string {
 	format := fmt.Sprintf("%%.%df", decimals)
 	str := fmt.Sprintf(format, value)
 
-	if usesCommaDecimal(loc) {
+	if UsesCommaDecimal(loc) {
 		return addThousandSeparatorsLocale(str, '.', ',')
 	}
 

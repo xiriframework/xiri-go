@@ -21,7 +21,7 @@ func FormatDouble2(value float64, ctx *core.UiContext) string {
 func FormatInteger(value int64, ctx *core.UiContext) string {
 	// Format the int64 directly (no float64 detour) to keep full precision above 2^53.
 	str := strconv.FormatInt(value, 10)
-	if usesCommaDecimal(ctx.SafeLocale()) {
+	if UsesCommaDecimal(ctx.SafeLocale()) {
 		return addThousandSeparatorsLocale(str, '.', ',')
 	}
 	return addThousandSeparatorsLocale(str, ',', '.')

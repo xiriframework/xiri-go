@@ -4,8 +4,12 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"math"
+	"strconv"
+	"strings"
 
 	"github.com/xiriframework/xiri-go/component/core"
+	"github.com/xiriframework/xiri-go/formatter"
 	"github.com/xiriframework/xiri-go/response"
 	"github.com/xuri/excelize/v2"
 )
@@ -345,6 +349,47 @@ func sanitizeExportValue(s string) string {
 	return s
 }
 
+// csvNumber renders ExportNumber and native numbers without exponent or thousands separator,
+// with a decimal comma if requested. Numbers are not formula-sanitized: "-12,50" must stay a number.
+func csvNumber(value any, commaDecimal bool) (string, bool) {
+	if nonFinite(value) {
+		return "", false
+	}
+	var s string
+	switch v := value.(type) {
+	case ExportNumber:
+		s = strconv.FormatFloat(v.Value, 'f', v.Decimals, 64)
+	case float64:
+		s = strconv.FormatFloat(v, 'f', -1, 64)
+	case float32:
+		s = strconv.FormatFloat(float64(v), 'f', -1, 32)
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		s = fmt.Sprint(v)
+	default:
+		return "", false
+	}
+	if commaDecimal {
+		s = strings.Replace(s, ".", ",", 1)
+	}
+	return s, true
+}
+
+// nonFinite reports NaN/±Inf numbers; they are exported as (formula-sanitized) text.
+func nonFinite(value any) bool {
+	var f float64
+	switch v := value.(type) {
+	case ExportNumber:
+		f = v.Value
+	case float64:
+		f = v
+	case float32:
+		f = float64(v)
+	default:
+		return false
+	}
+	return math.IsNaN(f) || math.IsInf(f, 0)
+}
+
 // generateCSV creates a CSV string from the table data.
 // Uses semicolon (;) delimiter for Excel compatibility.
 // Only includes fields that are marked as CSV-enabled.
@@ -356,7 +401,9 @@ func (td *TableDataResponse) generateCSV(ctx *core.UiContext) string {
 	data, fieldsToUse := expandNFieldColumns(td.data, fieldsToUse)
 
 	buf := new(bytes.Buffer)
+	buf.WriteString("\xEF\xBB\xBF") // UTF-8 BOM: Excel otherwise opens the file as ANSI
 	writer := csv.NewWriter(buf)
+	commaDecimal := formatter.UsesCommaDecimal(ctx.SafeLocale())
 	writer.Comma = ';' // Semicolon separator for Excel compatibility (European locale)
 
 	// If no data, return empty CSV
@@ -416,10 +463,16 @@ func (td *TableDataResponse) generateCSV(ctx *core.UiContext) string {
 			// Handle array values (e.g., [display, value] from formatters)
 			if arr, ok := value.([]interface{}); ok && len(arr) > 0 {
 				// For CSV, use the display value (first element)
-				row[i] = sanitizeExportValue(fmt.Sprintf("%v", arr[0]))
-			} else {
-				row[i] = sanitizeExportValue(fmt.Sprintf("%v", value))
+				value = arr[0]
 			}
+			if num, ok := csvNumber(value, commaDecimal); ok {
+				row[i] = num
+				continue
+			}
+			if num, ok := value.(ExportNumber); ok { // NaN/±Inf
+				value = num.Value
+			}
+			row[i] = sanitizeExportValue(fmt.Sprintf("%v", value))
 		}
 
 		if err := writer.Write(row); err != nil {
@@ -508,6 +561,7 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 	}
 
 	// Write data rows
+	numStyles := map[int]int{} // decimals -> style ID
 	for rowIdx, rowData := range data {
 		excelRow := rowIdx + 2 // Excel rows are 1-indexed, +1 for header
 		for colIdx, fieldID := range fieldIDsOrdered {
@@ -526,6 +580,35 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 			if arr, ok := value.([]interface{}); ok && len(arr) > 0 {
 				// For Excel, use the display value (first element)
 				value = arr[0]
+			}
+
+			if nonFinite(value) {
+				if num, ok := value.(ExportNumber); ok {
+					value = num.Value
+				}
+				value = fmt.Sprint(value)
+			}
+
+			// Numbers become numeric cells; ExportNumber also gets a number format
+			if num, ok := value.(ExportNumber); ok {
+				if err := f.SetCellFloat(sheetName, cellName, num.Value, -1, 64); err != nil {
+					return nil, fmt.Errorf("error writing data cell: %w", err)
+				}
+				style, ok := numStyles[num.Decimals]
+				if !ok {
+					numFmt := "#,##0"
+					if num.Decimals > 0 {
+						numFmt += "." + strings.Repeat("0", num.Decimals)
+					}
+					if style, err = f.NewStyle(&excelize.Style{CustomNumFmt: &numFmt}); err != nil {
+						return nil, fmt.Errorf("error creating number style: %w", err)
+					}
+					numStyles[num.Decimals] = style
+				}
+				if err := f.SetCellStyle(sheetName, cellName, cellName, style); err != nil {
+					return nil, fmt.Errorf("error styling data cell: %w", err)
+				}
+				continue
 			}
 
 			// Sanitize string values to prevent formula injection
@@ -567,7 +650,10 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 			}
 
 			// Convert to string and measure
-			valueStr := fmt.Sprintf("%v", value)
+			valueStr, isNum := csvNumber(value, false)
+			if !isNum {
+				valueStr = fmt.Sprintf("%v", value)
+			}
 			valueWidth := float64(len(valueStr)) * 1.2
 			if valueWidth > maxWidth {
 				maxWidth = valueWidth
