@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.7.0]
+
 ### Added
 
 - **Übersetzbare Prüffehler.** Benutzerrelevante Feldfehler sind jetzt `*field.ValidationError`
