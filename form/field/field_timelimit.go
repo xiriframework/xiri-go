@@ -51,7 +51,7 @@ func NewTimeLimitField(id, name string, required bool) *TimeLimitField {
 func (f *TimeLimitField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("timelimit field %s is required", f.ID)
+			return invalid("required", nil, "timelimit field %s is required", f.ID)
 		}
 		return nil
 	}

@@ -60,7 +60,7 @@ func (f *ModelListField) SetAllowedFunc(allowed ModelAllowedFunc) {
 func (f *ModelListField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required && !f.AllowEmpty {
-			return fmt.Errorf("modellist field %s is required", f.ID)
+			return invalid("required", nil, "modellist field %s is required", f.ID)
 		}
 		return nil
 	}
@@ -71,38 +71,38 @@ func (f *ModelListField) Validate(value interface{}) error {
 	}
 
 	if !f.AllowEmpty && len(list) == 0 && f.Required {
-		return fmt.Errorf("modellist %s cannot be empty", f.ID)
+		return invalid("required", nil, "modellist %s cannot be empty", f.ID)
 	}
 
 	if f.MinItems != nil && len(list) < *f.MinItems {
-		return fmt.Errorf("modellist %s must have at least %d items", f.ID, *f.MinItems)
+		return invalid("min_items", map[string]any{"min": *f.MinItems}, "modellist %s must have at least %d items", f.ID, *f.MinItems)
 	}
 
 	if f.MaxItems != nil && len(list) > *f.MaxItems {
-		return fmt.Errorf("modellist %s must have at most %d items", f.ID, *f.MaxItems)
+		return invalid("max_items", map[string]any{"max": *f.MaxItems}, "modellist %s must have at most %d items", f.ID, *f.MaxItems)
 	}
 
 	if f.SingleOnly && len(list) > 1 {
-		return fmt.Errorf("modellist %s can only have one item", f.ID)
+		return invalid("max_items", map[string]any{"max": 1}, "modellist %s can only have one item", f.ID)
 	}
 
 	def, _ := parseModelListValue(nil, f.GetDefault())
 	var check []int32
 	for _, id := range list {
 		if slices.Contains(f.Sub, id) {
-			return fmt.Errorf("modellist field %s: id %d is not an allowed option", f.ID, id)
+			return invalid("not_allowed", nil, "modellist field %s: id %d is not an allowed option", f.ID, id)
 		}
 		if slices.Contains(def, id) {
 			continue
 		}
 		if f.AllowedFunc == nil && !modelIDAllowed(f.URL, f.LoaderFunc != nil, f.Options, f.List, id) {
-			return fmt.Errorf("modellist field %s: id %d is not an allowed option", f.ID, id)
+			return invalid("not_allowed", nil, "modellist field %s: id %d is not an allowed option", f.ID, id)
 		}
 		check = append(check, id)
 	}
 	// The hook only says yes or no for the whole batch, so the message names no ID.
 	if f.AllowedFunc != nil && len(check) > 0 && !f.AllowedFunc(check) {
-		return fmt.Errorf("modellist field %s: contains an id that is not an allowed option", f.ID)
+		return invalid("not_allowed", nil, "modellist field %s: contains an id that is not an allowed option", f.ID)
 	}
 
 	return nil

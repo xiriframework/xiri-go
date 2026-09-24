@@ -42,7 +42,7 @@ func (f *SelectField) Validate(value interface{}) error {
 	if f.Multiple {
 		if value == nil {
 			if f.Required {
-				return fmt.Errorf("select field %s is required", f.ID)
+				return invalid("required", nil, "select field %s is required", f.ID)
 			}
 			return nil
 		}
@@ -51,11 +51,11 @@ func (f *SelectField) Validate(value interface{}) error {
 			return fmt.Errorf("invalid select multi value type for %s", f.ID)
 		}
 		if f.Required && len(list) == 0 {
-			return fmt.Errorf("select field %s is required", f.ID)
+			return invalid("required", nil, "select field %s is required", f.ID)
 		}
 		for _, id := range list {
 			if !f.optionExists(id) {
-				return fmt.Errorf("select field %s has invalid value %d", f.ID, id)
+				return invalid("not_allowed", nil, "select field %s has invalid value %d", f.ID, id)
 			}
 		}
 		return nil
@@ -63,7 +63,7 @@ func (f *SelectField) Validate(value interface{}) error {
 
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("select field %s is required", f.ID)
+			return invalid("required", nil, "select field %s is required", f.ID)
 		}
 		return nil
 	}
@@ -75,7 +75,7 @@ func (f *SelectField) Validate(value interface{}) error {
 		}
 	}
 
-	return fmt.Errorf("select field %s has invalid value", f.ID)
+	return invalid("not_allowed", nil, "select field %s has invalid value", f.ID)
 }
 
 func (f *SelectField) Parse(raw interface{}) (interface{}, error) {
@@ -86,7 +86,7 @@ func (f *SelectField) Parse(raw interface{}) (interface{}, error) {
 		}
 		for _, id := range parsed {
 			if !f.optionExists(id) {
-				return nil, fmt.Errorf("select field %s has no matching option for value %v", f.ID, id)
+				return nil, invalid("not_allowed", nil, "select field %s has no matching option for value %v", f.ID, id)
 			}
 		}
 		return parsed, nil
@@ -130,7 +130,7 @@ func (f *SelectField) Parse(raw interface{}) (interface{}, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("select field %s has no matching option for value %v", f.ID, raw)
+	return nil, invalid("not_allowed", nil, "select field %s has no matching option for value %v", f.ID, raw)
 }
 
 // BindValue parses, validates, and stores the value in the field

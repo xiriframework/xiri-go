@@ -40,7 +40,7 @@ func (f *TextField) Validate(value interface{}) error {
 
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("text field %s is required", f.ID)
+			return invalid("required", nil, "text field %s is required", f.ID)
 		}
 		return nil
 	}
@@ -51,19 +51,19 @@ func (f *TextField) Validate(value interface{}) error {
 	}
 
 	if f.Required && strings.TrimSpace(str) == "" {
-		return fmt.Errorf("text field %s is required", f.ID)
+		return invalid("required", nil, "text field %s is required", f.ID)
 	}
 
 	if f.MinLength > 0 && len(str) < f.MinLength {
-		return fmt.Errorf("text field %s must be at least %d characters", f.ID, f.MinLength)
+		return invalid("min_length", map[string]any{"min": f.MinLength}, "text field %s must be at least %d characters", f.ID, f.MinLength)
 	}
 
 	if f.MaxLength > 0 && len(str) > f.MaxLength {
-		return fmt.Errorf("text field %s must be at most %d characters", f.ID, f.MaxLength)
+		return invalid("max_length", map[string]any{"max": f.MaxLength}, "text field %s must be at most %d characters", f.ID, f.MaxLength)
 	}
 
 	if re != nil && str != "" && !re.MatchString(str) {
-		return fmt.Errorf("text field %s has invalid format", f.ID)
+		return invalid("pattern", nil, "text field %s has invalid format", f.ID)
 	}
 
 	return nil

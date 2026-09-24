@@ -7,6 +7,7 @@ import (
 	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/form/field"
 	"github.com/xiriframework/xiri-go/form/group"
+	"github.com/xiriframework/xiri-go/response"
 )
 
 func TestBindFromMap_Basic(t *testing.T) {
@@ -414,5 +415,33 @@ func TestBindFromMap_MissingDefaultsStillBind(t *testing.T) {
 	}
 	if n.Value == nil || *n.Value != 7 || m.Value != 42 || txt.Value == nil || *txt.Value != "x" || len(chips.Value) != 1 {
 		t.Errorf("defaults not bound: n=%v m=%v t=%v c=%v", n.Value, m.Value, txt.Value, chips.Value)
+	}
+}
+
+func TestBindFromMap_TranslatesWrappedValidationError(t *testing.T) {
+	ort := field.NewTextFieldWithLength("ort", "ORT", false, "", 0, 5)
+	texts := map[string]string{"ORT": "Ort", "validation.max_length": "Höchstens {max} Zeichen"}
+	ctx := &core.UiContext{Translate: func(k string) string {
+		if t, ok := texts[k]; ok {
+			return t
+		}
+		return k
+	}}
+	fg, err := group.NewFormGroupWithContext([]field.FormField{ort}, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = BindFromMap(map[string]interface{}{"ort": "Wien-Floridsdorf"}, fg)
+
+	var fe group.FieldErrors
+	if !errors.As(err, &fe) || fe["ort"] != "Höchstens 5 Zeichen" {
+		t.Fatalf("expected translated field error, got %T: %v", err, err)
+	}
+	if err.Error() != "Ort: Höchstens 5 Zeichen" {
+		t.Fatalf("banner: %q", err.Error())
+	}
+	if resp := response.NewErrorResponseFromError(err); resp.Fields["ort"] != "Höchstens 5 Zeichen" {
+		t.Fatalf("response fields: %v", resp.Fields)
 	}
 }

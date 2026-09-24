@@ -15,7 +15,7 @@ type BoolField struct {
 func (f *BoolField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("bool field %s is required", f.ID)
+			return invalid("required", nil, "bool field %s is required", f.ID)
 		}
 		return nil
 	}

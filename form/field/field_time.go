@@ -24,7 +24,7 @@ type TimeField struct {
 func (f *TimeField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("time field %s is required", f.ID)
+			return invalid("required", nil, "time field %s is required", f.ID)
 		}
 		return nil
 	}
@@ -43,24 +43,24 @@ func (f *TimeField) Validate(value interface{}) error {
 	}
 
 	if t.IsZero() {
-		return fmt.Errorf("time %s cannot be zero", f.ID)
+		return invalid("required", nil, "time %s cannot be zero", f.ID)
 	}
 
 	now := time.Now()
 	if !f.AllowPast && t.Before(now) {
-		return fmt.Errorf("time %s cannot be in the past", f.ID)
+		return invalid("not_past", nil, "time %s cannot be in the past", f.ID)
 	}
 
 	if !f.AllowFuture && t.After(now) {
-		return fmt.Errorf("time %s cannot be in the future", f.ID)
+		return invalid("not_future", nil, "time %s cannot be in the future", f.ID)
 	}
 
 	if f.MinDate != nil && t.Before(*f.MinDate) {
-		return fmt.Errorf("time %s is before minimum date", f.ID)
+		return invalid("min_date", nil, "time %s is before minimum date", f.ID)
 	}
 
 	if f.MaxDate != nil && t.After(*f.MaxDate) {
-		return fmt.Errorf("time %s is after maximum date", f.ID)
+		return invalid("max_date", nil, "time %s is after maximum date", f.ID)
 	}
 
 	return nil

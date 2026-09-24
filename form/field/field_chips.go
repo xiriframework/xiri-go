@@ -49,7 +49,7 @@ func (f *ChipsField) optionExists(id int64) bool {
 func (f *ChipsField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("chips field %s is required", f.ID)
+			return invalid("required", nil, "chips field %s is required", f.ID)
 		}
 		return nil
 	}
@@ -60,14 +60,14 @@ func (f *ChipsField) Validate(value interface{}) error {
 	}
 
 	if f.Required && len(arr) == 0 {
-		return fmt.Errorf("chips field %s is required", f.ID)
+		return invalid("required", nil, "chips field %s is required", f.ID)
 	}
 
 	// Numeric chips must reference a known option ID; strings are free text.
 	for _, item := range arr {
 		if id, ok := item.(int64); ok {
 			if !f.optionExists(id) {
-				return fmt.Errorf("chips field %s has no matching option for id %d", f.ID, id)
+				return invalid("not_allowed", nil, "chips field %s has no matching option for id %d", f.ID, id)
 			}
 		}
 	}

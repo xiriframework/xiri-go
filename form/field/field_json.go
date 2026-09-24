@@ -16,7 +16,7 @@ type JsonField struct {
 func (f *JsonField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("json field %s is required", f.ID)
+			return invalid("required", nil, "json field %s is required", f.ID)
 		}
 		return nil
 	}

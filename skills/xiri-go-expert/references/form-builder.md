@@ -123,6 +123,24 @@ sie als `fields` in der 400-Antwort aus, xiri-form zeigt jede Meldung am betroff
 liefert weiterhin einen Text (`id: msg; id2: msg2`), bestehende `wc.BadRequest(err.Error())`-Aufrufer
 laufen also unverändert — verlieren aber die Feldzuordnung.
 
+**Übersetzte Meldungen:** Hat der `UiContext` eine `TranslateFunc`, übersetzt xiri-go jede Feldmeldung
+über den Key `validation.<Code>` und ersetzt `{field}` (übersetzte Beschriftung) und die Parameter;
+`err.Error()` nennt dann die Beschriftung statt der ID. Fehlt ein Key, bleibt der englische Text.
+
+| Key | Platzhalter |
+|---|---|
+| `validation.required` | `{field}` |
+| `validation.min_length` / `validation.max_length` | `{min}` / `{max}` |
+| `validation.pattern` | — |
+| `validation.min` / `validation.max` (Zahl) | `{min}` / `{max}` |
+| `validation.min_items` / `validation.max_items` | `{min}` / `{max}` |
+| `validation.not_allowed` | — |
+| `validation.not_past` / `not_future` / `min_date` / `max_date` / `range_order` (Zeit) | — |
+
+`{field}` geht in jedem Key. Unter dem Feld reicht meist die Meldung ohne Namen („Höchstens {max} Zeichen").
+Technische Fehler (falscher Typ, Geoform-Struktur) bleiben englisch.
+Den Typ nicht per Assertion prüfen (`err.(group.FieldErrors)`), sondern mit `errors.As`.
+
 Nach dem Binding sind die Werte direkt auf den Fields verfügbar:
 
 ```go

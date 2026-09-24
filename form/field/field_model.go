@@ -73,7 +73,7 @@ func (f *ModelField) SetAllowedFunc(allowed ModelAllowedFunc) {
 func (f *ModelField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("model field %s is required", f.ID)
+			return invalid("required", nil, "model field %s is required", f.ID)
 		}
 		return nil
 	}
@@ -90,7 +90,7 @@ func (f *ModelField) Validate(value interface{}) error {
 	if id == 0 {
 		return nil
 	}
-	notAllowed := fmt.Errorf("model field %s: id %d is not an allowed option", f.ID, id)
+	notAllowed := invalid("not_allowed", nil, "model field %s: id %d is not an allowed option", f.ID, id)
 	if slices.Contains(f.Sub, id) {
 		return notAllowed
 	}

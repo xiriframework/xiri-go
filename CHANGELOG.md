@@ -7,6 +7,29 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+
+- **Übersetzbare Prüffehler.** Benutzerrelevante Feldfehler sind jetzt `*field.ValidationError`
+  mit `Code` und `Params`; `Error()` bleibt der bisherige englische Text. Hat der `UiContext` eine
+  `TranslateFunc`, übersetzt die FormGroup den Key `validation.<Code>` und setzt `{field}`
+  (übersetzte Feldbeschriftung) sowie die Params ein, z. B. `validation.max_length` →
+  `Höchstens {max} Zeichen`. Codes: `required`, `min_length`/`max_length` `{min}`/`{max}`,
+  `pattern`, `min`/`max` `{min}`/`{max}`, `min_items`/`max_items` `{min}`/`{max}`, `not_allowed`,
+  `not_past`, `not_future`, `min_date`, `max_date`, `range_order`. Die Texte liefert die App;
+  fehlt ein Key (oder liefert die Funktion `""`), bleibt der englische Text. Greift in
+  `BindAndValidate`/`BindFromMap`, `ParseValues(Sparse)`, `ValidateValues`,
+  `ParseAndValidate(Sparse)` und damit auch in Tabellenfiltern. Neu: `FormGroup.FieldErrorMessage`,
+  `FormGroup.WrapFieldErrors`.
+
+### Changed
+
+- **Banner nennt die Feldbeschriftung statt der ID**, sobald der `UiContext` eine `TranslateFunc`
+  hat: `err.Error()` lautet dann `Ort: Höchstens 50 Zeichen` statt `ort: …`. Der konkrete
+  Fehlertyp ist in diesem Fall ein Wrapper um `group.FieldErrors`; `errors.As(err, &fe)` und
+  `response.NewErrorResponseFromError` funktionieren unverändert, eine Typ-Assertion
+  `err.(group.FieldErrors)` nicht mehr — auf `errors.As` umstellen. Ohne `TranslateFunc` ändert
+  sich nichts.
+
 ## [0.6.0]
 ### Added
 

@@ -26,45 +26,45 @@ func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (
 			// setzen (wie BindFromMap). In beiden Fällen ist der Default die einzige Quelle und
 			// gilt auch im Sparse-Pfad — sonst verliert ein serverseitig gesetzter oder
 			// gesperrter Filter (Einzelobjekt-Ansicht, eigener Mandant) seinen Wert.
-			parseDefault(f, parsed, errs)
+			fg.parseDefault(f, parsed, errs)
 			continue
 		}
 
 		rawValue, exists := raw[f.GetID()]
 		if !exists {
 			if f.IsRequired() {
-				errs[f.GetID()] = "required field " + f.GetID() + " is missing"
+				errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), missingRequired(f.GetID()))
 				continue
 			}
 			if useDefaults {
-				parseDefault(f, parsed, errs)
+				fg.parseDefault(f, parsed, errs)
 			}
 			continue
 		}
 
 		value, err := f.Parse(rawValue)
 		if err != nil {
-			errs[f.GetID()] = err.Error()
+			errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), err)
 			continue
 		}
 		parsed[f.GetID()] = value
 	}
 
 	if len(errs) > 0 {
-		return nil, errs
+		return nil, fg.WrapFieldErrors(errs)
 	}
 	return parsed, nil
 }
 
 // parseDefault runs the default through Parse like the bind paths do, so directly set
 // defaults (int instead of int32, []int32 instead of ModelListValue) come out normalized.
-func parseDefault(f field.FormField, parsed map[string]interface{}, errs FieldErrors) {
+func (fg *FormGroup) parseDefault(f field.FormField, parsed map[string]interface{}, errs FieldErrors) {
 	if f.GetDefault() == nil {
 		return
 	}
 	v, err := f.Parse(nil)
 	if err != nil {
-		errs[f.GetID()] = err.Error()
+		errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), err)
 		return
 	}
 	if v != nil {
@@ -78,15 +78,15 @@ func (fg *FormGroup) ValidateValues(values map[string]interface{}) error {
 	for _, f := range fg.fields {
 		value, exists := values[f.GetID()]
 		if !exists && f.IsRequired() && f.GetForm() {
-			errs[f.GetID()] = "required field " + f.GetID() + " is missing"
+			errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), missingRequired(f.GetID()))
 			continue
 		}
 		if err := f.Validate(value); err != nil {
-			errs[f.GetID()] = err.Error()
+			errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), err)
 		}
 	}
 	if len(errs) > 0 {
-		return errs
+		return fg.WrapFieldErrors(errs)
 	}
 	return nil
 }
@@ -118,12 +118,16 @@ func (fg *FormGroup) ParseAndValidateSparse(raw map[string]interface{}) (map[str
 	for _, f := range fg.fields {
 		if v, ok := parsed[f.GetID()]; ok {
 			if err := f.Validate(v); err != nil {
-				errs[f.GetID()] = err.Error()
+				errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), err)
 			}
 		}
 	}
 	if len(errs) > 0 {
-		return nil, errs
+		return nil, fg.WrapFieldErrors(errs)
 	}
 	return parsed, nil
+}
+
+func missingRequired(id string) error {
+	return &field.ValidationError{Code: "required", Msg: "required field " + id + " is missing"}
 }

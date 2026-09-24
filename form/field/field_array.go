@@ -20,7 +20,7 @@ type ArrayField struct {
 func (f *ArrayField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required && !f.AllowEmpty {
-			return fmt.Errorf("array field %s is required", f.ID)
+			return invalid("required", nil, "array field %s is required", f.ID)
 		}
 		return nil
 	}
@@ -31,15 +31,15 @@ func (f *ArrayField) Validate(value interface{}) error {
 	}
 
 	if !f.AllowEmpty && len(arr) == 0 {
-		return fmt.Errorf("array %s cannot be empty", f.ID)
+		return invalid("required", nil, "array %s cannot be empty", f.ID)
 	}
 
 	if f.MinItems != nil && len(arr) < *f.MinItems {
-		return fmt.Errorf("array %s must have at least %d items", f.ID, *f.MinItems)
+		return invalid("min_items", map[string]any{"min": *f.MinItems}, "array %s must have at least %d items", f.ID, *f.MinItems)
 	}
 
 	if f.MaxItems != nil && len(arr) > *f.MaxItems {
-		return fmt.Errorf("array %s must have at most %d items", f.ID, *f.MaxItems)
+		return invalid("max_items", map[string]any{"max": *f.MaxItems}, "array %s must have at most %d items", f.ID, *f.MaxItems)
 	}
 
 	return nil

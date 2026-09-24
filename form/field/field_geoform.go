@@ -27,7 +27,7 @@ type GeoformValue struct {
 func (f *GeoformField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("geoform field %s is required", f.ID)
+			return invalid("required", nil, "geoform field %s is required", f.ID)
 		}
 		return nil
 	}

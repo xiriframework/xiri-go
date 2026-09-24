@@ -26,7 +26,7 @@ type TimeRangeValue struct {
 func (f *TimeRangeField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("timerange field %s is required", f.ID)
+			return invalid("required", nil, "timerange field %s is required", f.ID)
 		}
 		return nil
 	}
@@ -37,16 +37,16 @@ func (f *TimeRangeField) Validate(value interface{}) error {
 	}
 
 	if tr.Start.IsZero() || tr.End.IsZero() {
-		return fmt.Errorf("timerange %s cannot have zero dates", f.ID)
+		return invalid("required", nil, "timerange %s cannot have zero dates", f.ID)
 	}
 
 	if f.AllowSingleDay {
 		if tr.Start.After(tr.End) {
-			return fmt.Errorf("timerange %s start cannot be after end", f.ID)
+			return invalid("range_order", nil, "timerange %s start cannot be after end", f.ID)
 		}
 	} else {
 		if !tr.Start.Before(tr.End) {
-			return fmt.Errorf("timerange %s start must be before end", f.ID)
+			return invalid("range_order", nil, "timerange %s start must be before end", f.ID)
 		}
 	}
 

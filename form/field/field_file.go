@@ -4,7 +4,6 @@ import (
 	"github.com/xiriframework/xiri-go/component/core"
 )
 
-import "fmt"
 
 // FileField represents a file upload form field
 type FileField struct {
@@ -21,7 +20,7 @@ type FileField struct {
 func (f *FileField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("file field %s is required", f.ID)
+			return invalid("required", nil, "file field %s is required", f.ID)
 		}
 		return nil
 	}

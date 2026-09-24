@@ -22,7 +22,7 @@ type IntField struct {
 func (f *IntField) Validate(value interface{}) error {
 	if value == nil {
 		if f.Required {
-			return fmt.Errorf("int field %s is required", f.ID)
+			return invalid("required", nil, "int field %s is required", f.ID)
 		}
 		return nil
 	}
@@ -42,11 +42,11 @@ func (f *IntField) Validate(value interface{}) error {
 	}
 
 	if lower := f.effectiveMin(); lower != nil && num < *lower {
-		return fmt.Errorf("int field %s must be >= %d", f.ID, *lower)
+		return invalid("min", map[string]any{"min": *lower}, "int field %s must be >= %d", f.ID, *lower)
 	}
 
 	if f.Max != nil && num > *f.Max {
-		return fmt.Errorf("int field %s must be <= %d", f.ID, *f.Max)
+		return invalid("max", map[string]any{"max": *f.Max}, "int field %s must be <= %d", f.ID, *f.Max)
 	}
 
 	return nil
