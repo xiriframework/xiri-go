@@ -7,6 +7,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+
+- **Deaktivierte Menüeinträge mit Begründung: `table.AddMenuEntries[T]` + `table.MenuEntry`.**
+  Wie `AddMenu`, der Accessor liefert aber pro Eintrag `MenuEntry{URL, DisabledHint}`. Ein
+  nicht-leerer `DisabledHint` zeigt den Eintrag deaktiviert und erklärt den Grund im Tooltip
+  (z. B. „Stornieren" bei einer schon verbuchten Rechnung); beide Felder leer blendet ihn aus,
+  `nil` den ganzen Button. Der Hint geht unübersetzt raus wie bei `WithRowHint`. `AddMenu` bleibt
+  unverändert. **Braucht ein xiri-ng-Release nach 0.5.0**; ältere Frontends behandeln den
+  gesperrten Eintrag als URL.
+
 ## [0.7.0]
 
 ### Added

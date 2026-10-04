@@ -84,8 +84,8 @@ type field[T any] struct {
 	accessor func(T) any // Extract value from row struct
 
 	// T-dependent accessors for icon fields and menu buttons
-	hintAccessor  func(T) string           // Optional: extracts per-row hint text for icon fields
-	menuAccessors map[int]func(T) []string // Per-button menu data accessor (key = button index)
+	hintAccessor  func(T) string              // Optional: extracts per-row hint text for icon fields
+	menuAccessors map[int]func(T) []MenuEntry // Per-button menu data accessor (key = button index)
 }
 
 // buttonDef defines a button in a buttons-type field

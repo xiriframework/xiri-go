@@ -366,6 +366,28 @@ table.AddMenu[Device](fb, 0, "more_vert", core.ColorPrimary, "Aktionen",
     })
 ```
 
+### Deaktivierte Menü-Items mit Begründung
+
+Soll ein Item sichtbar bleiben, aber gesperrt sein (mit Tooltip-Grund), `table.AddMenuEntries[T]` statt `AddMenu`
+verwenden. Der Accessor liefert pro `AddMenuItem` einen `table.MenuEntry`:
+
+```go
+table.AddMenuEntries[Invoice](fb, 0, "more_vert", core.ColorPrimary, "Aktionen",
+    func(r Invoice) []table.MenuEntry {
+        id := strconv.FormatInt(r.ID, 10)
+        cancel := table.MenuEntry{URL: c.apiUrl("cancel", id).PrintPrefix()}
+        if r.Booked {
+            cancel = table.MenuEntry{DisabledHint: "Schon verbucht"} // sichtbar, gesperrt, Tooltip
+        }
+        return []table.MenuEntry{{URL: c.pageUrl("edit", id).Print()}, cancel}
+    })
+fb.AddMenuItem(table.FieldButtonActionLink,   "edit",   core.ColorPrimary, "Bearbeiten")
+fb.AddMenuItem(table.FieldButtonActionDialog, "cancel", core.ColorWarning, "Stornieren")
+```
+
+`DisabledHint` gesetzt → gesperrt (URL wird ignoriert); `URL` und `DisabledHint` leer → ausgeblendet; `nil` → ganzer Button
+ausgeblendet. Der Hint wird nicht übersetzt (wie `WithRowHint`), bei Bedarf im Accessor übersetzen. Braucht xiri-ng nach 0.5.0.
+
 ## Top Buttons (Toolbar über der Tabelle)
 
 `SetButtonsTop` nimmt eine Liste von `*button.TableButton`. Typischer Use-Case: „Neu", „Importieren", „Export", „Filter reset".

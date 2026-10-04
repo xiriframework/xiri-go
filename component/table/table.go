@@ -847,11 +847,14 @@ func (t *Table[T]) GetData(ctx *core.UiContext, output OutputType) []map[string]
 							continue
 						}
 						result := make([]any, len(menuData))
-						for j, v := range menuData {
-							if v == "" {
+						for j, entry := range menuData {
+							switch {
+							case entry.DisabledHint != "":
+								result[j] = map[string]any{"disabled": entry.DisabledHint}
+							case entry.URL == "":
 								result[j] = false
-							} else {
-								result[j] = v
+							default:
+								result[j] = entry.URL
 							}
 						}
 						buttonMap[keyStr] = result

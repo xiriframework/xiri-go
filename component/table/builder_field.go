@@ -408,19 +408,26 @@ func WithRowHint[T any](fb *FieldBuilder, accessor func(T) string) *FieldBuilder
 	return fb
 }
 
-// AddMenu adds a menu trigger button. The accessor provides per-row menu item data.
-// Each element in the returned []string corresponds to a menu item:
-// - non-empty string: URL/data for the menu item
-// - "": hide the menu item for this row
+// MenuEntry is the per-row state of one menu item for AddMenuEntries.
+type MenuEntry struct {
+	URL          string // URL/data for the menu item; "" without DisabledHint hides the item
+	DisabledHint string // Non-empty: item stays visible but disabled, the hint is shown as tooltip
+}
+
+// AddMenuEntries adds a menu trigger button like AddMenu, with per-row state for each menu item:
+// - URL set, DisabledHint empty: the item is active
+// - DisabledHint set: the item stays visible but disabled, the hint is its tooltip (URL is ignored)
+// - both empty: hide the menu item for this row
 // Returning nil hides the entire menu button for this row.
-func AddMenu[T any](fb *FieldBuilder, key int, icon string, color core.Color, hint string, accessor func(T) []string) *FieldBuilder {
+// The hint is sent as is (like WithRowHint); translate it in the accessor if needed.
+func AddMenuEntries[T any](fb *FieldBuilder, key int, icon string, color core.Color, hint string, accessor func(T) []MenuEntry) *FieldBuilder {
 	if !fb.base.addButton(key, FieldButtonActionMenu, icon, color, hint) {
 		return fb // out-of-range key rejected; do not record parallel menu state
 	}
 
 	f := fb.typedField.(*field[T])
 	if f.menuAccessors == nil {
-		f.menuAccessors = make(map[int]func(T) []string)
+		f.menuAccessors = make(map[int]func(T) []MenuEntry)
 	}
 	f.menuAccessors[key] = accessor
 
@@ -431,4 +438,24 @@ func AddMenu[T any](fb *FieldBuilder, key int, icon string, color core.Color, hi
 
 	fb.lastMenuKey = key
 	return fb
+}
+
+// AddMenu adds a menu trigger button. The accessor provides per-row menu item data.
+// Each element in the returned []string corresponds to a menu item:
+// - non-empty string: URL/data for the menu item
+// - "": hide the menu item for this row
+// Returning nil hides the entire menu button for this row.
+// To show an item disabled with a reason instead of hiding it, use AddMenuEntries.
+func AddMenu[T any](fb *FieldBuilder, key int, icon string, color core.Color, hint string, accessor func(T) []string) *FieldBuilder {
+	return AddMenuEntries(fb, key, icon, color, hint, func(row T) []MenuEntry {
+		urls := accessor(row)
+		if urls == nil {
+			return nil // keep nil: hides the whole button, an empty slice would render an empty menu
+		}
+		entries := make([]MenuEntry, len(urls))
+		for i, url := range urls {
+			entries[i] = MenuEntry{URL: url}
+		}
+		return entries
+	})
 }

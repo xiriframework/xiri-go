@@ -243,6 +243,7 @@ b.ButtonsField("actions", "", accessor).
 // AddButton(key int, action table.FieldButtonAction, icon string, color core.Color, hint string)
 // Die URL pro Button liefert der Accessor unter dem Key strconv.Itoa(key); keine Platzhalter-Ersetzung.
 // Menü-Items: table.AddMenu[T](fb, key, ...) + fb.AddMenuItem(action, icon, color, text) — siehe tables.md
+// Gesperrte Menü-Items mit Tooltip-Grund: table.AddMenuEntries[T](fb, key, ..., func(T) []table.MenuEntry) — siehe tables.md
 ```
 
 ## Table Options
