@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.7.1]
+
 ### Added
 
 - **Deaktivierte Menüeinträge mit Begründung: `table.AddMenuEntries[T]` + `table.MenuEntry`.**
