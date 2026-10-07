@@ -236,7 +236,7 @@ result := response.NewExcelDataResult(bytes) // Excel bytes
 
 ### `component.DataResponse(ctx)` — Partial-Refresh-Pattern
 
-Viele Komponenten bieten eine `DataResponse(ctx) response.DataResult`-Methode, die **nur die data-Portion** ohne den `type`-Wrapper liefert. Gedacht für AJAX-Endpoints, die einer bereits gerenderten Komponente im Frontend neue Daten einspielen (z.B. `WithReload`-gepolltes Card/Stat).
+Viele Komponenten bieten eine `DataResponse(ctx) response.DataResult`-Methode, die **nur die data-Portion** ohne den `type`-Wrapper liefert. Gedacht für AJAX-Endpoints, die einer bereits gerenderten Komponente im Frontend neue Daten einspielen (z.B. eine per `SetURL` nachgeladene Card/Stat).
 
 Unterstützt:
 
@@ -258,7 +258,7 @@ Beispiel — Card mit `SetURL` + AJAX-Reload:
 // Page: Card als Shell, lädt Daten lazy
 card := card.NewCard(core.CardTypeTable, nil, "Live-Status", nil, nil, nil, true, false, nil)
 card.SetURL(c.apiUrl("card", "status"))
-card.WithReload(true)   // Frontend pollt
+card.WithReload(true)   // manueller Reload-Button im Header (kein Polling), nur mit SetURL
 
 // AJAX-Endpoint liefert die komplette Card als {"card": {...}}
 func (c *Controller) CardStatus(ctx echo.Context) error {

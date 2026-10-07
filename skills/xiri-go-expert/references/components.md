@@ -48,7 +48,7 @@ c.WithHeaderIcon("router")               // Material-Icon links im Header
 c.WithHeaderIconColor("primary")         // Farbe des Header-Icons
 c.WithTranslate(false)                   // Header nicht übersetzen (Default: true)
 c.WithCollapsible(true)
-c.WithCollapsed(true)                    // startet eingeklappt (nur mit WithCollapsible)
+c.WithCollapsed(true)                    // startet eingeklappt, macht die Card automatisch einklappbar
 c.WithMaxHeight("400px")
 c.WithFlat(true)                          // rahmenlos: kein Schatten/Hintergrund/Radius (s. u.)
 c.Print(ctx)

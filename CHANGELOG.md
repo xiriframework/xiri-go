@@ -12,18 +12,26 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **`dialog.NewDialogForm` mit `header == nil`** stürzt nicht mehr ab, der Dialog hat dann keinen Titel.
 - **`FileField` sendet `max` und `accept`.** Die bisherigen Keys `maxSize`/`allowedTypes`/`allowedExtensions`
   las xiri-ng nie, im Browser gab es weder Größenlimit noch Typfilter. `accept` sind `AllowedTypes` und
-  `AllowedExtensions` kommagetrennt.
+  `AllowedExtensions` kommagetrennt. Achtung: xiri-ng verwirft eine zu große Datei bisher ohne Meldung
+  an den Nutzer, das Feld bleibt einfach leer.
 - **Card mit `WithCollapsed(true)` lässt sich wieder öffnen:** sie sendet jetzt immer auch
   `collapsible: true`, auch nach `WithCollapsible(false)`. Vorher blieb sie ohne `WithCollapsible(true)` zu.
 - **`TimeField` mit Subtyp `"time"`** (oder einem anderen unbekannten) rendert als `datetime`, `type` und
   `subtype` gleichermaßen. xiri-ng hatte für `time` keinen Renderer.
 - **Hint-Warnung bei `NewTableButton`** nennt das Icon (es liegt dort in `text`).
+- **Godoc und Skill-Doku:** `Card.WithReload` ist ein manueller Reload-Button (kein Polling, nur mit
+  `SetURL`). `SetAccess`/`SetScenario`/`DBName` an Formularfeldern sind reine Metadaten. CSV-/Excel-Export
+  braucht keinen `switch` auf `GetOutputType()`, `wc.Data(tbl)` liefert ihn (die Beispiele nannten nicht
+  existierende `wc.CsvFromTable`/`wc.ExcelFromTable`). `FileField` ist als Data-URL im Formular-JSON
+  dokumentiert, nicht als Multipart-Upload.
 
 ### Changed
 
-- **`FileField.Validate` prüft serverseitig:** `MaxSize` pro Datei an den dekodierten Base64-Bytes (neuer
-  Code `max_size` mit `{max}`), `required` auch bei leerer Liste, und kaputte Einträge sind ein Fehler.
-  Ein reiner String als Wert gilt nicht mehr als gültig.
+- **`FileField.Validate` prüft serverseitig.** Erwartet wird, was xiri-ng schickt: `[{name, data}]` mit
+  `data` als `data:<mime>;base64,…`. Geprüft wird `MaxSize` pro Datei an den dekodierten Bytes (neuer Code
+  `max_size` mit `{max}`, deutlich zu große Payloads schon vor dem Dekodieren), `required` auch bei leerer
+  Liste. Einträge ohne `name`, ohne Data-URL oder mit kaputtem Base64 sind ein Fehler. **Bricht Aufrufer,**
+  die einen anderen Wert übergeben, etwa einen reinen Dateinamen als String. Den MIME-Typ prüft Go nicht.
 
 ### Deprecated
 

@@ -137,7 +137,7 @@ func (c *Controller) Delete(ctx echo.Context) error {
 func dialog.NewDialogForm(
     fields    []map[string]any,  // aus fb.BuildAddForDisplay() oder fb.BuildEditForDisplay()
     u         *url.Url,          // Submit-Target
-    header    *string,           // POINTER — `*header` wird als Dialog-Titel genutzt
+    header    *string,           // Dialog-Titel; nil = kein Titel
     extra     map[string]any,
     okText    *string,           // nil = "Ok"
     closeText *string,           // nil = "Back"
