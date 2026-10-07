@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.8.0]
+
 ### Fixed
 
 - **`dialog.NewDialogForm` mit `header == nil`** stürzt nicht mehr ab, der Dialog hat dann keinen Titel.
