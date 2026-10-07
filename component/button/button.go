@@ -110,6 +110,7 @@ func NewButton(
 }
 
 // NewApiButton creates a button that triggers an API call
+// hint is the tooltip, not an icon — set an icon via WithIcon.
 func NewApiButton(
 	text string,
 	u *url.Url,
@@ -191,6 +192,7 @@ func NewCloseButton(
 }
 
 // NewDialogButton creates a button that opens a dialog
+// hint is the tooltip, not an icon — set an icon via WithIcon.
 func NewDialogButton(
 	text string,
 	u *url.Url,
@@ -278,6 +280,7 @@ func NewFormButton(
 }
 
 // NewLinkButton creates a navigation link button
+// hint is the tooltip, not an icon — set an icon via WithIcon.
 func NewLinkButton(
 	text string,
 	u *url.Url,
@@ -409,6 +412,15 @@ func DefaultFormButtons(backText, saveText string, saveUrl *url.Url) []*Button {
 // Returns the Button for method chaining
 func (b *Button) WithHint(hint string) *Button {
 	b.hint = hint
+	return b
+}
+
+// WithIcon sets the Material icon name (optional).
+// Only icon, icontext, fab and minifab buttons render an icon; raised, basic,
+// stroked and flat drop it — use core.ButtonTypeIconText for text with icon.
+// Returns the Button for method chaining
+func (b *Button) WithIcon(icon string) *Button {
+	b.icon = icon
 	return b
 }
 

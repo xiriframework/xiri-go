@@ -976,23 +976,41 @@ button.NewLinkButton(
     u          *url.Url,
     color      core.Color,
     buttonType core.ButtonType,
-    hint       string,
+    hint       string,   // Tooltip — KEIN Icon!
     disabled   bool,
     tabIndex   *int,
     options    map[string]any,
 ) *Button
 ```
 
+**Position 5 (`hint`) ist der Tooltip, nicht das Icon.** Die Kurzformen (`NewLinkButton`,
+`NewApiButton`, `NewDialogButton`, …) haben keinen Icon-Parameter — ein Icon-Name an Position 5
+ergibt einen Button ohne Icon mit Tooltip „edit“. Das Icon kommt per `WithIcon`:
+
+```go
+// Text + Icon
+button.NewLinkButton("Bearbeiten", u, core.ColorPrimary, core.ButtonTypeIconText, "", false, nil, nil).
+    WithIcon("edit")
+
+// Nur Icon: bei ButtonTypeIcon ist text der Icon-Name, hint der Accessible Name (Pflicht)
+button.NewLinkButton("edit", u, core.ColorPrimary, core.ButtonTypeIcon, "Bearbeiten", false, nil, nil)
+```
+
+Ein Icon rendern nur `ButtonTypeIcon`, `IconText`, `Fab` und `MiniFab`. Bei `Raised`, `Basic`,
+`Stroked` und `Flat` lässt `Print()` das Icon weg — auch mit `WithIcon`. Für Text mit Icon also
+`ButtonTypeIconText` nehmen.
+
 ### Chain-Methoden auf `*Button`
 
 ```go
 btn.WithHint("Details anzeigen")
+btn.WithIcon("edit")                         // Icon (nur Icon/IconText/Fab/MiniFab rendern es, siehe oben)
 btn.WithDisabled(true)
 btn.WithData(map[string]any{"_csv": true})  // Custom-Payload an Frontend (siehe unten)
 btn.WithAutoLoad(true)                       // Aktion einmalig automatisch beim Laden auslösen (siehe unten)
 btn.WithTarget("_blank")                     // bei ButtonActionDownload: im Tab anzeigen (siehe oben)
 btn.WithHide(true)                           // Button gar nicht rendern (siehe unten)
-// … siehe button.go für weitere Optionen (WithIcon, etc.)
+// … siehe button.go für weitere Optionen (WithTabIndex, WithDefault, WithOption, …)
 ```
 
 `*TableButton` reicht `WithData`, `WithAutoLoad`, `WithTarget` und `WithHide` an den

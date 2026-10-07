@@ -239,6 +239,10 @@ core.ColorPrimary | Secondary | Tertiary | Accent | Warning | Error | Success
 core.ButtonTypeRaised | Basic | Stroked | Flat | Fab | MiniFab | Icon | IconText
 ```
 
+Bei den Kurzformen (`NewLinkButton`, `NewApiButton`, `NewDialogButton`, …) ist Position 5 der
+Tooltip (`hint`), **nicht** das Icon. Icon per `.WithIcon("edit")`; sichtbar nur bei
+`Icon`/`IconText`/`Fab`/`MiniFab` — Text mit Icon = `ButtonTypeIconText`.
+
 ## Wichtige Do-nots
 
 - **Kein** `NewTextareaField` — `NewTextField` mit `.Subtype = "textarea"`.

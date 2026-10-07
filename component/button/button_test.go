@@ -303,3 +303,29 @@ func TestTableButton_WithHide_PassesThroughToButton(t *testing.T) {
 		t.Errorf("out[\"hide\"] = %v, want true", out["hide"])
 	}
 }
+
+func TestLinkButton_WithIcon_IconTextPrintsIconAndText(t *testing.T) {
+	btn := button.NewLinkButton("Bearbeiten", url.NewUrl("/x"), core.ColorPrimary, core.ButtonTypeIconText, "", false, nil, nil).
+		WithIcon("edit")
+
+	out := btn.Print(nil)
+
+	if out["icon"] != "edit" {
+		t.Errorf("out[\"icon\"] = %v, want edit", out["icon"])
+	}
+	if out["text"] != "Bearbeiten" {
+		t.Errorf("out[\"text\"] = %v, want Bearbeiten", out["text"])
+	}
+	if out["hint"] != "" {
+		t.Errorf("out[\"hint\"] = %v, want empty", out["hint"])
+	}
+}
+
+func TestTableButton_WithIcon_OverridesIcon(t *testing.T) {
+	tb := button.NewTableButton(core.ButtonActionLink, "edit", url.NewUrl("/x"), "Bearbeiten", core.ColorPrimary, false, nil)
+	tb.GetButton().WithIcon("delete")
+
+	if out := tb.Print(nil); out["icon"] != "delete" {
+		t.Errorf("out[\"icon\"] = %v, want delete", out["icon"])
+	}
+}
