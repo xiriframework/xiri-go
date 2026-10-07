@@ -404,7 +404,8 @@ f.AllowedExtensions = []string{".pdf", ".png"}                             // �
 f.Multiple = true
 ```
 
-- `MaxSize` geht als `max` ans Frontend, Typen und Endungen kommagetrennt als `accept`.
+- `MaxSize` geht als `max` ans Frontend, Typen und Endungen kommagetrennt als `accept`. xiri-ng (nach 0.6.0)
+  weist eine größere Datei mit Meldung ab und sperrt das Formular; bis 0.6.0 blieb das Feld stumm leer.
 - `Validate` prüft `required` (auch eine leere Liste) und `MaxSize` pro Datei an den dekodierten Bytes
   (Code `max_size`). Kaputte Einträge sind ein Fehler.
 - Den MIME-Typ prüft Go nicht, er kommt vom Client. Wer ihn braucht, prüft die dekodierten Bytes selbst

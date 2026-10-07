@@ -1008,7 +1008,7 @@ btn.WithIcon("edit")                         // Icon (nur Icon/IconText/Fab/Mini
 btn.WithDisabled(true)
 btn.WithData(map[string]any{"_csv": true})  // Custom-Payload an Frontend (siehe unten)
 btn.WithAutoLoad(true)                       // Aktion einmalig automatisch beim Laden auslösen (siehe unten)
-btn.WithTarget("_blank")                     // bei ButtonActionDownload: im Tab anzeigen (siehe oben)
+btn.WithTarget("_blank")                     // Link/Href: neuer Tab; ButtonActionDownload: im Tab anzeigen (siehe oben)
 btn.WithHide(true)                           // Button gar nicht rendern (siehe unten)
 // … siehe button.go für weitere Optionen (WithTabIndex, WithDefault, WithOption, …)
 ```

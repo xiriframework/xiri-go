@@ -221,6 +221,7 @@ type InlineEditRequest struct {
 
 // Response (Backend → Frontend) — response.ReturnInlineEdit
 // Methoden: WithUpdates, WithRefreshTable, WithRefreshPage, WithGoto, WithMessage
+// Refresh + Goto zusammen: xiri-ng navigiert (Goto hat Vorrang, der Refresh entfällt)
 
 type EditableChipOption struct {
     Value string
