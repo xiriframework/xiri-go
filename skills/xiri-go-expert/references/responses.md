@@ -168,6 +168,9 @@ return wc.Component(response.NewReturnPoll(statusUrl.PrintPrefix(), 2000).
 Setter: `WithText`, `WithColor`, `WithIcon`, `WithType`, `WithHint`, `Disable()`, `Enable()`
 (alle fluent, nur gesetzte Felder landen im JSON).
 
+`WithIcon` wirkt wie beim Button nur bei Typ icon/icontext/fab/minifab; bei raised/basic/stroked/flat
+fällt das Icon weg, dann zusätzlich `WithType("icontext")` patchen.
+
 ### ReturnFields — Feld-Patch für `SetReloadOn`
 
 ```go

@@ -12,8 +12,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **`dialog.NewDialogForm` mit `header == nil`** stürzt nicht mehr ab, der Dialog hat dann keinen Titel.
 - **`FileField` sendet `max` und `accept`.** Die bisherigen Keys `maxSize`/`allowedTypes`/`allowedExtensions`
   las xiri-ng nie, im Browser gab es weder Größenlimit noch Typfilter. `accept` sind `AllowedTypes` und
-  `AllowedExtensions` kommagetrennt. Achtung: xiri-ng verwirft eine zu große Datei bisher ohne Meldung
-  an den Nutzer, das Feld bleibt einfach leer.
+  `AllowedExtensions` kommagetrennt. Achtung: xiri-ng bis 0.6.0 verwirft eine zu große Datei ohne Meldung
+  an den Nutzer, das Feld bleibt einfach leer; erst die nächste xiri-ng-Version zeigt eine Meldung.
 - **Card mit `WithCollapsed(true)` lässt sich wieder öffnen:** sie sendet jetzt immer auch
   `collapsible: true`, auch nach `WithCollapsible(false)`. Vorher blieb sie ohne `WithCollapsible(true)` zu.
 - **`TimeField` mit Subtyp `"time"`** (oder einem anderen unbekannten) rendert als `datetime`, `type` und

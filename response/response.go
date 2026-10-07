@@ -38,7 +38,8 @@ func (b ButtonPatch) WithText(text string) ButtonPatch { b.Text = text; return b
 // WithColor sets the new button color (e.g. "success", "warn", "primary").
 func (b ButtonPatch) WithColor(color string) ButtonPatch { b.Color = color; return b }
 
-// WithIcon sets the new button icon.
+// WithIcon sets the new button icon. Only icon, icontext, fab and minifab buttons render an icon;
+// raised, basic, stroked and flat drop it — patch WithType("icontext") as well to show it.
 func (b ButtonPatch) WithIcon(icon string) ButtonPatch { b.Icon = icon; return b }
 
 // WithType sets the new button type (e.g. "raised", "flat").
