@@ -72,13 +72,13 @@ func (f *HtmlField) SetDisabled(disabled bool) *HtmlField {
 	return f
 }
 
-// SetAccess sets the access control permissions
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
 func (f *HtmlField) SetAccess(access []string) *HtmlField {
 	f.BaseField.SetAccess(access)
 	return f
 }
 
-// SetScenario sets which scenarios this field applies to
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
 func (f *HtmlField) SetScenario(scenario []string) *HtmlField {
 	f.BaseField.SetScenario(scenario)
 	return f

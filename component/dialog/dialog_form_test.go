@@ -299,3 +299,12 @@ func TestNewDialogFormMultiEdit(t *testing.T) {
 		}
 	})
 }
+
+// A form dialog without a title is legitimate; a nil header must not panic.
+func TestNewDialogForm_NilHeader(t *testing.T) {
+	result := NewDialogForm(nil, url.NewUrl("/api/save"), nil, nil, nil, nil).Print(nil)
+
+	if result["header"] != "" {
+		t.Errorf("header = %v, want empty string", result["header"])
+	}
+}

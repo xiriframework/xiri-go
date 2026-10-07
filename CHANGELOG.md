@@ -7,6 +7,30 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`dialog.NewDialogForm` mit `header == nil`** stürzt nicht mehr ab, der Dialog hat dann keinen Titel.
+- **`FileField` sendet `max` und `accept`.** Die bisherigen Keys `maxSize`/`allowedTypes`/`allowedExtensions`
+  las xiri-ng nie, im Browser gab es weder Größenlimit noch Typfilter. `accept` sind `AllowedTypes` und
+  `AllowedExtensions` kommagetrennt.
+- **Card mit `WithCollapsed(true)` lässt sich wieder öffnen:** sie sendet jetzt immer auch
+  `collapsible: true`, auch nach `WithCollapsible(false)`. Vorher blieb sie ohne `WithCollapsible(true)` zu.
+- **`TimeField` mit Subtyp `"time"`** (oder einem anderen unbekannten) rendert als `datetime`, `type` und
+  `subtype` gleichermaßen. xiri-ng hatte für `time` keinen Renderer.
+- **Hint-Warnung bei `NewTableButton`** nennt das Icon (es liegt dort in `text`).
+
+### Changed
+
+- **`FileField.Validate` prüft serverseitig:** `MaxSize` pro Datei an den dekodierten Base64-Bytes (neuer
+  Code `max_size` mit `{max}`), `required` auch bei leerer Liste, und kaputte Einträge sind ein Fehler.
+  Ein reiner String als Wert gilt nicht mehr als gültig.
+
+### Deprecated
+
+- **`FieldBuilder.WithColumnOrder`** hatte nie eine Wirkung, Spalten erscheinen in Einfügereihenfolge.
+- **`FieldBuilder.WithAccess`** (Tabelle) wurde weder exportiert noch ausgewertet. Eine geschützte Spalte
+  rollenabhängig gar nicht erst aufnehmen.
+
 ## [0.7.1]
 
 ### Added

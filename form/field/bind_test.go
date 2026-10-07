@@ -413,8 +413,8 @@ func TestFileFieldValidate(t *testing.T) {
 		t.Fatal("expected error for nil on required file field")
 	}
 
-	// Non-nil value should pass
-	if err := f.Validate("somefile.pdf"); err != nil {
+	// A file in the frontend's [{name, data}] format should pass
+	if err := f.Validate(fileValue("a.pdf", 3)); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }

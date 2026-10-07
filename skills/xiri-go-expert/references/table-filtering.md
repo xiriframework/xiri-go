@@ -283,14 +283,7 @@ filters, _ := tbl.LoadFilterData(ctx)
 rows := c.svc.FindAll(filters, pagination.NewInfinite())  // kein Limit für Export
 
 tbl.SetData(rows)
-switch tbl.GetOutputType() {
-case table.OutputCSV:
-    return wc.CsvFromTable(tbl, "devices.csv")
-case table.OutputExcel:
-    return wc.ExcelFromTable(tbl, "devices.xlsx")
-default:
-    return wc.Data(tbl)
-}
+return wc.Data(tbl) // DataResponse liefert je nach GetOutputType() JSON, CSV oder Excel
 ```
 
 ## Bulk-Actions mit Select-Buttons

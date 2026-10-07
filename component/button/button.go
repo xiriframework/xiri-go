@@ -528,8 +528,13 @@ func (b *Button) warnMissingHint() {
 		return
 	}
 	b.warnedHint = true
+	// Same choice as Print: NewTableButton keeps the icon name in text.
+	icon := b.icon
+	if icon == "" {
+		icon = b.text
+	}
 	slog.Warn("button: icon-only button without hint has no accessible name",
-		"action", string(b.action), "type", string(b.buttonType), "icon", b.icon)
+		"action", string(b.action), "type", string(b.buttonType), "icon", icon)
 }
 
 // Print returns the JSON representation of the button

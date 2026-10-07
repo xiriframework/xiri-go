@@ -225,13 +225,13 @@ func (f *IntField) SetDisabled(disabled bool) *IntField {
 	return f
 }
 
-// SetAccess sets the access control permissions
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
 func (f *IntField) SetAccess(access []string) *IntField {
 	f.BaseField.SetAccess(access)
 	return f
 }
 
-// SetScenario sets which scenarios this field applies to
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
 func (f *IntField) SetScenario(scenario []string) *IntField {
 	f.BaseField.SetScenario(scenario)
 	return f

@@ -41,12 +41,11 @@ type fieldBase struct {
 	display  *string
 
 	// Display and behavior configuration
-	search      bool    // Column is searchable
-	sort        bool    // Column is sortable
-	sticky      bool    // Column is sticky (fixed during scroll)
-	header      *string // Custom header text override
-	headerSpan  *int    // Header column span for grouped headers
-	columnOrder int     // Column ordering/positioning
+	search     bool    // Column is searchable
+	sort       bool    // Column is sortable
+	sticky     bool    // Column is sticky (fixed during scroll)
+	header     *string // Custom header text override
+	headerSpan *int    // Header column span for grouped headers
 
 	// Input field configuration (for fieldTypeInput)
 	inputType     *string // Input type (text, number, email, etc.)
@@ -64,9 +63,6 @@ type fieldBase struct {
 	editableOptionsUrl    string           // URL to load options dynamically per row
 	editableOptionsSearch bool             // Show a search box in the inline-edit select (client-side filtering)
 	editableSearchUrl     string           // URL for server-side search: POST {id, field, search} -> [{value,label,color?}]
-
-	// Access control (potentially handled at higher level)
-	access []string // Required permissions
 
 	// Type-specific data for buttons/icon fields
 	buttons   map[int]*buttonDef
@@ -206,13 +202,12 @@ func (f *fieldBase) addIcon(value string, icon string, color core.Color, hint st
 // This ensures all field properties are preserved in the conversion for the Angular frontend.
 func (f *fieldBase) toTableField() *tableFieldJSON {
 	tf := &tableFieldJSON{
-		ID:          f.id,
-		fieldType:   f.fieldType,
-		name:        f.name,
-		footer:      f.footer,
-		hide:        f.hide,
-		csv:         f.csv,
-		columnOrder: f.columnOrder,
+		ID:        f.id,
+		fieldType: f.fieldType,
+		name:      f.name,
+		footer:    f.footer,
+		hide:      f.hide,
+		csv:       f.csv,
 
 		// behavior
 		search: f.search,
@@ -246,9 +241,6 @@ func (f *fieldBase) toTableField() *tableFieldJSON {
 		editableOptionsUrl:    f.editableOptionsUrl,
 		editableOptionsSearch: f.editableOptionsSearch,
 		editableSearchUrl:     f.editableSearchUrl,
-
-		// Unexported fields - access control
-		access: f.access,
 
 		cellObject: cellObjectKind(f.fieldTypeHint),
 

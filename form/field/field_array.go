@@ -153,13 +153,13 @@ func (f *ArrayField) SetDisabled(disabled bool) *ArrayField {
 	return f
 }
 
-// SetAccess sets the access control permissions
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
 func (f *ArrayField) SetAccess(access []string) *ArrayField {
 	f.BaseField.SetAccess(access)
 	return f
 }
 
-// SetScenario sets which scenarios this field applies to
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
 func (f *ArrayField) SetScenario(scenario []string) *ArrayField {
 	f.BaseField.SetScenario(scenario)
 	return f

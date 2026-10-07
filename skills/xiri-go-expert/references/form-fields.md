@@ -307,7 +307,7 @@ f := field.NewTimeField("start", "event.start", true, 0)
 // Kein Default → 0 übergeben. Achtung: 0 ist ein echter Timestamp (1970-01-01), kein "leer" —
 // das Feld kommt damit vorbelegt im Frontend an und Parse(nil) liefert 0, nicht nil.
 
-f.Subtype = "datetime"  // datetime (default), date, time, yearmonth
+f.Subtype = "datetime"  // datetime (default), date, yearmonth; Unbekanntes wird datetime
 
 // MinDate/MaxDate (*time.Time) validieren serverseitig UND werden als min/max exportiert:
 f.MinDate = &time.Time{...}
@@ -394,14 +394,21 @@ Ein ChipsField **ohne `List`** enthält schlicht nur Freitext-Strings (`IDs()` i
 
 ## FileField
 
-Datei-Upload.
+Datei-Upload. Es gibt keinen Multipart-Upload: xiri-ng liest die Dateien als Data-URL und schickt sie
+im normalen Formular-JSON als `[{name, data}]`, `data` = `"data:<mime>;base64,<payload>"`.
 
 ```go
-f := field.NewFileField("document", "device.document", true, 10*1024*1024) // 10MB
-f.AllowedTypes = []string{"application/pdf", "image/png"}
-f.AllowedExtensions = []string{".pdf", ".png"}
+f := field.NewFileField("document", "device.document", true, 10*1024*1024) // 10MB pro Datei
+f.AllowedTypes = []string{"application/pdf", "image/png"}                  // → accept
+f.AllowedExtensions = []string{".pdf", ".png"}                             // → accept
 f.Multiple = true
 ```
+
+- `MaxSize` geht als `max` ans Frontend, Typen und Endungen kommagetrennt als `accept`.
+- `Validate` prüft `required` (auch eine leere Liste) und `MaxSize` pro Datei an den dekodierten Bytes
+  (Code `max_size`). Kaputte Einträge sind ein Fehler.
+- Den MIME-Typ prüft Go nicht, er kommt vom Client. Wer ihn braucht, prüft die dekodierten Bytes selbst
+  (z. B. `http.DetectContentType`).
 
 ## TimeLimitField
 

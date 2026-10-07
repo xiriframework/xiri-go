@@ -237,9 +237,10 @@ func (fb *FieldBuilder) WithHeaderSpan(span int) *FieldBuilder {
 	return fb
 }
 
-// WithColumnOrder sets column ordering
+// WithColumnOrder used to promise a column order but was never evaluated.
+//
+// Deprecated: has no effect, columns render in insertion order.
 func (fb *FieldBuilder) WithColumnOrder(order int) *FieldBuilder {
-	fb.base.columnOrder = order
 	return fb
 }
 
@@ -376,9 +377,10 @@ func (fb *FieldBuilder) WithEditableSearchOptionsUrl(url string) *FieldBuilder {
 	return fb
 }
 
-// WithAccess sets required permissions
+// WithAccess used to store required permissions, but they were neither exported nor evaluated.
+//
+// Deprecated: has no effect; leave the column out of the table instead.
 func (fb *FieldBuilder) WithAccess(access []string) *FieldBuilder {
-	fb.base.access = access
 	return fb
 }
 

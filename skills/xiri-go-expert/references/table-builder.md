@@ -110,7 +110,6 @@ b.TextField("name", "device.name", accessor).
     WithTextSuffix("kg").
     WithHeader("Gruppe A").         // Header-Zeile über der Spalte
     WithHeaderSpan(3).              // Header spans N Spalten
-    WithColumnOrder(1).             // Spaltenreihenfolge
     Hide().                          // Spalte verstecken
     HideInCSV().                     // Nur in CSV verstecken
     ShowInCSV().                     // Nur in CSV anzeigen

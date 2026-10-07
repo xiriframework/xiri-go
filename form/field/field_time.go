@@ -17,7 +17,7 @@ type TimeField struct {
 	Max         *int64 // Maximum date (Unix timestamp or days offset)
 	AllowPast   bool   // If false, only future dates are allowed
 	AllowFuture bool   // If false, only past dates are allowed
-	Subtype     string // Subtype: "date", "datetime", "time"
+	Subtype     string // Subtype: "date", "datetime" or "yearmonth"; anything else renders as datetime
 	Value       *int64 // Parsed and validated value (Unix timestamp)
 }
 
@@ -173,17 +173,15 @@ func (f *TimeField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 	}
 	result := f.BaseField.GetBaseExport(ctx, value)
 
-	// Determine type based on subtype
-	if f.Subtype == "date" {
-		result["type"] = "date"
-	} else if f.Subtype == "time" {
-		result["type"] = "time"
-	} else if f.Subtype == "yearmonth" {
-		result["type"] = "yearmonth"
-	} else {
+	// Determine type based on subtype; anything else (including "") renders as datetime
+	switch f.Subtype {
+	case "date", "yearmonth":
+		result["type"] = f.Subtype
+		result["subtype"] = f.Subtype
+	default:
 		result["type"] = "datetime"
+		result["subtype"] = "datetime"
 	}
-	result["subtype"] = f.Subtype
 
 	// min/max for the frontend picker: Min/Max (day offset or absolute) take precedence,
 	// otherwise the absolute MinDate/MaxDate used by Validate() are exported so that
@@ -234,13 +232,13 @@ func (f *TimeField) SetDisabled(disabled bool) *TimeField {
 	return f
 }
 
-// SetAccess sets the access control permissions
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
 func (f *TimeField) SetAccess(access []string) *TimeField {
 	f.BaseField.SetAccess(access)
 	return f
 }
 
-// SetScenario sets which scenarios this field applies to
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
 func (f *TimeField) SetScenario(scenario []string) *TimeField {
 	f.BaseField.SetScenario(scenario)
 	return f

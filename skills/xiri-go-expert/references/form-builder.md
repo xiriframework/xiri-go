@@ -135,6 +135,7 @@ laufen also unverändert — verlieren aber die Feldzuordnung.
 | `validation.min` / `validation.max` (Zahl) | `{min}` / `{max}` |
 | `validation.min_items` / `validation.max_items` | `{min}` / `{max}` |
 | `validation.not_allowed` | — |
+| `validation.max_size` (Datei, Bytes pro Datei) | `{max}` |
 | `validation.not_past` / `not_future` / `min_date` / `max_date` / `range_order` (Zeit) | — |
 
 `{field}` geht in jedem Key. Unter dem Feld reicht meist die Meldung ohne Namen („Höchstens {max} Zeichen").

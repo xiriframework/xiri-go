@@ -11,7 +11,7 @@ import (
 // Card represents a card component with header and content
 type Card struct {
 	cardType        core.CardType
-	content         any // Can be map[string]any or struct (e.g., *CardListContent)
+	content         any              // Can be map[string]any or struct (e.g., *CardListContent)
 	components      []core.Component // Optional sub-components rendered in xcol-grid (multi-component card)
 	header          string
 	headerSub       *string
@@ -150,7 +150,7 @@ func (c *Card) SetURL(url *url.Url) *Card {
 	return c
 }
 
-// WithReload enables periodic reload of the card data when using AJAX mode.
+// WithReload shows a manual reload button in the card header. Only effective with SetURL.
 func (c *Card) WithReload(reload bool) *Card {
 	c.reload = &reload
 	return c
@@ -162,7 +162,8 @@ func (c *Card) WithCollapsible(collapsible bool) *Card {
 	return c
 }
 
-// WithCollapsed sets whether the card starts in collapsed state.
+// WithCollapsed sets whether the card starts in collapsed state. WithCollapsed(true) also
+// makes the card collapsible, even after WithCollapsible(false), so it can be expanded again.
 func (c *Card) WithCollapsed(collapsed bool) *Card {
 	c.collapsed = &collapsed
 	return c
@@ -274,6 +275,11 @@ func (c *Card) printHeader(ctx *core.UiContext) map[string]any {
 	}
 	if c.collapsed != nil {
 		data["collapsed"] = *c.collapsed
+		// A collapsed card the user cannot expand is a dead end: xiri-ng only reacts to
+		// header clicks when collapsible is set.
+		if *c.collapsed {
+			data["collapsible"] = true
+		}
 	}
 	if c.maxHeight != nil {
 		data["maxHeight"] = *c.maxHeight

@@ -138,3 +138,26 @@ func TestCard_DataResponseEnvelope(t *testing.T) {
 		t.Errorf("card=%v", card)
 	}
 }
+
+// xiri-ng ignores header clicks unless "collapsible" is set, so a card sent with
+// collapsed: true alone could never be opened again. WithCollapsed(true) therefore
+// always makes the card collapsible — in static and URL mode alike.
+func TestCard_CollapsedImpliesCollapsible(t *testing.T) {
+	newCard := func() *Card { return NewCard(core.CardTypeTable, nil, "H", nil, nil, nil, false, false, nil) }
+	cases := map[string]*Card{
+		"static":              newCard().WithCollapsed(true),
+		"url":                 newCard().SetURL(url.NewUrl("/api/card")).WithCollapsed(true),
+		"explicit not collap": newCard().WithCollapsible(false).WithCollapsed(true),
+	}
+	for name, c := range cases {
+		data := c.Print(cardCtx())["data"].(map[string]any)
+		if data["collapsible"] != true || data["collapsed"] != true {
+			t.Errorf("%s: collapsible=%v collapsed=%v, want both true", name, data["collapsible"], data["collapsed"])
+		}
+	}
+
+	open := newCard().WithCollapsed(false).Print(cardCtx())["data"].(map[string]any)
+	if _, ok := open["collapsible"]; ok {
+		t.Errorf("WithCollapsed(false) alone: unexpected collapsible=%v", open["collapsible"])
+	}
+}

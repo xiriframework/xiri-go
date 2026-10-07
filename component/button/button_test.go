@@ -329,3 +329,18 @@ func TestTableButton_WithIcon_OverridesIcon(t *testing.T) {
 		t.Errorf("out[\"icon\"] = %v, want delete", out["icon"])
 	}
 }
+
+// NewTableButton stores the icon name in text, not in icon; the warning must still
+// name the icon so the developer can find the button.
+func TestTableButtonWithoutHint_WarningNamesIcon(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	defer slog.SetDefault(prev)
+
+	button.NewTableButton(core.ButtonActionApi, "edit", url.NewUrl("/x"), "", core.ColorPrimary, false, nil).Print(nil)
+
+	if !strings.Contains(buf.String(), "icon=edit") {
+		t.Errorf("expected icon=edit in the warning, got %q", buf.String())
+	}
+}

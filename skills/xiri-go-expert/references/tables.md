@@ -138,7 +138,6 @@ b.TextField("name", "Name", accessor).
     WithHint("Gerätename").        // Tooltip
     WithHeader("NAME").            // Custom Header (z.B. abgekürzt)
     WithHeaderSpan(2).             // Header-colspan
-    WithColumnOrder(5).            // Reihenfolge überschreiben
     WithTextPrefix("€ ").
     WithTextSuffix(" km")
 ```
@@ -239,18 +238,15 @@ Die Tabelle selbst braucht dafür `b.SetEditUrl(c.apiUrl("inline-edit").PrintPre
 
 ### Zugriff / Berechtigung
 
-```go
-b.TextField("salary", "Gehalt", accessor).
-    WithAccess([]string{"admin", "hr"})    // Rollen-Metadaten für das Frontend
-```
+`WithAccess` ist **deprecated** und wirkungslos: Die Rollen wurden weder ins JSON geschrieben noch
+ausgewertet. Eine geschützte Spalte nimmt man rollenabhängig gar nicht erst in die Tabelle auf und
+prüft den Zugriff im eigenen Handler:
 
-> ⚠️ **`WithAccess` ist kein Zugriffsschutz.** Die Library wertet die Rollen **nirgends** aus — es
-> gibt keine Backend-Prüfung. Die Werte landen als Metadaten im JSON-Modell; ob und wie das Frontend
-> sie berücksichtigt, ist nicht Sache der Library. Wer eine Spalte wirklich schützen will, darf sie
-> **gar nicht erst in die Tabelle aufnehmen** (bzw. den Accessor rollenabhängig leer liefern lassen)
-> und muss den Zugriff im eigenen Handler prüfen. Ein Klient sieht sonst den Wert im Response.
->
-> (Bekannt als Finding #2 des Audits; eine echte Durchsetzung steht noch aus.)
+```go
+if user.Can("hr") {
+    b.TextField("salary", "Gehalt", accessor)
+}
+```
 
 ## Row Buttons (Aktionen pro Zeile)
 
@@ -769,15 +765,10 @@ Wenn `SetCsv(true)` / `SetExcel(true)`, hängt das Frontend `_csv: true` bzw. `_
 
 ```go
 tbl.SetData(rows)
-switch tbl.GetOutputType() {
-case table.OutputCSV:
-    return wc.CsvFromTable(tbl, "devices.csv")
-case table.OutputExcel:
-    return wc.ExcelFromTable(tbl, "devices.xlsx")
-default:
-    return wc.Data(tbl)
-}
+return wc.Data(tbl) // DataResponse liefert je nach GetOutputType() JSON, CSV oder Excel
 ```
+
+Ein `switch` auf `GetOutputType()` ist nicht nötig. Den Dateinamen setzt das Frontend.
 
 **Zahlen im Export:**
 - Integer, Float, Distance, Pressure und Speed werden automatisch als Zahl exportiert.

@@ -281,13 +281,13 @@ func (f *TimeLimitField) SetDisabled(disabled bool) *TimeLimitField {
 	return f
 }
 
-// SetAccess sets the access control permissions
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
 func (f *TimeLimitField) SetAccess(access []string) *TimeLimitField {
 	f.BaseField.SetAccess(access)
 	return f
 }
 
-// SetScenario sets which scenarios this field applies to
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
 func (f *TimeLimitField) SetScenario(scenario []string) *TimeLimitField {
 	f.BaseField.SetScenario(scenario)
 	return f

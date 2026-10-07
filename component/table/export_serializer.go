@@ -82,13 +82,12 @@ type fieldButtonJSON struct {
 //   - Translation of labels and hints
 //   - Proper JSON structure for various field types
 type tableFieldJSON struct {
-	ID          string
-	fieldType   fieldType
-	name        string
-	footer      FieldFooter
-	hide        bool
-	csv         bool
-	columnOrder int
+	ID        string
+	fieldType fieldType
+	name      string
+	footer    FieldFooter
+	hide      bool
+	csv       bool
 
 	// behavior
 	search bool
@@ -126,9 +125,6 @@ type tableFieldJSON struct {
 	editableSearchUrl     string
 
 	cellObject string // "string" | "number" (kind of v): web cells are {d, v} objects; "" = plain cells
-
-	// access control
-	access []string
 
 	// type-specific data
 	buttons map[int]*fieldButtonJSON

@@ -319,13 +319,13 @@ func (f *GeoformField) SetDisabled(disabled bool) *GeoformField {
 	return f
 }
 
-// SetAccess sets the access control permissions
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
 func (f *GeoformField) SetAccess(access []string) *GeoformField {
 	f.BaseField.SetAccess(access)
 	return f
 }
 
-// SetScenario sets which scenarios this field applies to
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
 func (f *GeoformField) SetScenario(scenario []string) *GeoformField {
 	f.BaseField.SetScenario(scenario)
 	return f

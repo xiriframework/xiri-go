@@ -9,26 +9,26 @@ import (
 type FieldType string
 
 const (
-	FieldTypeTimeRange  FieldType = "timerange"
-	FieldTypeModelList  FieldType = "modellist"
-	FieldTypeModel      FieldType = "model"
-	FieldTypeBool       FieldType = "bool"
-	FieldTypeInt        FieldType = "number"
-	FieldTypeSelect     FieldType = "select"
-	FieldTypeRadio      FieldType = "radio"
-	FieldTypeText       FieldType = "text"
-	FieldTypeArray FieldType = "array"
-	FieldTypeFile       FieldType = "file"
-	FieldTypeHeader     FieldType = "header"
-	FieldTypeHtml       FieldType = "html"
-	FieldTypeInfo       FieldType = "info"
-	FieldTypeJson       FieldType = "json"
-	FieldTypeSerial     FieldType = "serial"
-	FieldTypeTime       FieldType = "time"
-	FieldTypeGeoform    FieldType = "geoform"   // Geometry field for geofencing/map drawing (16th field type)
-	FieldTypeTimelimit  FieldType = "timelimit" // Time limit field with weekdays and time range (17th field type)
-	FieldTypeChips      FieldType = "chips"     // Tag/chip input field (18th field type)
-	FieldTypeDivider    FieldType = "divider"   // Visual divider/separator (19th field type)
+	FieldTypeTimeRange FieldType = "timerange"
+	FieldTypeModelList FieldType = "modellist"
+	FieldTypeModel     FieldType = "model"
+	FieldTypeBool      FieldType = "bool"
+	FieldTypeInt       FieldType = "number"
+	FieldTypeSelect    FieldType = "select"
+	FieldTypeRadio     FieldType = "radio"
+	FieldTypeText      FieldType = "text"
+	FieldTypeArray     FieldType = "array"
+	FieldTypeFile      FieldType = "file"
+	FieldTypeHeader    FieldType = "header"
+	FieldTypeHtml      FieldType = "html"
+	FieldTypeInfo      FieldType = "info"
+	FieldTypeJson      FieldType = "json"
+	FieldTypeSerial    FieldType = "serial"
+	FieldTypeTime      FieldType = "time"
+	FieldTypeGeoform   FieldType = "geoform"   // Geometry field for geofencing/map drawing (16th field type)
+	FieldTypeTimelimit FieldType = "timelimit" // Time limit field with weekdays and time range (17th field type)
+	FieldTypeChips     FieldType = "chips"     // Tag/chip input field (18th field type)
+	FieldTypeDivider   FieldType = "divider"   // Visual divider/separator (19th field type)
 )
 
 // FormField is the base interface that all form fields must implement
@@ -105,9 +105,11 @@ type BaseField struct {
 	AddURL string
 
 	// Advanced options
-	Access   []string // Access control permissions (nil = no restriction)
-	Scenario []string // Which scenarios this field applies to (nil = all scenarios)
-	DBName   string   // Database column name (empty = use ID)
+	// Access, Scenario and DBName are metadata only: neither exported nor evaluated by xiri-go.
+	// Access is no access control.
+	Access   []string // Role metadata
+	Scenario []string // Scenario metadata
+	DBName   string   // Database column name metadata
 	Form     bool     // Whether to show in form (false = hidden field)
 }
 
@@ -222,13 +224,13 @@ func (f *BaseField) SetHide(hide bool) *BaseField {
 	return f
 }
 
-// SetAccess sets the access control permissions (nil = no restriction)
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
 func (f *BaseField) SetAccess(access []string) *BaseField {
 	f.Access = access
 	return f
 }
 
-// SetScenario sets which scenarios this field applies to (nil = all scenarios)
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
 func (f *BaseField) SetScenario(scenario []string) *BaseField {
 	f.Scenario = scenario
 	return f

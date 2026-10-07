@@ -1382,95 +1382,6 @@ func TestAdvanced06_CustomHeaders(t *testing.T) {
 	// - Can be dynamic based on context
 }
 
-// TestAdvanced07_ColumnOrdering demonstrates explicit column order
-func TestAdvanced07_ColumnOrdering(t *testing.T) {
-	rows := generateDeviceData()
-
-	builder := table.NewBuilder[DeviceTableRow]()
-
-	// Explicitly set column order (default is insertion order)
-	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
-		return r.Name
-	}).WithColumnOrder(2) // Third column
-
-	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
-		return r.ID
-	}).WithColumnOrder(1) // Second column
-
-	statusIcons := table.NewIconSet()
-	statusIcons.Add("online", "check_circle", core.ColorAccent, "Online")
-	statusIcons.Add("offline", "cancel", core.ColorWarning, "Offline")
-
-	builder.IconFieldFromSet("status", "device.status",
-		func(r DeviceTableRow) *table.IconRef {
-			return statusIcons.Resolve(r.Status)
-		},
-		statusIcons,
-	).WithColumnOrder(0) // First column
-
-	tbl := builder.Build()
-	tbl.SetData(rows)
-	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
-
-	// Verify column order (fields are sorted by columnOrder)
-	fmt.Printf("Column order:\n")
-	for i, field := range fields {
-		fmt.Printf("  Position %d: %s\n", i, field["id"])
-	}
-	// Expected: status (0), id (1), name (2)
-
-	// Column ordering:
-	// - Fields are sorted by columnOrder before display
-	// - Default: insertion order (auto-assigned 0, 1, 2, ...)
-	// - Explicit ordering allows reordering without changing code flow
-	// - Useful for dynamic column visibility/reordering
-}
-
-// TestAdvanced08_AccessControl demonstrates permission-based field visibility
-func TestAdvanced08_AccessControl(t *testing.T) {
-	rows := generateDeviceData()
-
-	builder := table.NewBuilder[DeviceTableRow]()
-
-	// Public field (no access control)
-	builder.TextField("name", "device.name", func(r DeviceTableRow) string {
-		return r.Name
-	})
-
-	// Admin-only field
-	builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
-		return r.ID
-	}).WithAccess([]string{"admin", "superadmin"})
-
-	// Edit permission required
-	builder.InputField("notes", "device.notes", func(r DeviceTableRow) any {
-		return r.Notes
-	}).WithAccess([]string{"device.edit"}).WithInputType("text")
-
-	tbl := builder.Build()
-	tbl.SetData(rows)
-	fields := tbl.Print(exampleContext())["data"].(map[string]any)["fields"].([]map[string]any)
-
-	// Access control is set in field definition
-	// Frontend checks user permissions and hides fields accordingly
-	for _, field := range fields {
-		if access, ok := field["access"].([]string); ok && len(access) > 0 {
-			fmt.Printf("Field %s requires permissions: %v\n", field["id"], access)
-		} else {
-			fmt.Printf("Field %s is public\n", field["id"])
-		}
-	}
-
-	// Access control:
-	// - Field-level permissions checked by frontend
-	// - Backend should also enforce permissions on data
-	// - Multiple permissions = OR logic (any permission grants access)
-	// - No access set = public field
-}
-
-// ===== REAL CONTROLLER INTEGRATION EXAMPLES =====
-// These examples demonstrate patterns used in actual controller implementations
-
 // TestIntegration01_AJAXTable demonstrates AJAX table with URL endpoint
 func TestIntegration01_AJAXTable(t *testing.T) {
 	// In controller: no data provided, URL is set for AJAX loading
@@ -1736,7 +1647,7 @@ func TestIntegration06_DynamicFieldVisibility(t *testing.T) {
 	// Admin-only field
 	idField := builder.IdField("id", "device.id", func(r DeviceTableRow) int64 {
 		return r.ID
-	}).WithAccess([]string{"admin"})
+	})
 
 	// Conditionally hide based on permissions
 	if !hasPermission([]string{"admin"}) {

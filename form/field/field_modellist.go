@@ -252,13 +252,13 @@ func (f *ModelListField) SetDisabled(disabled bool) *ModelListField {
 	return f
 }
 
-// SetAccess sets the access control permissions
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
 func (f *ModelListField) SetAccess(access []string) *ModelListField {
 	f.BaseField.SetAccess(access)
 	return f
 }
 
-// SetScenario sets which scenarios this field applies to
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
 func (f *ModelListField) SetScenario(scenario []string) *ModelListField {
 	f.BaseField.SetScenario(scenario)
 	return f

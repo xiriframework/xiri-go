@@ -4,12 +4,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/types/distance"
 	"github.com/xiriframework/xiri-go/types/language"
 	"github.com/xiriframework/xiri-go/types/locale"
 	"github.com/xiriframework/xiri-go/types/pressure"
 	"github.com/xiriframework/xiri-go/types/timezone"
-	"github.com/xiriframework/xiri-go/component/core"
 )
 
 func TestTimeFieldMinMaxMidnightCalculation(t *testing.T) {
@@ -152,9 +152,9 @@ func TestTimeFieldParseYearMonthInvalidStrings(t *testing.T) {
 	cases := []string{
 		"not-a-date",
 		"2026/04",
-		"2026-13",       // invalid month
-		"2026-00",       // invalid month
-		"26-04",         // 2-digit year not supported
+		"2026-13", // invalid month
+		"2026-00", // invalid month
+		"26-04",   // 2-digit year not supported
 		"April 2026",
 		"",
 	}
@@ -349,5 +349,17 @@ func TestTimeFieldMinOffsetWinsOverMinDate(t *testing.T) {
 
 	if got, _ := result["min"].(int64); got == minDate.Unix() {
 		t.Errorf("Min offset must take precedence over MinDate, got MinDate %d", got)
+	}
+}
+
+// xiri-ng has no renderer for type "time", and renders type "datetime" with subtype
+// "time" as a date-only picker. Unknown subtypes therefore fall back to datetime in both keys.
+func TestTimeFieldExportUnknownSubtypeFallsBackToDatetime(t *testing.T) {
+	field := NewTimeField("at", "test.at", false, 0)
+	field.Subtype = "time"
+	result := field.ExportForFrontend(nil, nil)
+
+	if result["type"] != "datetime" || result["subtype"] != "datetime" {
+		t.Errorf("type=%v subtype=%v, want both \"datetime\"", result["type"], result["subtype"])
 	}
 }

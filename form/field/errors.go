@@ -17,6 +17,7 @@ import "fmt"
 //	not_past / not_future      —               (time fields)
 //	min_date / max_date        —               (time fields)
 //	range_order                —               (time range start after end)
+//	max_size                   {max}           (file fields, bytes per file)
 type ValidationError struct {
 	Code   string
 	Params map[string]any

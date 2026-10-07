@@ -10,7 +10,7 @@ import (
 // Parameters:
 //   - fields: Array of form field configurations (from form/group.ExportForFrontendWithValues)
 //   - u: URL to submit form data
-//   - header: Dialog header text (required, passed as pointer for consistency with old API)
+//   - header: Optional dialog header text (nil = no header)
 //   - extra: Optional extra data passed to frontend
 //   - okText: Optional custom OK button text (uses translation or "Ok" as fallback)
 //   - closeText: Optional custom close button text (uses translation or "Back" as fallback)
@@ -33,7 +33,7 @@ func NewDialogForm(
 
 	return newDialog(
 		core.DialogTypeForm,
-		*header,
+		resolveText(header, ""),
 		fields,
 		buttons,
 		extra,

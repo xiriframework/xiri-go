@@ -121,13 +121,13 @@ func (f *JsonField) SetDisabled(disabled bool) *JsonField {
 	return f
 }
 
-// SetAccess sets the access control permissions
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
 func (f *JsonField) SetAccess(access []string) *JsonField {
 	f.BaseField.SetAccess(access)
 	return f
 }
 
-// SetScenario sets which scenarios this field applies to
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
 func (f *JsonField) SetScenario(scenario []string) *JsonField {
 	f.BaseField.SetScenario(scenario)
 	return f
