@@ -60,7 +60,7 @@ c.Print(ctx)
 // AJAX-Card (lädt sich komplett von URL: Titel, Buttons, Inhalt)
 c := card.NewCard(core.CardTypeTable, nil, "devices.list", nil, nil, nil, true, false, nil)
 c.SetURL(xurl.NewUrl("/api/devices/table"))
-c.WithReload(true)
+c.WithReload(true)                       // nur mit SetURL; ohne warnt Print per slog.Warn
 c.Print(ctx)
 // Endpoint: fertige Card bauen und wc.Data(card) liefern → {"card": {...}}
 ```

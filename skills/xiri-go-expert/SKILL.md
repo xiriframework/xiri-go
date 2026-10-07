@@ -245,9 +245,12 @@ Tooltip (`hint`), **nicht** das Icon. Icon per `.WithIcon("edit")`; sichtbar nur
 
 ## Wichtige Do-nots
 
-- **Kein** `NewTextareaField` — `NewTextField` mit `.Subtype = "textarea"`.
+- **Kein** `NewTextareaField` — `NewTextField` mit `.Subtype = "textarea"`. Vorschläge
+  (`SetSuggestions`/`SetSuggestionsURL`) rendert eine Textarea nicht (`slog.Warn`).
+- **Icon/Hint/Farbe-Reihenfolge nicht raten** — sie ist in jeder Funktion anders und `core.Color` nimmt jeden
+  String. Tabelle in `references/components.md` → „Parameter-Reihenfolge Icon/Hint/Farbe“.
 - **Kein** `NewMultiSelectField` — `NewSelectField(...).SetMultiple(true)`.
-- **Kein eigener „Alle auswählen“-Button** neben einem Multi-Select — `SetSelectAll(true)` am `SelectField` (Frontend-Toggle über der Liste, wirkt auf die sichtbaren/gefilterten Optionen; nur mit `SetMultiple(true)`).
+- **Kein eigener „Alle auswählen“-Button** neben einem Multi-Select — `SetSelectAll(true)` am `SelectField` (Frontend-Toggle über der Liste, wirkt auf die sichtbaren/gefilterten Optionen; nur mit `SetMultiple(true)`, sonst `slog.Warn`).
 - **Kein** `NewDeviceListField` — `NewModelListField(id, name, required, "device", ids)`.
 - **Kein `nil` als Default-Argument** bei Text/Int/Bool/Time — das sind Wert-Parameter, nicht
   Pointer. Nullwert übergeben (`""`, `0`, `false`). `nil` ist nur bei Slice/Map-Defaults erlaubt
