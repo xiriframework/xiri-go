@@ -112,6 +112,10 @@ func (b *TableBuilder[T]) validateFields() {
 			}
 		}
 	}
+	opts := b.table.options
+	if opts.SaveState != nil && *opts.SaveState && opts.SaveStateId == nil {
+		slog.Warn("table.Build: SetSaveState(true) without SetSaveStateId; the state is not saved")
+	}
 	b.validateTree()
 }
 

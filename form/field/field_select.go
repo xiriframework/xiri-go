@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/xiriframework/xiri-go/component/core"
 )
@@ -16,6 +17,8 @@ type SelectField struct {
 	SelectAll bool    // If true (and Multiple), the frontend shows a "select all / none" toggle
 	Value     int32   // Parsed and validated value (single-select mode)
 	Values    []int32 // Parsed and validated values (multi-select mode)
+
+	warnedSelectAll bool
 }
 
 // SelectOption represents a single option in a select field
@@ -235,6 +238,9 @@ func (f *SelectField) ExportForFrontend(ctx *core.UiContext, value interface{}) 
 		if f.SelectAll {
 			result["selectAll"] = true
 		}
+	} else if f.SelectAll && !f.warnedSelectAll {
+		f.warnedSelectAll = true
+		slog.Warn("field: selectAll without Multiple has no effect, use SetMultiple(true)", "fieldId", f.ID)
 	}
 
 	// Export options as array of {id, name} maps

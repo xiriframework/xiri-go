@@ -2,6 +2,7 @@ package field
 
 import (
 	"fmt"
+	"log/slog"
 	"regexp"
 	"strings"
 
@@ -26,6 +27,8 @@ type TextField struct {
 	Suggestions    []string // Autocomplete suggestions; nil = none, empty = explicitly none (exports list: [])
 	SuggestionsURL string   // Endpoint for suggestions while typing: POST {search, <SearchWith...>} -> [{id, name}]
 	SearchWith     []string // IDs of other form fields whose current value is sent with the suggestion request
+
+	warnedSuggestions bool
 }
 
 func (f *TextField) Validate(value interface{}) error {
@@ -180,6 +183,11 @@ func (f *TextField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 	}
 	result["type"] = fieldType
 	result["subtype"] = f.Subtype
+	// An empty list only clears suggestions via reload patch, so only real suggestions are lost.
+	if fieldType == "textarea" && (len(f.Suggestions) > 0 || f.SuggestionsURL != "") && !f.warnedSuggestions {
+		f.warnedSuggestions = true
+		slog.Warn("field: textarea renders no suggestions, use subtype text", "fieldId", f.ID, "subtype", f.Subtype)
+	}
 
 	// Add min/max length
 	if f.MinLength > 0 {

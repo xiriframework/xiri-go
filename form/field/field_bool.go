@@ -86,7 +86,8 @@ func (f *BoolField) ExportForFrontend(ctx *core.UiContext, value interface{}) ma
 // Builder Functions
 // ============================================================================
 
-// NewBoolField creates a boolean form field
+// NewBoolField creates a boolean form field.
+// Order of the two bools: required first, then the current value.
 func NewBoolField(id, name string, required bool, currentValue bool) *BoolField {
 	return &BoolField{
 		BaseField: &BaseField{

@@ -15,7 +15,8 @@ func NewUrl(url string) *Url {
 	}
 }
 
-// NewUrlPrefix creates a new URL with prefix
+// NewUrlPrefix creates a new URL with prefix. Path first, then prefix:
+// NewUrlPrefix("/devices", "/api") prints "/api/devices" via PrintPrefix.
 func NewUrlPrefix(url string, prefix string) *Url {
 	return &Url{
 		url:    url,

@@ -14,6 +14,9 @@ type Icon struct {
 
 // NewIcon creates a new icon component with required parameters
 // Optional parameters can be set using builder methods: WithHint(), WithOptions()
+//
+// Order: icon, hint, color. Siblings order these differently (e.g. NewTableButton: icon, u, hint,
+// color; FieldBuilder.AddButton: icon, color, hint), and core.Color accepts any string literal.
 func NewIcon(icon string, hint string, color core.Color, options map[string]any) *Icon {
 	if options == nil {
 		options = make(map[string]any)

@@ -208,12 +208,14 @@ func (r ReturnInlineEdit) WithUpdates(updates map[string]any) ReturnInlineEdit {
 }
 
 // WithRefreshTable triggers a table reload after the update.
+// Shares the field with WithRefreshPage: the last call wins.
 func (r ReturnInlineEdit) WithRefreshTable() ReturnInlineEdit {
 	r.Refresh = "table"
 	return r
 }
 
 // WithRefreshPage triggers a full page reload after the update.
+// Shares the field with WithRefreshTable: the last call wins.
 func (r ReturnInlineEdit) WithRefreshPage() ReturnInlineEdit {
 	r.Refresh = "page"
 	return r

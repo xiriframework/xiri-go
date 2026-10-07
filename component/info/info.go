@@ -64,6 +64,7 @@ type InfoPoint struct {
 
 // NewInfoPoint creates a new info point component with required parameters
 // Optional parameters can be set using builder methods: WithSubtext(), WithUrl(), etc.
+// The first three are all strings: text, icon, iconColor (e.g. string(core.ColorPrimary)).
 func NewInfoPoint(
 	text string,
 	icon string,

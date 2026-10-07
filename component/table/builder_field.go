@@ -127,7 +127,8 @@ func (fb *FieldBuilder) WithDisplay(display string) *FieldBuilder {
 	return fb
 }
 
-// AddButton adds a button to a buttons-type field
+// AddButton adds a button to a buttons-type field.
+// Order: key, action, icon, color, hint — color before hint, unlike NewTableButton.
 func (fb *FieldBuilder) AddButton(
 	key int,
 	action FieldButtonAction,
@@ -385,6 +386,7 @@ func (fb *FieldBuilder) WithAccess(access []string) *FieldBuilder {
 }
 
 // AddMenuItem adds a menu item definition to the last added menu button.
+// Order: action, icon, color, text.
 func (fb *FieldBuilder) AddMenuItem(action FieldButtonAction, icon string, color core.Color, text string) *FieldBuilder {
 	if fb.base.menuItems == nil {
 		fb.base.menuItems = make(map[int][]*menuItemDef)
@@ -448,6 +450,7 @@ func AddMenuEntries[T any](fb *FieldBuilder, key int, icon string, color core.Co
 // - "": hide the menu item for this row
 // Returning nil hides the entire menu button for this row.
 // To show an item disabled with a reason instead of hiding it, use AddMenuEntries.
+// Order: fb, key, icon, color, hint, accessor.
 func AddMenu[T any](fb *FieldBuilder, key int, icon string, color core.Color, hint string, accessor func(T) []string) *FieldBuilder {
 	return AddMenuEntries(fb, key, icon, color, hint, func(row T) []MenuEntry {
 		urls := accessor(row)

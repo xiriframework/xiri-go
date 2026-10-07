@@ -335,7 +335,8 @@ func NewHrefButton(
 	)
 }
 
-// NewTableButton creates a table action button (icon-only) with type safety
+// NewTableButton creates a table action button (icon-only) with type safety.
+// Order: action, icon, url, hint, color — icon and hint are both strings.
 func NewTableButton(
 	action core.ButtonAction,
 	icon string,

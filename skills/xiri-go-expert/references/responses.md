@@ -187,8 +187,8 @@ geänderten Feld-Definitionen). Details und Ablauf: `form-fields.md` → „Abh�
 ```go
 response.NewReturnInlineEdit() ReturnInlineEdit          // {"done": true}
 r.WithUpdates(map[string]any{"price": tbl.Cell(uc, "price", row)}) // Zellen der Row patchen
-r.WithRefreshTable()                                     // "refresh": "table"
-r.WithRefreshPage()                                      // "refresh": "page"
+r.WithRefreshTable()                                     // "refresh": "table" — ein Feld mit WithRefreshPage,
+r.WithRefreshPage()                                      // "refresh": "page"  — der letzte Aufruf gewinnt
 r.WithGoto("/Portal/Device/7")                           // "goto"
 r.WithMessage("Gespeichert", response.MessageSuccess)
 ```

@@ -112,6 +112,8 @@ f.SetSuggestionsURL(u, "country", "kind") // beim Tippen: POST u {search, countr
 f.SetSuggestionsURL(nil)                  // schaltet das Nachladen ab
 ```
 
+- **Nur einzeilig:** Subtyp `textarea`/`html` rendert keine Vorschläge (xiri-ng, bewusst); xiri-go warnt
+  beim Export, wenn dort welche gesetzt sind.
 - `Suggestions == nil` exportiert keinen Key; `SetSuggestions()` ohne Argumente exportiert `list: []`.
   Genau das braucht ein Feld, dessen Vorschläge erst per `SetReloadOn` kommen — das Frontend rendert
   ein Textfeld nur dann von Anfang an als Vorschlagsfeld, sonst wechselt beim Patch das Input-Element.
@@ -167,7 +169,8 @@ Checkbox. Value: `*bool`
 
 ```go
 f := field.NewBoolField("active", "device.active", false, false)
-// Parameter: id, translationKey, required, currentValue (bool — Wert, nicht *bool)
+// Parameter: id, translationKey, required, currentValue (bool — Wert, nicht *bool).
+// Zwei Bools in Folge: erst Pflichtfeld, dann Wert — vertauscht kompiliert es.
 
 // Nach BindAndValidate:
 active := *f.Value  // bool
@@ -511,7 +514,7 @@ critField.BaseField.
 ```go
 fb := formbuilder.NewFormBuilder(uc)
 
-active := field.NewBoolField("active", "Aktiv", false, false)
+active := field.NewBoolField("active", "Aktiv", false, false) // required, value
 reason := field.NewTextField("reason", "Abschalt-Grund", false, "")
 reason.BaseField.SetShowWhen("active", field.CondEquals, false)
 

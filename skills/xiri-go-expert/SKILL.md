@@ -32,7 +32,7 @@ FormGroup/Builder → *.Print(ctx *core.UiContext) → map[string]any → JSON �
 import xurl "github.com/xiriframework/xiri-go/component/url"
 
 xurl.NewUrl("/devices")                      // Frontend-Link (kein Prefix)
-xurl.NewUrlPrefix("/devices", "/api/v1")     // API-Endpoint (mit Prefix)
+xurl.NewUrlPrefix("/devices", "/api/v1")     // API-Endpoint (mit Prefix) — erst Pfad, dann Prefix
 u.Add("edit").Add("42")                       // Chain-Append (ein Segment pro Add)
 u.Print()        // ohne Prefix
 u.PrintPrefix()  // mit Prefix — das geben ALLE Komponenten aus (auch Link-Buttons, Breadcrumbs)

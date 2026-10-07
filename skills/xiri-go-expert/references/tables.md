@@ -528,8 +528,8 @@ b.SetSearch(true)
 b.SetQuery(false)           // Deprecated, ohne Frontend-Wirkung
 b.SetFilterCollapsed(true)  // wrappt SetFilter in ein Expansion-Panel; true = eingeklappt starten,
                             // false = aufgeklappt, gar nicht gesetzt = kein Panel (siehe table-filtering.md)
-b.SetCsv(true)              // CSV-Export-Button verfügbar
-b.SetExcel(true)            // Excel-Export
+b.SetCsv(true)              // CSV-Export-Button (Default an), nur mit tbl.SetURL
+b.SetExcel(true)            // Excel-Export (Default an), nur mit tbl.SetURL
 b.SetSaveState(true)        // Filter/Sort/Page persistieren (Session-Storage, 1 h; nur zusammen mit SetSaveStateId)
 b.SetSaveStateId("device-table")
 b.SetBorders(true)

@@ -2,6 +2,8 @@
 package card
 
 import (
+	"log/slog"
+
 	"github.com/xiriframework/xiri-go/component/button"
 	"github.com/xiriframework/xiri-go/component/core"
 	"github.com/xiriframework/xiri-go/component/url"
@@ -30,6 +32,8 @@ type Card struct {
 	maxHeight       *string
 	padding         *string
 	flat            *bool
+
+	warnedReload bool
 }
 
 // NewCard creates a new card component with full control over all parameters.
@@ -39,6 +43,10 @@ type Card struct {
 //
 // Use NewCard directly only when you need custom CardType or advanced options
 // like translateHeader, forceMinWidth, or headerIcon.
+//
+// headerSub, headerIcon and headerIconColor are three *string in a row; passing nil and using
+// WithHeaderSub/WithHeaderIcon/WithHeaderIconColor avoids mixing them up. Then come two bools:
+// translateHeader, forceMinWidth.
 func NewCard(
 	cardType core.CardType,
 	content any, // Can be map[string]any or struct (e.g., *CardListContent)
@@ -212,6 +220,11 @@ func (c *Card) Print(ctx *core.UiContext) map[string]any {
 			data["reload"] = *c.reload
 		}
 	} else {
+		// Not in printData: the data endpoint rebuilds the card without URL and answers via DataResponse.
+		if c.reload != nil && *c.reload && !c.warnedReload {
+			c.warnedReload = true
+			slog.Warn("card: WithReload(true) without SetURL has no effect", "header", c.header)
+		}
 		data = c.printData(ctx)
 	}
 

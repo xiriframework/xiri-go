@@ -448,6 +448,10 @@ d.Print(ctx)
 d := dialog.NewDialog(core.DialogTypeForm, "dialog.edit", formComponent, buttons, nil, nil)
 ```
 
+Der Header steht in den Kurz-Konstruktoren an wechselnder Stelle: `NewDialogForm(fields, u, header *string, …)` an
+3., `NewDialogDelete/NewDialogWarning(text, u, extra, header *string, …)` an 4., `NewDialogWaiting(text, u, header
+string, …)` an 3. Stelle als `string`. Details: `dialogs.md`.
+
 ## DescriptionList (`component/descriptionlist`)
 
 Schlüssel-Wert-Liste.
@@ -1115,6 +1119,23 @@ i.WithData(map[string]any{"badge": 3})  // Custom-Payload unter Top-Level "data"
 ```
 
 Custom-Payload-Konvention identisch zum Button: `WithData` für Frontend-Daten, `WithOption`/`WithOptions` für Custom-Payload deprecated.
+
+### Parameter-Reihenfolge Icon/Hint/Farbe
+
+Jede Funktion ordnet Icon, Hint/Text und Farbe anders an. `core.Color` ist ein `string`-Typ, ein String-Literal an
+der falschen Stelle kompiliert also, und das Ergebnis ist still falsch. Benannte Konstanten (`core.ColorPrimary`)
+statt Literalen verwenden, dann fällt ein Dreher beim Lesen auf.
+
+| Funktion                                  | Reihenfolge                                                    |
+| ----------------------------------------- | -------------------------------------------------------------- |
+| `icon.NewIcon`                            | `(icon, hint, color, options)`                                 |
+| `button.NewTableButton`                   | `(action, icon, u, hint, color, disabled, options)`            |
+| `FieldBuilder.AddButton`                  | `(key, action, icon, color, hint)`                             |
+| `table.AddMenu`                           | `(fb, key, icon, color, hint, accessor)`                       |
+| `FieldBuilder.AddMenuItem`                | `(action, icon, color, text)`                                  |
+| `IconSet.Add`                             | `(value, icon, color, hint)` — `value` und `icon` sind Strings |
+| `info.NewInfoPoint`                       | `(text, icon, iconColor string, …)` — drei Strings in Folge    |
+| `card.NewCard`                            | `(…, header, headerSub, headerIcon, headerIconColor *string, translateHeader, forceMinWidth bool, display)` — lieber `nil` übergeben und `WithHeaderSub`/`WithHeaderIcon`/`WithHeaderIconColor` setzen |
 
 ## InfoText / InfoPoint (`component/info`)
 

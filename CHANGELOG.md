@@ -25,6 +25,18 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   existierende `wc.CsvFromTable`/`wc.ExcelFromTable`). `FileField` ist als Data-URL im Formular-JSON
   dokumentiert, nicht als Multipart-Upload.
 
+### Added
+
+- **`slog.Warn` bei wirkungslosen Kombinationen:** `SelectField` mit `SelectAll` ohne `Multiple`,
+  `TextField` mit Subtyp `textarea`/`html` und Vorschlägen (`SetSuggestions` mit Werten oder
+  `SetSuggestionsURL`), Card mit `WithReload(true)` ohne `SetURL` (einmal pro Instanz beim Export bzw.
+  `Print`) und Tabellen mit `SetSaveState(true)` ohne `SetSaveStateId` (bei `Build`).
+- **Godoc und Skill-Doku zur Parameter-Reihenfolge**, wo gleiche Typen nebeneinander stehen: Icon/Hint/Farbe
+  in `NewIcon`, `NewTableButton`, `AddButton`, `AddMenu`, `AddMenuItem`, `IconSet.Add`, `NewInfoPoint`;
+  `NewCard`, `NewBoolField`, `NewUrlPrefix`, Dialog-Header-Position. CSV/Excel-Export ist per Default an,
+  der Button erscheint aber nur mit `tbl.SetURL`. `InlineEdit.WithRefreshTable`/`WithRefreshPage`: der
+  letzte Aufruf gewinnt.
+
 ### Changed
 
 - **`FileField.Validate` prüft serverseitig.** Erwartet wird, was xiri-ng schickt: `[{name, data}]` mit

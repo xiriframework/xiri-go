@@ -40,7 +40,9 @@ type DialogWaiting struct {
 	waitingError   string
 }
 
-// NewDialogWaiting creates a waiting dialog with polling
+// NewDialogWaiting creates a waiting dialog with polling.
+// Order: text, u, header — header is a plain string here and comes third, unlike the *string
+// header of NewDialogDelete/NewDialogWarning (fourth) and NewDialogForm (third).
 func NewDialogWaiting(
 	text string,
 	u *url.Url,
