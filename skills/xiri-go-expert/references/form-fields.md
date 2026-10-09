@@ -14,7 +14,7 @@ field.SetDisabled(true)          // Deaktiviert: UI gesperrt (ab xiri-ng 0.4.14)
 field.SetAccess([]string{"admin"}) // Rollen-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetScenario([]string{"add"}) // Szenario-Metadaten (KEIN Zugriffsschutz, siehe unten)
 field.SetForm(false)             // Nicht im Formular anzeigen
-field.SetHide(true)              // Unsichtbar, Wert wird trotzdem gesendet und validiert (ab xiri-ng 0.6.2; davor verwarf das Frontend das Feld, der Server sah den Default)
+field.SetHide(true)              // Unsichtbar, Wert wird trotzdem gesendet und validiert (ab xiri-ng 0.7.0; davor verwarf das Frontend das Feld, der Server sah den Default)
 field.BaseField.SetAddURL(xurl.NewUrlPrefix("/Portal/Tag/AddDialog", "/api")) // "+"-Button: neue Option per Dialog anlegen
 ```
 

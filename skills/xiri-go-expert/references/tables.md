@@ -411,8 +411,8 @@ b.SetButtonsTop([]*button.TableButton{
 })
 ```
 
-Antwortet die Aktion eines Top-Buttons mit `NewReturnRefreshTable()`, lädt nur diese Tabelle neu (ab der nächsten
-xiri-ng-Version nach 0.6.1; bis dahin zusätzlich die ganze Seite). Bei einer statischen Tabelle (`SetData`) lädt
+Antwortet die Aktion eines Top-Buttons mit `NewReturnRefreshTable()`, lädt nur diese Tabelle neu (ab xiri-ng
+0.7.0; bis dahin zusätzlich die ganze Seite). Bei einer statischen Tabelle (`SetData`) lädt
 stattdessen der nächste Panel-Host bzw. die Seite, siehe `responses.md`.
 
 Im Gegensatz zu `pageheader.New(...).Buttons(...)` erscheinen Top-Buttons **direkt in der Tabellen-Toolbar** (neben Suche/Pagination) statt im Seitenkopf. Welcher Platz richtig ist, hängt vom UI-Design: globale Seiten-Actions → PageHeader; tabellen-spezifische Actions (nur wenn diese Tabelle sichtbar ist) → Top-Buttons.

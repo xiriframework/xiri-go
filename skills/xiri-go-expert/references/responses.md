@@ -24,7 +24,7 @@ Tabelle neu laden (z.B. nach Zeile löschen). Wirkt auf die Tabelle, in der der 
 Inline-Edit-Aktionen, `SetButtonsTop` und den Button im `SetEmptyState`. Eine Tabelle mit URL lädt neu (läuft gerade
 ein Load, danach). Eine statische Tabelle (`SetData`, ohne URL) kann nichts nachladen und verhält sich wie
 `ReturnRefreshPanel`: nächste Card/Expansion-Panel mit URL oder Query-Ergebnis mit URL, sonst die Seite. Außerhalb
-einer Tabelle lädt die Seite neu. Gilt ab der nächsten xiri-ng-Version (nach 0.6.1); bis dahin lud ein Kopf-Button
+einer Tabelle lädt die Seite neu. Gilt ab xiri-ng 0.7.0; bis dahin lud ein Kopf-Button
 Seite und Tabelle, und in statischen Tabellen tat eine Zeilenaktion nichts.
 
 ```go
@@ -41,8 +41,8 @@ Detailseite. Panel ist eine Card mit `SetURL(...)` (Endpoint liefert `card.DataR
 `expansion.Panel` mit `SetURL(...)` (Endpoint liefert `panel.DataResponse(ctx)`). Der Auslöser darf ein
 Button im Header, unten oder in einer verschachtelten Komponente sein, ebenso eine Tabellenaktion im Panel —
 das Frontend findet den nächstgelegenen Host mit URL. Auch das Ergebnis einer Query mit URL ist ein Host: Eine Aktion
-darin führt die Abfrage mit dem aktuellen Filter neu aus (Buttons der Filterleiste nicht; ab der nächsten xiri-ng-Version
-nach 0.6.1). Ein Host ohne URL reicht an den nächsten äußeren weiter;
+darin führt die Abfrage mit dem aktuellen Filter neu aus (Buttons der Filterleiste nicht; ab xiri-ng 0.7.0).
+Ein Host ohne URL reicht an den nächsten äußeren weiter;
 erst ohne weiteren Host lädt die Seite neu. Ab xiri-ng 0.4.11 auch dann, wenn der Auslöser in gar keinem Host liegt
 (0.4.10: nur Konsolenwarnung, nichts passiert) — derselbe Dialog kann also auf einer Übersichtsseite ohne Panel
 wiederverwendet werden.

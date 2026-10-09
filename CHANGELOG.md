@@ -10,12 +10,12 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ### Fixed
 
 - **Skill-Doku: `SetHide(true)` und Dialog-Buttons in `links.Links`.** Ein verstecktes Feld ist unsichtbar,
-  sein Wert wird aber mitgesendet und validiert. Das gilt erst ab der nächsten xiri-ng-Version (nach 0.6.1),
+  sein Wert wird aber mitgesendet und validiert. Das gilt erst ab xiri-ng 0.7.0,
   vorher verwarf das Frontend solche Felder, und der Server bekam stumm den Default. Dialog-Buttons in einer
   Links-Karte werten ab derselben Version die ganze Antwort aus (`NewReturnGoto`, `NewReturnRefreshTable`,
   `NewReturnRefreshPanel`), bis 0.6.1 wirkte nur `NewReturnRefreshPage`.
-- **Skill-Doku und Doc-Kommentar: `NewReturnRefreshTable` und Query-Ergebnis als Panel.** Ab der nächsten
-  xiri-ng-Version (nach 0.6.1) lädt ein Top-Button (`SetButtonsTop`) mit `RefreshTable` nur die Tabelle statt Seite
+- **Skill-Doku und Doc-Kommentar: `NewReturnRefreshTable` und Query-Ergebnis als Panel.** Ab xiri-ng 0.7.0
+  lädt ein Top-Button (`SetButtonsTop`) mit `RefreshTable` nur die Tabelle statt Seite
   und Tabelle. Eine statische Tabelle (`SetData`) verhält sich wie bei `RefreshPanel` (nächstes Panel mit URL, sonst
   die Seite), statt nichts zu tun. Das Ergebnis einer Query mit URL ist ein Panel: `RefreshPanel` aus einer Aktion
   darin führt die Abfrage mit dem aktuellen Filter neu aus.
