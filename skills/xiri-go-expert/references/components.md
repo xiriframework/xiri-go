@@ -852,6 +852,10 @@ lk.Add(button.NewSimpleLinkButton("Benutzer", xurl.NewUrl("/users"), core.ColorS
 lk.Print(ctx)
 ```
 
+Dialog-Buttons in der Liste werten die Dialog-Antwort voll aus: `NewReturnGoto`, `NewReturnRefreshPage`,
+`NewReturnRefreshTable` (lädt die Seite neu) und `NewReturnRefreshPanel` (umschließende Card/Expansion mit URL).
+Bis xiri-ng 0.6.1 wirkte nur `NewReturnRefreshPage`.
+
 ## Toolbar (`component/toolbar`)
 
 Toolbar mit Suche und Buttons.

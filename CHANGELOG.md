@@ -7,6 +7,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Skill-Doku: `SetHide(true)` und Dialog-Buttons in `links.Links`.** Ein verstecktes Feld ist unsichtbar,
+  sein Wert wird aber mitgesendet und validiert. Das gilt erst ab der nächsten xiri-ng-Version (nach 0.6.1),
+  vorher verwarf das Frontend solche Felder, und der Server bekam stumm den Default. Dialog-Buttons in einer
+  Links-Karte werten ab derselben Version die ganze Antwort aus (`NewReturnGoto`, `NewReturnRefreshTable`,
+  `NewReturnRefreshPanel`), bis 0.6.1 wirkte nur `NewReturnRefreshPage`.
+
 ## [0.8.0]
 
 ### Fixed
