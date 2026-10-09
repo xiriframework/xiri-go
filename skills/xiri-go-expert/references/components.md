@@ -853,7 +853,8 @@ lk.Print(ctx)
 ```
 
 Dialog-Buttons in der Liste werten die Dialog-Antwort voll aus: `NewReturnGoto`, `NewReturnRefreshPage`,
-`NewReturnRefreshTable` (lädt die Seite neu) und `NewReturnRefreshPanel` (umschließende Card/Expansion mit URL).
+`NewReturnRefreshTable` (lädt die Seite neu) und `NewReturnRefreshPanel` (nächster Panel-Host: Card/Expansion mit
+URL oder das Ergebnis einer Query mit URL, sonst die Seite).
 Bis xiri-ng 0.6.1 wirkte nur `NewReturnRefreshPage`.
 
 ## Toolbar (`component/toolbar`)
