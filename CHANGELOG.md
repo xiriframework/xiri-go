@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.8.1]
+
 ### Fixed
 
 - **Skill-Doku: `SetHide(true)` und Dialog-Buttons in `links.Links`.** Ein verstecktes Feld ist unsichtbar,
