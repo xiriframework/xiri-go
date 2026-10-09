@@ -122,6 +122,9 @@ func (r ReturnFields) WithMessage(text string, msgType MessageType) ReturnFields
 // With message: {"done": true, "refresh": "table", "message": "Row deleted", "messageType": "success"}
 //
 // Use case: Operation completed on table row, reload the table data
+//
+// xiri-ng reloads the table that contains the trigger (row, bulk, inline edit, top and empty-state buttons). A static
+// table (SetData, no URL) cannot reload itself and behaves like ReturnRefreshPanel; outside a table the page reloads.
 type ReturnRefreshTable struct {
 	Done    bool   `json:"done"`    // Always true
 	Refresh string `json:"refresh"` // Always "table"

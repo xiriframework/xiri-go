@@ -199,7 +199,7 @@ func (ctrl *Controller) InlineEditSave(c echo.Context) error {
     // Response-Varianten:
     return c.JSON(200, response.NewReturnInlineEdit().
         WithUpdates(map[string]any{"status": "Aktiv"}))                             // Nur Felder patchen
-    return c.JSON(200, response.NewReturnInlineEdit().WithRefreshTable())            // Tabelle neu laden
+    return c.JSON(200, response.NewReturnInlineEdit().WithRefreshTable())            // Tabelle neu laden (statisch: Panel/Seite)
     return c.JSON(200, response.NewReturnInlineEdit().WithRefreshPage())             // Seite neu laden
     return c.JSON(200, response.NewReturnInlineEdit().WithGoto("/other/page"))       // Navigation
     return c.JSON(200, response.NewReturnInlineEdit().                               // Kombiniert
