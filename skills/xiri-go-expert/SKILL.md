@@ -51,6 +51,7 @@ u.PrintPrefix()  // mit Prefix — das geben ALLE Komponenten aus (auch Link-But
 | **Einen Dialog** (Delete, Form, Table, Waiting, Component) | `references/dialogs.md`                     |
 | **Ein Formular** (Felder, showWhen, Validierung)         | `references/form-fields.md` + `form-builder.md` |
 | **Abhängige Felder** (Optionen vom Server nachladen)     | `references/form-fields.md` (Abschnitt „Abhängige Felder“) |
+| **Wiederholbare Zeilen** (Positionen, Listen in einem Formular) | `references/form-fields.md` (Abschnitt „RowsField“) |
 | **Filter + Pagination** mit GORM                         | `references/table-filtering.md`             |
 | **End-to-End Pattern** (CRUD, MassEdit, MassDelete, Stepper, Inline-Edit, Dashboard) | `references/patterns.md`                    |
 | **Response-Typen** (Refresh, Goto, DataResult, DataResponse) | `references/responses.md`                   |
@@ -255,6 +256,15 @@ Tooltip (`hint`), **nicht** das Icon. Icon per `.WithIcon("edit")`; sichtbar nur
 - **Kein `nil` als Default-Argument** bei Text/Int/Bool/Time — das sind Wert-Parameter, nicht
   Pointer. Nullwert übergeben (`""`, `0`, `false`). `nil` ist nur bei Slice/Map-Defaults erlaubt
   (`NewModelListField`, `NewArrayField`, `NewJsonField`).
+- **`NewRowsField`** neben `NewArrayField` (Liste gleich aufgebauter Zeilen, Wert `[]map[string]any`, Fehler `items.2.label`):
+
+```go
+items := field.NewRowsField("items", "POSITIONEN", true, []field.FormField{
+    field.NewTextField("label", "BEZEICHNUNG", true, ""),
+    field.NewBoolField("required", "PFLICHT", false, true),
+}).SetMaxRows(50).SetAddText("POSITION_HINZUFUEGEN")
+```
+
 - **Keine** URL-Strings konkatenieren — `*xurl.Url` via Controller-Helper.
 - **`LoadPaginationParams` NACH `LoadFilterData`** (liest aus gespeicherten Filtern). Nur bei **Server-Side-Pagination** nötig — client-seitig (xiri-ng default) weglassen.
 - **`ButtonsField`-Keys sind Strings** (`"0"`, `"1"`), nicht Ints.

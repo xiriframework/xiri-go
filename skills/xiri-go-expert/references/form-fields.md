@@ -434,6 +434,64 @@ f := field.NewGeoformField("geofence", "zone.geofence", true)
 // Kein f.Value/BindValue: f.Parse(raw) bzw. fg.ParseValues(...) liefert *GeoformValue{Type (1=Polygon, 2=Kreis), Path}
 ```
 
+## RowsField — wiederholbare Zeilen
+
+Liste gleich aufgebauter Zeilen (Positionen, Telefonnummern, Staffelpreise), bearbeitet als kompakte Tabelle in einem
+Formular/Dialog. Unterfelder: `text` (ohne textarea/html), `number`, `bool`, `select`. `panic` bei doppelten
+Unterfeld-IDs und anderen Typen.
+
+```go
+key := field.NewTextField("key", "KEY", false, "")
+key.BaseField.SetHide(true) // interne ID: unsichtbar, läuft mit
+category := field.NewTextField("category", "KATEGORIE", false, "").SetSuggestions("Technik", "Ladung")
+label := field.NewTextField("label", "BEZEICHNUNG", true, "")
+required := field.NewBoolField("required", "PFLICHT", false, true) // Default für neue Zeilen
+photo := field.NewBoolField("photo", "FOTO_BEI_MANGEL", false, false)
+
+items := field.NewRowsField("items", "POSITIONEN", true,
+    []field.FormField{key, category, label, required, photo}).
+    SetMaxRows(50).
+    SetAddText("POSITION_HINZUFUEGEN").
+    SetUnique("label").
+    SetColumnWidth("label", 3)
+
+// Bearbeiten: Wert als Struct-Slice (json-Tags = Unterfeld-IDs) oder []map[string]any
+fields := fg.ExportForFrontendWithValues(map[string]interface{}{"name": cl.Name, "items": cl.Items})
+
+// Speichern
+if err := builder.BindAndValidate(c, fg); err != nil {
+    return c.JSON(http.StatusBadRequest, response.NewErrorResponseFromError(err)) // fields: {"items.2.label": "…"}
+}
+for _, row := range items.Value { // []map[string]any
+    _ = row["key"].(string)   // "" bei neuen Zeilen
+    _ = row["label"].(string) // getrimmt
+    _ = row["required"].(bool)
+}
+```
+
+| Methode | Wirkung |
+|---|---|
+| `SetMinRows(n)` / `SetMaxRows(n)` | Zeilenanzahl; Min greift ab der ersten Zeile, `required` = mindestens eine |
+| `SetUnique(ids...)` | Kombination eindeutig (getrimmt, ohne Groß-/Kleinschreibung, leere zählen nicht); Code `duplicate` |
+| `SetAddText(key)` | Beschriftung des Hinzufügen-Buttons |
+| `SetSortable` / `SetAddable` / `SetRemovable` (Default `true`), `SetCopy` (Default `false`) | Nur UI |
+| `SetColumnWidth(subID, n)` | relative Spaltenbreite (`n fr`) |
+
+Werte und Zahlen: `number`-Zellen kommen als `int`, `select` als Options-Wert (`int32`), `bool` als `bool`.
+
+**Was der Server nicht prüfen kann:** `SetAddable(false)`/`SetRemovable(false)`/`SetSortable(false)` sind reine
+UI-Schalter — ob wirklich nichts hinzugefügt, gelöscht oder umsortiert wurde, prüft die App gegen ihren gespeicherten
+Stand (über ein Schlüssel-Unterfeld wie `key`). Ein `disabled`-Unterfeld nimmt der Server nie vom Client, die Zelle
+trägt nach dem Bind den Default; den echten Wert holt die App über `key`.
+
+**Leere Zeilen** (alle sichtbaren Zellen leer oder Default, alle versteckten leer) werden verworfen — eine
+versehentlich angelegte letzte Zeile löst keinen Pflichtfehler aus. Ein versteckter Default macht jede Zeile
+nicht-leer: versteckte Unterfelder ohne Default anlegen.
+
+**Fehler:** `group.FieldErrors` mit `"items"` (Anzahl, required) und `"items.<zeile>.<unterfeld>"` (0-basiert, bezogen
+auf den gesendeten Wert). Übersetzung über `validation.<Code>`, `{field}` = Label des Unterfelds. Eigene Zellfehler
+aus der App: `fe := group.FieldErrors{"items.3.label": "gibt es schon"}` und `response.NewErrorResponseFromError(fe)`.
+
 ## ArrayField
 
 Array/Liste.
