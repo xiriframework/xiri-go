@@ -186,11 +186,11 @@ func (f *RowsField) checkUnique(rows []map[string]any, errs *RowErrors) {
 	if len(f.Unique) == 0 {
 		return
 	}
-	// The error goes on the first visible column, a hidden one would not show it.
+	// The error goes on the first visible column, a hidden or not exported one would not show it.
 	first := f.Sub(f.Unique[0])
 	for _, id := range f.Unique {
 		sub := f.Sub(id)
-		if h, ok := sub.(interface{ IsHidden() bool }); !ok || !h.IsHidden() {
+		if h, ok := sub.(interface{ IsHidden() bool }); sub.GetForm() && (!ok || !h.IsHidden()) {
 			first = sub
 			break
 		}
@@ -223,12 +223,13 @@ func uniqueKey(ids []string, row map[string]any) (string, bool) {
 	return strings.Join(parts, "\x00"), blank
 }
 
-// rowIsEmpty: every visible cell blank or on its default, every hidden cell blank.
+// rowIsEmpty: every visible cell blank or on its default, every hidden cell blank. Disabled and Form=false
+// sub-fields never count: the client cannot set them (and does not know Form=false ones).
 // Counterpart: isEmptyRow in xiri-ng (rows.util.ts) - both must agree, or row indices of errors shift.
 func (f *RowsField) rowIsEmpty(row map[string]any) bool {
 	for _, sub := range f.Fields {
 		v := row[sub.GetID()]
-		if isBlank(v) {
+		if isBlank(v) || sub.IsDisabled() || !sub.GetForm() {
 			continue
 		}
 		if h, ok := sub.(interface{ IsHidden() bool }); ok && h.IsHidden() {

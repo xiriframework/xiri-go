@@ -51,7 +51,11 @@ func (fg *FormGroup) AddFieldError(errs FieldErrors, f field.FormField, err erro
 		errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), re.Field)
 	}
 	for _, c := range re.Cells {
-		errs[fmt.Sprintf("%s.%d.%s", f.GetID(), c.Row, c.Sub)] = fg.message(fg.ctx.SafeTranslate(c.Name), c.Err)
+		// First error per cell wins: a duplicate must not hide the cell's own validation error.
+		key := fmt.Sprintf("%s.%d.%s", f.GetID(), c.Row, c.Sub)
+		if _, taken := errs[key]; !taken {
+			errs[key] = fg.message(fg.ctx.SafeTranslate(c.Name), c.Err)
+		}
 	}
 }
 

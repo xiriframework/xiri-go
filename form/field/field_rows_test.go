@@ -356,3 +356,30 @@ func TestRowsField_UniqueErrorOnFirstVisibleSubField(t *testing.T) {
 		t.Fatalf("cells: %+v", re.Cells)
 	}
 }
+
+// Wie isEmptyRow in xiri-ng: gesperrte und Form=false-Unterfelder machen eine Zeile nie nicht-leer.
+func TestRowsField_LockedHiddenDefaultKeepsRowEmpty(t *testing.T) {
+	kind := NewTextField("kind", "ART", false, "intern")
+	kind.BaseField.SetHide(true)
+	kind.BaseField.SetDisabled(true)
+	label := NewTextField("label", "BEZEICHNUNG", false, "")
+	f := NewRowsField("items", "POSITIONEN", false, []FormField{kind, label})
+	got, err := f.Parse([]any{map[string]any{"label": ""}, map[string]any{"label": "a"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rows := got.([]map[string]any); len(rows) != 1 || rows[0]["label"] != "a" {
+		t.Fatalf("rows: %v", rows)
+	}
+}
+
+func TestRowsField_UniqueErrorNotOnNonFormSubField(t *testing.T) {
+	f := checklistRows()
+	f.Sub("category").(*TextField).BaseField.SetForm(false)
+	f.SetUnique("category", "label")
+	v, _ := f.Parse([]any{map[string]any{"label": "a"}, map[string]any{"label": "a"}})
+	re := rowErrors(t, f.Validate(v))
+	if len(re.Cells) != 1 || re.Cells[0].Sub != "label" {
+		t.Fatalf("cells: %+v", re.Cells)
+	}
+}

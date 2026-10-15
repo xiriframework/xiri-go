@@ -75,3 +75,22 @@ func TestLabel_DottedIDOfNormalFieldStaysPlain(t *testing.T) {
 		t.Fatalf("banner: %q", err.Error())
 	}
 }
+
+// Trifft ein Duplikat eine Zelle, die schon selbst ungültig ist, bleibt der Zellfehler stehen.
+func TestParseAndValidate_RowsFirstCellErrorWins(t *testing.T) {
+	label := field.NewTextFieldWithLength("label", "BEZEICHNUNG", false, "", 0, 3)
+	items := field.NewRowsField("items", "POSITIONEN", false, []field.FormField{label}).SetUnique("label")
+	fg := groupWithCtx(t, deCtx(map[string]string{
+		"validation.max_length": "Höchstens {max} Zeichen",
+		"validation.duplicate":  "doppelt",
+	}), items)
+
+	_, err := fg.ParseAndValidate(map[string]interface{}{"items": []any{
+		map[string]any{"label": "abcd"},
+		map[string]any{"label": "abcd"},
+	}})
+
+	if got := fieldErrors(t, err)["items.1.label"]; got != "Höchstens 3 Zeichen" {
+		t.Fatalf("cell message: %q", got)
+	}
+}
