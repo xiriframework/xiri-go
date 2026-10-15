@@ -305,11 +305,16 @@ func (f *RowsField) SetMaxRows(n int) *RowsField {
 }
 
 // SetUnique makes the combination of these sub-fields unique across rows (trimmed, case-insensitive; rows
-// with all of them blank do not count). Panics on an unknown sub-field ID.
+// with all of them blank do not count). Panics on an unknown or Form=false sub-field ID: the client never sees
+// a Form=false column and could not show or check the duplicate.
 func (f *RowsField) SetUnique(ids ...string) *RowsField {
 	for _, id := range ids {
-		if f.Sub(id) == nil {
+		sub := f.Sub(id)
+		if sub == nil {
 			panic(fmt.Sprintf("rows field %s: unique sub-field %q does not exist", f.ID, id))
+		}
+		if !sub.GetForm() {
+			panic(fmt.Sprintf("rows field %s: unique sub-field %q has Form=false", f.ID, id))
 		}
 	}
 	f.Unique = ids

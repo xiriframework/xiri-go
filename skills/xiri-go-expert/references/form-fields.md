@@ -472,7 +472,7 @@ for _, row := range items.Value { // []map[string]any
 | Methode | Wirkung |
 |---|---|
 | `SetMinRows(n)` / `SetMaxRows(n)` | Zeilenanzahl; Min greift ab der ersten Zeile, `required` = mindestens eine |
-| `SetUnique(ids...)` | Kombination eindeutig (getrimmt, ohne Groß-/Kleinschreibung, leere zählen nicht); Code `duplicate` |
+| `SetUnique(ids...)` | Kombination eindeutig (getrimmt, ohne Groß-/Kleinschreibung, leere zählen nicht); Code `duplicate`; `panic` bei unbekannten oder `Form=false`-IDs |
 | `SetAddText(key)` | Beschriftung des Hinzufügen-Buttons |
 | `SetSortable` / `SetAddable` / `SetRemovable` (Default `true`), `SetCopy` (Default `false`) | Nur UI |
 | `SetColumnWidth(subID, n)` | relative Spaltenbreite (`n fr`) |

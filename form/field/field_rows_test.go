@@ -209,6 +209,11 @@ func TestNewRowsField_PanicsOnInvalidDefinition(t *testing.T) {
 		"unknown unique id": func() {
 			NewRowsField("r", "R", false, []FormField{NewTextField("a", "A", false, "")}).SetUnique("x")
 		},
+		"unique on Form=false sub-field": func() {
+			a := NewTextField("a", "A", false, "")
+			a.BaseField.SetForm(false)
+			NewRowsField("r", "R", false, []FormField{a}).SetUnique("a")
+		},
 	}
 	for name, fn := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -374,9 +379,9 @@ func TestRowsField_LockedHiddenDefaultKeepsRowEmpty(t *testing.T) {
 }
 
 func TestRowsField_UniqueErrorNotOnNonFormSubField(t *testing.T) {
-	f := checklistRows()
+	// SetForm(false) nach SetUnique: SetUnique würde es sonst ablehnen.
+	f := checklistRows().SetUnique("category", "label")
 	f.Sub("category").(*TextField).BaseField.SetForm(false)
-	f.SetUnique("category", "label")
 	v, _ := f.Parse([]any{map[string]any{"label": "a"}, map[string]any{"label": "a"}})
 	re := rowErrors(t, f.Validate(v))
 	if len(re.Cells) != 1 || re.Cells[0].Sub != "label" {
