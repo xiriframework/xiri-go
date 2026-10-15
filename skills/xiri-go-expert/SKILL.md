@@ -258,12 +258,12 @@ Tooltip (`hint`), **nicht** das Icon. Icon per `.WithIcon("edit")`; sichtbar nur
   (`NewModelListField`, `NewArrayField`, `NewJsonField`).
 - **`NewRowsField`** neben `NewArrayField` (Liste gleich aufgebauter Zeilen, Wert `[]map[string]any`, Fehler `items.2.label`):
 
-```go
-items := field.NewRowsField("items", "POSITIONEN", true, []field.FormField{
-    field.NewTextField("label", "BEZEICHNUNG", true, ""),
-    field.NewBoolField("required", "PFLICHT", false, true),
-}).SetMaxRows(50).SetAddText("POSITION_HINZUFUEGEN")
-```
+  ```go
+  items := field.NewRowsField("items", "POSITIONEN", true, []field.FormField{
+      field.NewTextField("label", "BEZEICHNUNG", true, ""),
+      field.NewBoolField("required", "PFLICHT", false, true),
+  }).SetMaxRows(50).SetAddText("POSITION_HINZUFUEGEN")
+  ```
 
 - **Keine** URL-Strings konkatenieren — `*xurl.Url` via Controller-Helper.
 - **`LoadPaginationParams` NACH `LoadFilterData`** (liest aus gespeicherten Filtern). Nur bei **Server-Side-Pagination** nötig — client-seitig (xiri-ng default) weglassen.

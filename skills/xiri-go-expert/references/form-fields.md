@@ -476,8 +476,9 @@ for _, row := range items.Value { // []map[string]any
 | `SetAddText(key)` | Beschriftung des Hinzufügen-Buttons |
 | `SetSortable` / `SetAddable` / `SetRemovable` (Default `true`), `SetCopy` (Default `false`) | Nur UI |
 | `SetColumnWidth(subID, n)` | relative Spaltenbreite (`n fr`) |
+| `SetDefault(rows)` | Zeilen für `nil`/Export ohne Wert; bei einem `SetDisabled(true)`- oder `SetForm(false)`-Feld die aktuellen Zeilen setzen, sonst kommen nach dem Bind keine Zeilen heraus |
 
-Werte und Zahlen: `number`-Zellen kommen als `int`, `select` als Options-Wert (`int32`), `bool` als `bool`.
+Werte und Zahlen: `number`-Zellen kommen als `int`, `select` als Options-Wert (Typ wie in `SelectOption.Value`, typischerweise `int32`), `bool` als `bool`. Der Export trägt je Zeile nur die Schlüssel der exportierten Unterfelder (`Form=false` und fremde Struct-/Map-Schlüssel bleiben draußen).
 
 **Was der Server nicht prüfen kann:** `SetAddable(false)`/`SetRemovable(false)`/`SetSortable(false)` sind reine
 UI-Schalter — ob wirklich nichts hinzugefügt, gelöscht oder umsortiert wurde, prüft die App gegen ihren gespeicherten
@@ -486,7 +487,7 @@ trägt nach dem Bind den Default; den echten Wert holt die App über `key`.
 
 **Leere Zeilen** (alle sichtbaren Zellen leer oder Default, alle versteckten leer) werden verworfen — eine
 versehentlich angelegte letzte Zeile löst keinen Pflichtfehler aus. Ein versteckter Default macht jede Zeile
-nicht-leer: versteckte Unterfelder ohne Default anlegen.
+nicht-leer: versteckte Schlüssel als Text-Unterfeld mit Default `""` anlegen (number/bool haben immer einen Default).
 
 **Fehler:** `group.FieldErrors` mit `"items"` (Anzahl, required) und `"items.<zeile>.<unterfeld>"` (0-basiert, bezogen
 auf den gesendeten Wert). Übersetzung über `validation.<Code>`, `{field}` = Label des Unterfelds. Eigene Zellfehler

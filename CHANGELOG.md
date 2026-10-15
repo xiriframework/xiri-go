@@ -10,14 +10,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 ### Added
 
 - **`field.NewRowsField`: Formularfeld mit wiederholbaren Zeilen (Typ `rows`).** Unterfelder (`text`, `number`,
-  `bool`, `select`) beschreiben eine Zeile, der Wert ist `[]map[string]any` (`Value`), Schlüssel = Unterfeld-ID.
-  Parse und Validate laufen je Zelle über die Unterfelder (Trim, Pflicht, Pattern, Min/Max), dazu `SetMinRows`/
-  `SetMaxRows`, `SetUnique` (Code `duplicate`) und die UI-Schalter `SetSortable`, `SetAddable`, `SetRemovable`,
-  `SetCopy`, `SetColumnWidth`, `SetAddText`. Leere Zeilen werden verworfen, Werte gesperrter Unterfelder nimmt der
-  Server nicht vom Client; Unterfelder mit `SetForm(false)` werden weder exportiert noch vom Client übernommen. Zellfehler stehen in `group.FieldErrors` unter `"<feld>.<zeile>.<unterfeld>"`
-  (z. B. `items.2.label`), der Banner nennt „Positionen 3 · Bezeichnung“. Neu dafür: `FormGroup.AddFieldError`.
-  `ExportForFrontendWithValues` nimmt den Wert auch als Struct-Slice (JSON-Tags = Unterfeld-IDs). Braucht xiri-ng mit
-  `rows`-Unterstützung.
+  `bool`, `select`) beschreiben eine Zeile, der Wert ist `[]map[string]any` (`Value`), Schlüssel = Unterfeld-ID;
+  `number`-Zellen sind immer `int`. Parse und Validate laufen je Zelle über die Unterfelder (Trim, Pflicht, Pattern,
+  Min/Max), dazu `SetMinRows`/`SetMaxRows`, `SetUnique` (Code `duplicate`, Fehler am ersten sichtbaren Unterfeld)
+  und die UI-Schalter `SetSortable`, `SetAddable`, `SetRemovable`, `SetCopy`, `SetColumnWidth`, `SetAddText`.
+  Leere Zeilen werden verworfen, Werte gesperrter Unterfelder nimmt der Server nicht vom Client. Unterfelder mit
+  `SetForm(false)` stehen weder in `fields` noch in den Zeilenwerten des Exports und werden nicht vom Client
+  übernommen; der Export enthält je Zeile nur Unterfeld-Schlüssel. Ein gesperrtes Feld behält seine Zeilen über
+  `SetDefault(rows)`. Zellfehler stehen in `group.FieldErrors` unter `"<feld>.<zeile>.<unterfeld>"` (z. B.
+  `items.2.label`), der Banner nennt „Positionen 3 · Bezeichnung“. Neu dafür: `FormGroup.AddFieldError`.
+  `ExportForFrontendWithValues` nimmt den Wert auch als Struct-Slice (JSON-Tags = Unterfeld-IDs). Braucht xiri-ng
+  mit `rows`-Unterstützung.
 
 ## [0.8.1]
 
