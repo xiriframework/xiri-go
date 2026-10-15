@@ -121,9 +121,9 @@ func (f *RowsField) Parse(raw any) (any, error) {
 		row := make(map[string]any, len(f.Fields))
 		failed := false
 		for _, sub := range f.Fields {
-			// Disabled: the client must not set it, the default applies (like disabled fields on form level).
+			// Disabled or Form=false: the client must not set it, the default applies (like on form level).
 			var v any
-			if !sub.IsDisabled() {
+			if sub.GetForm() && !sub.IsDisabled() {
 				v = in[sub.GetID()]
 			}
 			p, err := sub.Parse(v)

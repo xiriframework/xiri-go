@@ -216,3 +216,17 @@ func TestNewRowsField_PanicsOnInvalidDefinition(t *testing.T) {
 		})
 	}
 }
+
+func TestRowsField_NonFormSubFieldIgnoresClientValue(t *testing.T) {
+	cat := NewTextField("category", "KATEGORIE", false, "fix")
+	cat.BaseField.SetForm(false)
+	label := NewTextField("label", "BEZEICHNUNG", false, "")
+	f := NewRowsField("items", "POSITIONEN", false, []FormField{cat, label})
+	got, err := f.Parse([]any{map[string]any{"label": "a", "category": "hacked"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v := got.([]map[string]any)[0]["category"]; v != "fix" {
+		t.Fatalf("Form=false sub-field must keep its default, got %v", v)
+	}
+}
