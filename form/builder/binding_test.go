@@ -445,3 +445,24 @@ func TestBindFromMap_TranslatesWrappedValidationError(t *testing.T) {
 		t.Fatalf("response fields: %v", resp.Fields)
 	}
 }
+
+func TestBindFromMap_RowsCellErrorReachesResponse(t *testing.T) {
+	label := field.NewTextField("label", "BEZEICHNUNG", true, "")
+	cat := field.NewTextField("category", "KATEGORIE", false, "")
+	items := field.NewRowsField("items", "POSITIONEN", true, []field.FormField{cat, label})
+	fg := group.NewFormGroup([]field.FormField{items})
+
+	err := BindFromMap(map[string]interface{}{"items": []interface{}{
+		map[string]interface{}{"category": "A", "label": "x"},
+		map[string]interface{}{"category": "B", "label": "y"},
+		map[string]interface{}{"category": "C", "label": ""},
+	}}, fg)
+
+	resp := response.NewErrorResponseFromError(err)
+	if _, ok := resp.Fields["items.2.label"]; !ok {
+		t.Fatalf("want items.2.label in response fields, got %v", resp.Fields)
+	}
+	if _, ok := resp.Fields["items"]; ok {
+		t.Fatalf("cell error must not also land on the field: %v", resp.Fields)
+	}
+}

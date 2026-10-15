@@ -143,7 +143,7 @@ func BindFromMap(formData map[string]interface{}, fg *group.FormGroup) error {
 			rawValue = formData[f.GetID()]
 		}
 		if err := bindFieldValue(f, rawValue); err != nil {
-			errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), err)
+			fg.AddFieldError(errs, f, err)
 		}
 	}
 	if len(errs) > 0 {

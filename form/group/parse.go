@@ -33,7 +33,7 @@ func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (
 		rawValue, exists := raw[f.GetID()]
 		if !exists {
 			if f.IsRequired() {
-				errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), missingRequired(f.GetID()))
+				fg.AddFieldError(errs, f, missingRequired(f.GetID()))
 				continue
 			}
 			if useDefaults {
@@ -44,7 +44,7 @@ func (fg *FormGroup) parseValues(raw map[string]interface{}, useDefaults bool) (
 
 		value, err := f.Parse(rawValue)
 		if err != nil {
-			errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), err)
+			fg.AddFieldError(errs, f, err)
 			continue
 		}
 		parsed[f.GetID()] = value
@@ -64,7 +64,7 @@ func (fg *FormGroup) parseDefault(f field.FormField, parsed map[string]interface
 	}
 	v, err := f.Parse(nil)
 	if err != nil {
-		errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), err)
+		fg.AddFieldError(errs, f, err)
 		return
 	}
 	if v != nil {
@@ -78,11 +78,11 @@ func (fg *FormGroup) ValidateValues(values map[string]interface{}) error {
 	for _, f := range fg.fields {
 		value, exists := values[f.GetID()]
 		if !exists && f.IsRequired() && f.GetForm() {
-			errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), missingRequired(f.GetID()))
+			fg.AddFieldError(errs, f, missingRequired(f.GetID()))
 			continue
 		}
 		if err := f.Validate(value); err != nil {
-			errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), err)
+			fg.AddFieldError(errs, f, err)
 		}
 	}
 	if len(errs) > 0 {
@@ -118,7 +118,7 @@ func (fg *FormGroup) ParseAndValidateSparse(raw map[string]interface{}) (map[str
 	for _, f := range fg.fields {
 		if v, ok := parsed[f.GetID()]; ok {
 			if err := f.Validate(v); err != nil {
-				errs[f.GetID()] = fg.FieldErrorMessage(f.GetID(), err)
+				fg.AddFieldError(errs, f, err)
 			}
 		}
 	}
