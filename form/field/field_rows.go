@@ -311,13 +311,16 @@ func (f *RowsField) ExportForFrontend(ctx *core.UiContext, value any) map[string
 	}
 	result := f.BaseField.GetBaseExport(ctx, rows)
 
-	subs := make([]map[string]any, len(f.Fields))
-	for i, sub := range f.Fields {
+	subs := make([]map[string]any, 0, len(f.Fields))
+	for _, sub := range f.Fields {
+		if !sub.GetForm() {
+			continue
+		}
 		s := sub.ExportForFrontend(ctx, sub.GetDefault())
 		if w := f.Widths[sub.GetID()]; w > 0 {
 			s["cols"] = w
 		}
-		subs[i] = s
+		subs = append(subs, s)
 	}
 	result["fields"] = subs
 	result["sortable"] = f.Sortable

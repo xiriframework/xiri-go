@@ -281,3 +281,13 @@ func TestRowsField_ExportWithoutValueIsEmptyList(t *testing.T) {
 		t.Fatalf("value: %#v", out["value"])
 	}
 }
+
+func TestRowsField_ExportSkipsNonFormSubFields(t *testing.T) {
+	secret := NewTextField("secret", "SECRET", false, "x")
+	secret.BaseField.SetForm(false)
+	f := NewRowsField("items", "POSITIONEN", false, []FormField{NewTextField("label", "L", false, ""), secret})
+	subs := f.ExportForFrontend(&core.UiContext{}, nil)["fields"].([]map[string]any)
+	if len(subs) != 1 || subs[0]["id"] != "label" {
+		t.Fatalf("expected only label, got %v", subs)
+	}
+}
