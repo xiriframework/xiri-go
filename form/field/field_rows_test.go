@@ -3,6 +3,8 @@ package field
 import (
 	"errors"
 	"testing"
+
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // checklistRows ist das Abnahme-Beispiel aus der Anforderung von tracking.
@@ -201,6 +203,9 @@ func TestNewRowsField_PanicsOnInvalidDefinition(t *testing.T) {
 			ta.Subtype = "textarea"
 			NewRowsField("r", "R", false, []FormField{ta})
 		},
+		"nested rows": func() {
+			NewRowsField("r", "R", false, []FormField{NewRowsField("n", "N", false, nil)})
+		},
 		"unknown unique id": func() {
 			NewRowsField("r", "R", false, []FormField{NewTextField("a", "A", false, "")}).SetUnique("x")
 		},
@@ -228,5 +233,51 @@ func TestRowsField_NonFormSubFieldIgnoresClientValue(t *testing.T) {
 	}
 	if v := got.([]map[string]any)[0]["category"]; v != "fix" {
 		t.Fatalf("Form=false sub-field must keep its default, got %v", v)
+	}
+}
+
+type checklistItem struct {
+	Key      string `json:"key"`
+	Label    string `json:"label"`
+	Required bool   `json:"required"`
+	Qty      int32  `json:"qty"`
+}
+
+func TestRowsField_Export(t *testing.T) {
+	ctx := &core.UiContext{Translate: func(k string) string {
+		return map[string]string{"POSITIONEN": "Positionen", "ADD": "Position hinzufügen", "BEZEICHNUNG": "Bezeichnung"}[k]
+	}}
+	f := checklistRows().SetMinRows(1).SetMaxRows(50).SetAddText("ADD").SetSortable(false).SetCopy(true).
+		SetUnique("label").SetColumnWidth("label", 3)
+
+	out := f.ExportForFrontend(ctx, []checklistItem{{Key: "k1", Label: "Bremsen", Required: true, Qty: 2}})
+
+	if out["type"] != "rows" || out["name"] != "Positionen" || out["addText"] != "Position hinzufügen" {
+		t.Fatalf("head: %v", out)
+	}
+	if out["min"] != 1 || out["max"] != 50 || out["sortable"] != false || out["addable"] != true ||
+		out["removable"] != true || out["copy"] != true {
+		t.Fatalf("switches: %v", out)
+	}
+	if u := out["unique"].([]string); len(u) != 1 || u[0] != "label" {
+		t.Fatalf("unique: %v", out["unique"])
+	}
+	subs := out["fields"].([]map[string]any)
+	if len(subs) != 5 || subs[2]["id"] != "label" || subs[2]["cols"] != 3 || subs[2]["name"] != "Bezeichnung" {
+		t.Fatalf("fields: %v", subs)
+	}
+	if subs[0]["hide"] != true || subs[3]["value"] != true {
+		t.Fatalf("hide/default: %v / %v", subs[0], subs[3])
+	}
+	rows := out["value"].([]any)
+	if r := rows[0].(map[string]any); r["key"] != "k1" || r["qty"] != float64(2) {
+		t.Fatalf("value: %v", rows)
+	}
+}
+
+func TestRowsField_ExportWithoutValueIsEmptyList(t *testing.T) {
+	out := checklistRows().ExportForFrontend(nil, nil)
+	if rows, ok := out["value"].([]any); !ok || len(rows) != 0 {
+		t.Fatalf("value: %#v", out["value"])
 	}
 }

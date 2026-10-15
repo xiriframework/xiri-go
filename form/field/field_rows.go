@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/xiriframework/xiri-go/component/core"
 )
 
 // RowsField is a list of rows with the same structure. Fields describe one row; the value is one map per row,
@@ -292,5 +294,128 @@ func (f *RowsField) SetUnique(ids ...string) *RowsField {
 		}
 	}
 	f.Unique = ids
+	return f
+}
+
+// ExportForFrontend exports the field; value may be []map[string]any, []any or a slice of structs (json tags =
+// sub-field IDs). Sub-fields export their default as "value": that is what a new row starts with.
+func (f *RowsField) ExportForFrontend(ctx *core.UiContext, value any) map[string]any {
+	if value == nil {
+		value = f.GetDefault()
+	}
+	rows := []any{}
+	if value != nil {
+		if list, err := rowsToRaw(value); err == nil && list != nil {
+			rows = list
+		}
+	}
+	result := f.BaseField.GetBaseExport(ctx, rows)
+
+	subs := make([]map[string]any, len(f.Fields))
+	for i, sub := range f.Fields {
+		s := sub.ExportForFrontend(ctx, sub.GetDefault())
+		if w := f.Widths[sub.GetID()]; w > 0 {
+			s["cols"] = w
+		}
+		subs[i] = s
+	}
+	result["fields"] = subs
+	result["sortable"] = f.Sortable
+	result["addable"] = f.Addable
+	result["removable"] = f.Removable
+	result["copy"] = f.Copy
+	if len(f.Unique) > 0 {
+		result["unique"] = f.Unique
+	}
+	if f.AddText != "" {
+		result["addText"] = ctx.SafeTranslate(f.AddText)
+	}
+	if f.MinRows != nil {
+		result["min"] = *f.MinRows
+	}
+	if f.MaxRows != nil {
+		result["max"] = *f.MaxRows
+	}
+	return result
+}
+
+// SetAddText sets the translation key of the "add row" button.
+func (f *RowsField) SetAddText(key string) *RowsField {
+	f.AddText = key
+	return f
+}
+
+// SetSortable shows or hides drag handle and up/down buttons (UI only: the app checks the order itself).
+func (f *RowsField) SetSortable(v bool) *RowsField {
+	f.Sortable = v
+	return f
+}
+
+// SetAddable shows or hides the add button (UI only: only the app can check that no row was added).
+func (f *RowsField) SetAddable(v bool) *RowsField {
+	f.Addable = v
+	return f
+}
+
+// SetRemovable shows or hides the delete button (UI only: only the app can check that no row was removed).
+func (f *RowsField) SetRemovable(v bool) *RowsField {
+	f.Removable = v
+	return f
+}
+
+// SetCopy shows a duplicate button; the copy goes below the original, hidden sub-fields stay empty.
+func (f *RowsField) SetCopy(v bool) *RowsField {
+	f.Copy = v
+	return f
+}
+
+// SetColumnWidth sets the relative width of a column (CSS fr; default: 1, bool narrow).
+func (f *RowsField) SetColumnWidth(subID string, n int) *RowsField {
+	if f.Widths == nil {
+		f.Widths = map[string]int{}
+	}
+	f.Widths[subID] = n
+	return f
+}
+
+// SetClass sets the CSS class for frontend styling
+func (f *RowsField) SetClass(class string) *RowsField {
+	f.BaseField.SetClass(class)
+	return f
+}
+
+// SetHint sets the tooltip/help text for the field
+func (f *RowsField) SetHint(hint string) *RowsField {
+	f.BaseField.SetHint(hint)
+	return f
+}
+
+// SetStep sets the step indicator for multi-step forms
+func (f *RowsField) SetStep(step int) *RowsField {
+	f.BaseField.SetStep(step)
+	return f
+}
+
+// SetDisabled makes the whole field read-only (no add/delete/move)
+func (f *RowsField) SetDisabled(disabled bool) *RowsField {
+	f.BaseField.SetDisabled(disabled)
+	return f
+}
+
+// SetForm sets whether to show in form
+func (f *RowsField) SetForm(form bool) *RowsField {
+	f.BaseField.SetForm(form)
+	return f
+}
+
+// SetAccess stores role metadata. Metadata only: neither exported nor evaluated by xiri-go, no access control.
+func (f *RowsField) SetAccess(access []string) *RowsField {
+	f.BaseField.SetAccess(access)
+	return f
+}
+
+// SetScenario stores scenario metadata. Metadata only: neither exported nor evaluated by xiri-go.
+func (f *RowsField) SetScenario(scenario []string) *RowsField {
+	f.BaseField.SetScenario(scenario)
 	return f
 }
