@@ -270,7 +270,7 @@ func TestRowsField_Export(t *testing.T) {
 		t.Fatalf("hide/default: %v / %v", subs[0], subs[3])
 	}
 	rows := out["value"].([]any)
-	if r := rows[0].(map[string]any); r["key"] != "k1" || r["qty"] != float64(2) {
+	if r := rows[0].(map[string]any); r["key"] != "k1" || r["label"] != "Bremsen" || r["qty"] != nil {
 		t.Fatalf("value: %v", rows)
 	}
 }
@@ -289,5 +289,70 @@ func TestRowsField_ExportSkipsNonFormSubFields(t *testing.T) {
 	subs := f.ExportForFrontend(&core.UiContext{}, nil)["fields"].([]map[string]any)
 	if len(subs) != 1 || subs[0]["id"] != "label" {
 		t.Fatalf("expected only label, got %v", subs)
+	}
+}
+
+func TestRowsField_ExportRowsCarryOnlySubFieldKeys(t *testing.T) {
+	secret := NewTextField("secret", "SECRET", false, "x")
+	secret.BaseField.SetForm(false)
+	f := NewRowsField("items", "POSITIONEN", false, []FormField{NewTextField("label", "L", false, ""), secret})
+	out := f.ExportForFrontend(&core.UiContext{}, []map[string]any{
+		{"label": "a", "secret": "TOPSECRET", "internal_hash": "HASH"},
+	})
+	row := out["value"].([]any)[0].(map[string]any)
+	if len(row) != 1 || row["label"] != "a" {
+		t.Fatalf("row must carry only exported sub-field keys, got %v", row)
+	}
+}
+
+func TestRowsField_DisabledWithDefaultKeepsRows(t *testing.T) {
+	f := NewRowsField("items", "POSITIONEN", true, []FormField{NewTextField("label", "L", true, "")}).
+		SetDisabled(true).
+		SetDefault([]map[string]any{{"label": "a"}, {"label": "b"}})
+	if err := f.BindValue(nil); err != nil {
+		t.Fatal(err)
+	}
+	if len(f.Value) != 2 || f.Value[1]["label"] != "b" {
+		t.Fatalf("value: %v", f.Value)
+	}
+}
+
+func TestRowsField_NumberCellsAreAlwaysInt(t *testing.T) {
+	f := NewRowsField("items", "POSITIONEN", false, []FormField{NewTextField("label", "L", false, ""), NewIntField("qty", "Q", false, 0)})
+	got, err := f.Parse([]any{
+		map[string]any{"label": "a", "qty": nil},
+		map[string]any{"label": "b", "qty": float64(3)},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i, row := range got.([]map[string]any) {
+		if _, ok := row["qty"].(int); !ok {
+			t.Errorf("row %d qty is %T, want int", i, row["qty"])
+		}
+	}
+}
+
+func TestRowsField_CellErrorRowIndexSkipsDroppedEmptyRows(t *testing.T) {
+	kind := NewSelectField("kind", "ART", false, []SelectOption{{Value: int32(1), Label: "A"}})
+	label := NewTextField("label", "L", false, "")
+	f := NewRowsField("items", "POSITIONEN", false, []FormField{label, kind})
+	_, err := f.Parse([]any{
+		map[string]any{"label": "a"},
+		map[string]any{"label": ""},
+		map[string]any{"label": "c", "kind": float64(9)},
+	})
+	re := rowErrors(t, err)
+	if len(re.Cells) != 1 || re.Cells[0].Row != 1 || re.Cells[0].Sub != "kind" {
+		t.Fatalf("cells: %+v", re.Cells)
+	}
+}
+
+func TestRowsField_UniqueErrorOnFirstVisibleSubField(t *testing.T) {
+	f := checklistRows().SetUnique("key", "label")
+	v, _ := f.Parse([]any{map[string]any{"key": "k", "label": "a"}, map[string]any{"key": "k", "label": "a"}})
+	re := rowErrors(t, f.Validate(v))
+	if len(re.Cells) != 1 || re.Cells[0].Sub != "label" {
+		t.Fatalf("cells: %+v", re.Cells)
 	}
 }

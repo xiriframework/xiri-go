@@ -466,3 +466,18 @@ func TestBindFromMap_RowsCellErrorReachesResponse(t *testing.T) {
 		t.Fatalf("cell error must not also land on the field: %v", resp.Fields)
 	}
 }
+
+func TestBindFromMap_DisabledRowsFieldKeepsDefaultRows(t *testing.T) {
+	label := field.NewTextField("label", "BEZEICHNUNG", true, "")
+	items := field.NewRowsField("items", "POSITIONEN", true, []field.FormField{label}).
+		SetDisabled(true).
+		SetDefault([]map[string]any{{"label": "a"}, {"label": "b"}})
+	fg := group.NewFormGroup([]field.FormField{items})
+
+	if err := BindFromMap(map[string]interface{}{"items": []interface{}{}}, fg); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(items.Value) != 2 {
+		t.Fatalf("disabled rows field must keep its rows, got %v", items.Value)
+	}
+}

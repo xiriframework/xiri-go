@@ -134,6 +134,9 @@ func (f *RowsField) Parse(raw any) (any, error) {
 				failed = true
 				continue
 			}
+			if n, ok := p.(int32); ok && sub.GetType() == FieldTypeInt {
+				p = int(n) // IntField.Parse returns the raw default as int32 for nil
+			}
 			row[sub.GetID()] = p
 		}
 		if !failed && f.rowIsEmpty(row) {
@@ -183,7 +186,15 @@ func (f *RowsField) checkUnique(rows []map[string]any, errs *RowErrors) {
 	if len(f.Unique) == 0 {
 		return
 	}
+	// The error goes on the first visible column, a hidden one would not show it.
 	first := f.Sub(f.Unique[0])
+	for _, id := range f.Unique {
+		sub := f.Sub(id)
+		if h, ok := sub.(interface{ IsHidden() bool }); !ok || !h.IsHidden() {
+			first = sub
+			break
+		}
+	}
 	seen := make(map[string]bool, len(rows))
 	for i, row := range rows {
 		key, blank := uniqueKey(f.Unique, row)
@@ -273,6 +284,13 @@ func (f *RowsField) BindValue(raw any) error {
 	return nil
 }
 
+// SetDefault sets the rows used when no value is sent (nil), also for export. For a disabled or Form=false
+// field the client sends nothing: set the current rows here, or Parse(nil) yields no rows at all.
+func (f *RowsField) SetDefault(rows any) *RowsField {
+	f.Default = rows
+	return f
+}
+
 // SetMinRows sets the minimum number of rows (applies from the first row on).
 func (f *RowsField) SetMinRows(n int) *RowsField {
 	f.MinRows = &n
@@ -312,16 +330,33 @@ func (f *RowsField) ExportForFrontend(ctx *core.UiContext, value any) map[string
 	result := f.BaseField.GetBaseExport(ctx, rows)
 
 	subs := make([]map[string]any, 0, len(f.Fields))
+	exported := make(map[string]bool, len(f.Fields))
 	for _, sub := range f.Fields {
 		if !sub.GetForm() {
 			continue
 		}
+		exported[sub.GetID()] = true
 		s := sub.ExportForFrontend(ctx, sub.GetDefault())
 		if w := f.Widths[sub.GetID()]; w > 0 {
 			s["cols"] = w
 		}
 		subs = append(subs, s)
 	}
+	// Only exported sub-field keys leave the server: DB structs carry internal columns.
+	clean := make([]any, len(rows))
+	for i, r := range rows {
+		clean[i] = r
+		if m, ok := r.(map[string]any); ok {
+			c := make(map[string]any, len(exported))
+			for k, v := range m {
+				if exported[k] {
+					c[k] = v
+				}
+			}
+			clean[i] = c
+		}
+	}
+	result["value"] = clean
 	result["fields"] = subs
 	result["sortable"] = f.Sortable
 	result["addable"] = f.Addable
