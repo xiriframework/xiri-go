@@ -18,6 +18,7 @@ import "fmt"
 //	min_date / max_date        —               (time fields)
 //	range_order                —               (time range start after end)
 //	max_size                   {max}           (file fields, bytes per file)
+//	duplicate                  —               (rows field: unique columns repeat an earlier row)
 type ValidationError struct {
 	Code   string
 	Params map[string]any

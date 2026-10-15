@@ -29,6 +29,7 @@ const (
 	FieldTypeTimelimit FieldType = "timelimit" // Time limit field with weekdays and time range (17th field type)
 	FieldTypeChips     FieldType = "chips"     // Tag/chip input field (18th field type)
 	FieldTypeDivider   FieldType = "divider"   // Visual divider/separator (19th field type)
+	FieldTypeRows      FieldType = "rows"      // Repeatable rows of sub-fields (20th field type)
 )
 
 // FormField is the base interface that all form fields must implement
