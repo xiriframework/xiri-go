@@ -77,7 +77,7 @@ Jede Komponente wird vom Frontend in einen Grid-Slot gesteckt. Die Grid-CSS-Rege
 ```scss
 .xrow {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
+  grid-template-columns: repeat(12, minmax(0, 1fr));
   grid-column-gap: var(--xiri-grid-column-gap, 24px);
   grid-row-gap:    var(--xiri-grid-row-gap, 20px);
 }
@@ -93,6 +93,18 @@ Jede Komponente wird vom Frontend in einen Grid-Slot gesteckt. Die Grid-CSS-Rege
 .x-align-center     { justify-self: center; }
 .x-align-right      { justify-self: end; }
 ```
+
+### Vertikale Abstände (ab xiri-ng 0.8.0)
+
+Die Seite rendert als `<xiri-dyncomponent class="xrow">`. Den vertikalen Abstand zwischen den Komponenten liefert
+dort allein der row-gap (`--xiri-grid-row-gap`, Default 20 px). page-header, section, table, links, imagetext und
+cardlink verlieren im Grid ihr eigenes margin-bottom, auch als einziges Kind in Section-, Card- oder
+Container-Inhalten. Für Go heißt das:
+
+- Keine `spacer`-Komponenten oder Leer-Header als Abstandshalter einbauen, der Abstand ist überall gleich.
+- `AddNewRow` erzwingt nur einen Zeilenumbruch, keinen zusätzlichen Abstand.
+- Bis xiri-ng 0.7.x addierten sich Margin und Gap (44/52 px statt 20 px). Ein Layout, das das ausgeglichen hat, ist
+  ab 0.8.0 zu prüfen.
 
 ### Breakpoints
 
