@@ -135,7 +135,7 @@ Dieses Repo enthält einen bundled [Claude Code](https://claude.com/claude-code)
 
 Sobald aktiviert, triggert der Skill automatisch, wenn du Go-Code schreibst oder Fragen stellst zu:
 
-- **Komponenten**: Page-Layout, Tabellen, Dialoge, Formulare, Cards, Stepper, Tabs, Timeline, Stats, …
+- **Komponenten**: Page-Layout, Tabellen, Dialoge, Formulare, Cards, Stepper, Tabs, Timeline, Chat, Stats, …
 - **Tabellen**: Spalten-Typen, Top/Row/Bulk-Buttons, Inline-Edit, Server-Side-Pagination, CSV/Excel-Export
 - **Formulare**: 20+ Feldtypen, `SetShowWhen`-Conditional-Visibility, `FormBuilder` für Add/Edit
 - **Filter-Parsing**: Single- vs. Multi-Value aus `LoadFilterData`, GORM-Integration

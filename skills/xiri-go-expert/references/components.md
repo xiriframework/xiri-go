@@ -499,7 +499,7 @@ c := chat.New("Ticket/42/Chat").
 	WithPoll(5).                      // oder WithStream("Ticket/42/Chat/Stream")
 	WithPlaceholder("chat.placeholder").
 	WithMaxLength(4000).
-	WithHeight("60vh")
+	WithHeight("60vh")              // Standard 60vh; "100%" füllt einen Container mit fester Höhe
 ```
 
 Ein Endpunkt `url` für alles. Der Cursor ist frei wählbar (z. B. Änderungssequenz) und muss auch
