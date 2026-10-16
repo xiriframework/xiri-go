@@ -9,6 +9,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ### Added
 
+- **`chat.New`: Chat-Komponente (Typ `chat`).** Messenger-artiger Verlauf mit Eingabe, eigene Nachrichten rechts
+  mit Status (`Sent`, `Delivered`, `Read`), fremde mit Name und Avatar. Aktualisierung per `WithPoll(sekunden)` oder
+  `WithStream(url)` (SSE). Helfer für die Endpunkte: `NewPage`/`Add`/`HasOlder` (Seiten mit Änderungs-Cursor),
+  `SendResult`, `ParseSend` (Trim, Pflicht, Länge in Zeichen, `clientId` ≤ 64), `Cursor` (Last-Event-ID vor
+  `?cursor=`) und `NewStream` mit `Send`/`Ping`. Braucht xiri-ng mit `chat`-Unterstützung.
 - **`field.NewRowsField`: Formularfeld mit wiederholbaren Zeilen (Typ `rows`).** Unterfelder (`text`, `number`,
   `bool`, `select`) beschreiben eine Zeile, der Wert ist `[]map[string]any` (`Value`), Schlüssel = Unterfeld-ID;
   `number`-Zellen sind immer `int`. Parse und Validate laufen je Zelle über die Unterfelder (Trim, Pflicht, Pattern,

@@ -488,6 +488,88 @@ tl.WithDisplay("xcol-md-12")
 // .Description(string) .Datetime(string) .Icon(string) .IconColor(string)
 ```
 
+## Chat (`component/chat`)
+
+Messenger-artiger Verlauf: neue Nachrichten unten, Eingabe mit Senden. Eigene Nachrichten (`Own`) rechts mit
+Status, fremde links mit Name und Avatar (sonst Initialen). Aktualisierung per Polling (`WithPoll`) oder SSE
+(`WithStream`); ohne beides nur nach dem eigenen Senden.
+
+```go
+c := chat.New("Ticket/42/Chat").
+	WithPoll(5).                      // oder WithStream("Ticket/42/Chat/Stream")
+	WithPlaceholder("chat.placeholder").
+	WithMaxLength(4000).
+	WithHeight("60vh")
+```
+
+Ein Endpunkt `url` für alles. Der Cursor ist frei wählbar (z. B. Änderungssequenz) und muss auch
+**geänderte** Nachrichten liefern (Status „gelesen“), nicht nur neue:
+
+```go
+e.GET("/api/Ticket/:id/Chat", func(ec echo.Context) error {
+	if before := ec.QueryParam("before"); before != "" {
+		msgs, more := store.Before(before, 20)       // ältere Nachrichten
+		return ec.JSON(200, toPage(msgs, "", more).Print())
+	}
+	msgs, cur, more := store.Since(chat.Cursor(ec.Request())) // "" = Startseite (neueste 20)
+	return ec.JSON(200, toPage(msgs, cur, more).Print())
+})
+
+e.POST("/api/Ticket/:id/Chat", func(ec echo.Context) error {
+	in, err := chat.ParseSend(ec.Request().Body, 4000)
+	if err != nil {
+		return ec.JSON(400, map[string]string{"error": err.Error()})
+	}
+	m := store.Save(user, in.Text, in.ClientID)    // clientId speichern: Duplikate bei "Erneut senden" erkennen
+	return ec.JSON(200, chat.SendResult(chat.NewMessage(m.ID, m.Text, m.Time).Own().Status(chat.Sent).ClientID(in.ClientID)))
+})
+
+func toPage(msgs []Msg, cursor string, more bool) *chat.Page {
+	p := chat.NewPage(cursor).HasOlder(more)
+	for _, m := range msgs {
+		msg := p.Add(m.ID, m.Text, m.Time)
+		if m.UserID == user.ID {
+			msg.Own().Status(m.Status).ClientID(m.ClientID)
+		} else {
+			msg.From(m.UserName).Avatar(m.AvatarURL)
+		}
+	}
+	return p
+}
+```
+
+SSE (Cookie-Auth, `EventSource` sendet keine Header):
+
+```go
+e.GET("/api/Ticket/:id/Chat/Stream", func(ec echo.Context) error {
+	s, err := chat.NewStream(ec.Response())
+	if err != nil {
+		return err
+	}
+	cur := chat.Cursor(ec.Request())
+	tick := time.NewTicker(25 * time.Second)
+	defer tick.Stop()
+	for {
+		select {
+		case <-ec.Request().Context().Done():
+			return nil
+		case <-tick.C:
+			if s.Ping() != nil {
+				return nil
+			}
+		case <-hub.Changed(ticketID):               // eigener Pub/Sub der App
+			msgs, next, _ := store.Since(cur)
+			cur = next
+			if s.Send(toPage(msgs, cur, false)) != nil {
+				return nil
+			}
+		}
+	}
+})
+```
+
+„Gelesen“ setzt die App selbst, z. B. wenn der Empfänger Nachrichten über `Since` abruft.
+
 ## BarChart (`component/barchart`)
 
 Bar-Chart mit drei Modi (`ModeSimple`, `ModeStacked`, `ModeHeatmap`). Frontend rendert via **echarts v6** (in `xiri-ng` als optionale peerDependency — nur installieren, wenn Bar-Charts verwendet werden).
