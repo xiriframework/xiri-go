@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.8.2]
+
 ### Added
 
 - **`chat.New`: Chat-Komponente (Typ `chat`).** Messenger-artiger Verlauf mit Eingabe, eigene Nachrichten rechts
