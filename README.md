@@ -96,7 +96,7 @@ shell from a single prompt — no need to read the full API by hand.
 
 ## Requirements
 
-- Go 1.25+
+- Go 1.26+
 - [Echo v4](https://github.com/labstack/echo) (for HTTP response helpers)
 
 ## MCP: die App für Agenten öffnen

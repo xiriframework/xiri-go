@@ -7,6 +7,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Security
+
+- `golang.org/x/net` 0.57 → 0.61: behebt GO-2026-6603, GO-2026-6610, GO-2026-6611, GO-2026-6612 und GO-2026-6617
+  (HTTP/2). Weitere Module aktualisiert, u. a. `labstack/echo/v4` 4.16.0.
+
+### Changed
+
+- **Mindestversion Go 1.26** (`go.mod`), weil `golang.org/x/net` ab 0.60 sie voraussetzt.
+
 ## [0.8.2]
 
 ### Added
