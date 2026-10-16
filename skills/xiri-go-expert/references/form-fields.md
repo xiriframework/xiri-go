@@ -485,12 +485,14 @@ UI-Schalter — ob wirklich nichts hinzugefügt, gelöscht oder umsortiert wurde
 Stand (über ein Schlüssel-Unterfeld wie `key`). Ein `disabled`-Unterfeld nimmt der Server nie vom Client, die Zelle
 trägt nach dem Bind den Default; den echten Wert holt die App über `key`.
 
-**Leere Zeilen** (alle sichtbaren Zellen leer oder Default, alle versteckten leer) werden verworfen — eine
+**Leere Zeilen** (alle sichtbaren Zellen leer oder Default, alle versteckten leer; `disabled`- und `Form=false`-Unterfelder
+zählen nicht) werden verworfen — eine
 versehentlich angelegte letzte Zeile löst keinen Pflichtfehler aus. Ein versteckter Default macht jede Zeile
 nicht-leer: versteckte Schlüssel als Text-Unterfeld mit Default `""` anlegen (number/bool haben immer einen Default).
 
 **Fehler:** `group.FieldErrors` mit `"items"` (Anzahl, required) und `"items.<zeile>.<unterfeld>"` (0-basiert, bezogen
-auf den gesendeten Wert). Übersetzung über `validation.<Code>`, `{field}` = Label des Unterfelds. Eigene Zellfehler
+auf den gesendeten Wert). Übersetzung über `validation.<Code>`, `{field}` = Label des Unterfelds. Je Zelle
+bleibt der erste Fehler stehen (der eigene vor `duplicate`). Eigene Zellfehler
 aus der App: `fe := group.FieldErrors{"items.3.label": "gibt es schon"}` und `response.NewErrorResponseFromError(fe)`.
 
 ## ArrayField
