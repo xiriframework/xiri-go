@@ -125,7 +125,7 @@ func (c *Chat) WithPlaceholder(key string) *Chat { c.placeholder = key; return c
 // WithMaxLength begrenzt die Eingabe; denselben Wert an ParseSend übergeben.
 func (c *Chat) WithMaxLength(n int) *Chat { c.maxLength = n; return c }
 
-// WithHeight setzt die Höhe (CSS), z. B. "60vh". Ohne füllt der Chat seinen Container.
+// WithHeight setzt die Höhe (CSS); ohne gilt "60vh". "100%" füllt einen Container mit fester Höhe.
 func (c *Chat) WithHeight(css string) *Chat { c.height = css; return c }
 
 // WithDisplay setzt die Layout-Klasse.
