@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.8.4]
+
 ### Documentation
 
 - **Skill `references/pages.md`: vertikale Abstände im Grid (xiri-ng 0.8.0).** Der row-gap liefert den Abstand,
