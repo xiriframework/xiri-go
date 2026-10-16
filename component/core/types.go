@@ -6,7 +6,7 @@ import "slices"
 // xiri-ng führt dieselbe Liste als XIRI_COMPONENT_TYPES (plus reine Frontend-Typen wie cardlink);
 // component/core/types_test.go prüft beide Richtungen. Sortiert halten.
 var componentTypes = []string{
-	"barchart", "bulletchart", "buttonline", "calendar", "callout", "card", "container",
+	"barchart", "bulletchart", "buttonline", "calendar", "callout", "card", "chat", "container",
 	"description-list", "divider", "empty-state", "expansion", "form", "gantt", "gaugechart",
 	"header", "heatmap", "html", "imagetext", "infopoint", "infotext", "linechart", "links", "list",
 	"multi-stat", "multiprogress", "page-header", "piechart", "progress", "query", "sankey", "section",
