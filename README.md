@@ -139,7 +139,7 @@ Sobald aktiviert, triggert der Skill automatisch, wenn du Go-Code schreibst oder
 - **Tabellen**: Spalten-Typen, Top/Row/Bulk-Buttons, Inline-Edit, Server-Side-Pagination, CSV/Excel-Export
 - **Formulare**: 20+ Feldtypen, `SetShowWhen`-Conditional-Visibility, `FormBuilder` für Add/Edit
 - **Filter-Parsing**: Single- vs. Multi-Value aus `LoadFilterData`, GORM-Integration
-- **Dialoge**: Question, Form, Table, Waiting (inkl. Polling), MassDelete/MassEdit
+- **Dialoge**: Question, Form, Table, Waiting (inkl. Polling), MassDelete/MassEdit, Delete-Handler (`HandleDelRequest`, `HandleDelRequestWithDialog`)
 - **URL-Routing**: `*xurl.Url` mit Prefix-Pattern für Sidebar + API-Endpoints
 - **Patterns**: Vollständiges CRUD, Inline-Edit-Flow, Bulk-Actions, Dashboard
 - **UiContext, Formatter, Responses, Enums** — alles was die Library exportiert

@@ -1,6 +1,6 @@
 # Dialoge — alle Typen + Workflows
 
-`component/dialog` bietet fünf Dialog-Typen (`question`, `form`, `table`, `waiting`, `component`) plus eine Handvoll Helper für die häufigen Fälle (Delete, Warning, MultiDelete). Jeder Dialog wird vom Backend als JSON-Response geliefert, das Frontend öffnet einen MatDialog daraus.
+`component/dialog` bietet fünf Dialog-Typen (`question`, `form`, `table`, `waiting`, `component`) plus eine Handvoll Helper für die häufigen Fälle (Delete, Warning, MultiDelete, `HandleDelRequest`/`HandleDelRequestWithDialog`). Jeder Dialog wird vom Backend als JSON-Response geliefert, das Frontend öffnet einen MatDialog daraus.
 
 ## Dialog-Interface
 
@@ -78,13 +78,15 @@ dialog.NewDialogDelete(
     u          *url.Url,         // POST-Ziel bei Bestätigung
     extra      map[string]any,   // nil oder z.B. {"itemId": 42}
     headerText *string,          // nil = "Delete" (vom Translator übersetzt)
-    okText     *string,          // nil = "Ok"
-    closeText  *string,          // nil = "Back"
+    okText     *string,          // nil = "Ok"   — pro Aufruf überschreibbar, Wert ist ein Übersetzungsschlüssel
+    closeText  *string,          // nil = "Back" — dito
 ) Dialog
 
 // Warning (Icon "help_outline")
 dialog.NewDialogWarning(text, u, extra, headerText, okText, closeText)
 ```
+
+Läuft der Dialog über den Convenience-Handler, kommen eigene Texte über `HandleDelRequestWithDialog` hinein (siehe unten).
 
 Beide erzeugen einen `DialogTypeQuestion` mit `DialogQuestionContent{Icon, Question}` und zwei Standard-Buttons (Close + Submit).
 
@@ -130,6 +132,43 @@ func (c *Controller) Delete(ctx echo.Context) error {
     )
 }
 ```
+
+### `HandleDelRequestWithDialog` — eigene Texte oder Warndialog
+
+`HandleDelRequest` baut den Dialog selbst (immer `"Ok"`/`"Back"`). Für eigene Button-Texte den Dialog selbst bauen und
+übergeben, GET/POST bleibt gleich:
+
+```go
+func dialog.HandleDelRequestWithDialog(
+    c               echo.Context,
+    dlg             Dialog,                    // wird bei GET ausgegeben
+    deleteFunc      func() error,              // läuft bei POST; Fehler → 500
+    successResponse response.SuccessResponse,  // Antwort bei POST-Erfolg
+    ctx             *core.UiContext,
+) error
+```
+
+```go
+func (c *Controller) Delete(ctx echo.Context) error {
+    wc := webcontext.GetWebContext(ctx)
+    id, _ := strconv.ParseInt(ctx.Param("id"), 10, 64)
+
+    okText, closeText := "Entfernen", "Abbrechen"
+    dlg := dialog.NewDialogDelete(
+        fmt.Sprintf("Gerät #%d wirklich entfernen?", id),
+        c.apiUrl("delete", strconv.FormatInt(id, 10)), // *url.Url direkt, kein PrintPrefix-Umweg
+        nil, nil, &okText, &closeText,
+    )
+    return dialog.HandleDelRequestWithDialog(
+        ctx, dlg,
+        func() error { return c.svc.DB.Device.Delete(ctx.Request().Context(), id) },
+        response.NewReturnRefreshTable(),
+        wc.UiContext(),
+    )
+}
+```
+
+Für einen Warndialog statt `NewDialogDelete` einfach `NewDialogWarning` übergeben.
 
 ## Form-Dialog — Formular im Dialog statt auf eigener Seite
 
@@ -479,4 +518,6 @@ Custom-Content (z.B. eine Komponente): einfach eine Komponente als `content` an 
 - **Waiting-Dialog: URL muss den API-Prefix tragen**, weil Polling-GETs darauf gehen. `xurl.NewUrlPrefix(...)` oder `c.apiUrl(...)`.
 - **MultiDelete ohne `ExtractMultiSelectRequest`**: die IDs kommen immer unter `data`, mal als Zahl, mal als String. Der Extractor normalisiert das und liefert `isDialogOpen`.
 - **`NewDialogFormMultiDelete`: Öffnen und Submit sind beide POST auf dieselbe URL.** Der Select-Button schickt `{"data":[ids]}`, das OK im Dialog `{"data":[ids],"done":true}`. Nicht über `ctx.Request().Method` unterscheiden (immer POST), sondern über `isDialogOpen` aus `ExtractMultiSelectRequest`.
+- **Eigene Button-Texte bei `HandleDelRequest`**: geht dort nicht (übergibt immer `nil`) → `HandleDelRequestWithDialog` nehmen, nicht den GET/POST-Zweig nachbauen.
+- **Button-Texte sind Übersetzungsschlüssel**: ohne Eintrag im Translator der App steht der Schlüssel roh im Button. Bei `HandleDelRequestWithDialog` wird der Dialog auch beim POST gebaut; teure Lookups für den Fragetext (z. B. Name aus der DB) dann lieber im eigenen GET-Zweig wie im „Beispiel-Use“ oben.
 - **Größen:** Nutze `WithSize(dialog.SizeLg)` statt `WithOption("size", "lg")` — typsicher und compile-time-geprüft. Raw CSS-Werte (`"750px"`) funktionieren weiterhin als Escape-Hatch.

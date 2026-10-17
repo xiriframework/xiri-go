@@ -48,7 +48,7 @@ u.PrintPrefix()  // mit Prefix — das geben ALLE Komponenten aus (auch Link-But
 | -------------------------------------------------------- | ------------------------------------------- |
 | **Eine ganze Seite** (Page, Grid-Layout, Header, Farben) | `references/pages.md`                       |
 | **Eine Tabelle** (Spalten, Row/Top/Bulk-Buttons)         | `references/tables.md`                      |
-| **Einen Dialog** (Delete, Form, Table, Waiting, Component) | `references/dialogs.md`                     |
+| **Einen Dialog** (Delete inkl. `HandleDelRequest`/eigene Button-Texte, Form, Table, Waiting, Component) | `references/dialogs.md`                     |
 | **Ein Formular** (Felder, showWhen, Validierung)         | `references/form-fields.md` + `form-builder.md` |
 | **Abhängige Felder** (Optionen vom Server nachladen)     | `references/form-fields.md` (Abschnitt „Abhängige Felder“) |
 | **Wiederholbare Zeilen** (Positionen, Listen in einem Formular) | `references/form-fields.md` (Abschnitt „RowsField“) |

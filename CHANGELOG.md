@@ -7,6 +7,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+
+- **`dialog.HandleDelRequestWithDialog`.** Wie `HandleDelRequest`, aber mit fertigem Dialog, etwa für eigene
+  Button-Texte oder einen Warndialog. `HandleDelRequest` bleibt unverändert.
+
+### Documentation
+
+- **Skill `references/dialogs.md`:** `HandleDelRequestWithDialog` mit Beispiel, Button-Texte als Übersetzungsschlüssel;
+  neue Eval für den Delete-Handler.
+
 ## [0.8.4]
 
 ### Documentation

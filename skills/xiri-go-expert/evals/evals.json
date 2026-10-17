@@ -178,6 +178,18 @@
         {"name": "no_bind_and_validate", "type": "code_check", "description": "Kein BindAndValidate oder BindReload im Vorschlags-Handler"}
       ],
       "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "Schreibe einen Echo-Delete-Handler für Geräte mit dem Convenience-Handler von xiri-go. GET zeigt den Bestätigungsdialog, POST löscht und lädt die Tabelle neu. Die Buttons sollen 'Entfernen' und 'Abbrechen' heißen.",
+      "expected_output": "dialog.NewDialogDelete(text, url, nil, nil, &okText, &closeText) with okText 'Entfernen' and closeText 'Abbrechen', passed to dialog.HandleDelRequestWithDialog(ctx, dlg, deleteFunc, response.NewReturnRefreshTable(), uiCtx). No own GET/POST branch, no HandleDelRequest.",
+      "assertions": [
+        {"name": "uses_handle_del_request_with_dialog", "type": "contains_pattern", "description": "Ruft dialog.HandleDelRequestWithDialog auf, nicht dialog.HandleDelRequest"},
+        {"name": "custom_texts_via_new_dialog_delete", "type": "code_check", "description": "'Entfernen'/'Abbrechen' gehen als okText/closeText (5./6. Parameter) an NewDialogDelete, nicht als Header"},
+        {"name": "no_manual_method_switch", "type": "code_check", "description": "Kein eigenes ctx.Request().Method == GET/POST im Handler"},
+        {"name": "no_invented_api", "type": "code_check", "description": "Does not use methods or types that don't exist in xiri-go"}
+      ],
+      "files": []
     }
   ]
 }

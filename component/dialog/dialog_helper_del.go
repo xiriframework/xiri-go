@@ -12,8 +12,10 @@ import (
 
 // HandleDelRequest handles single-item delete operations using the standard dialog pattern.
 //
-// GET request: Shows delete confirmation dialog using NewDialogDelete
-// POST request: Executes delete operation and returns type-safe success response
+//   - GET: shows the delete confirmation dialog built with NewDialogDelete
+//   - POST: executes deleteFunc and returns the success response (500 on error)
+//
+// For custom button texts or a warning dialog use HandleDelRequestWithDialog.
 func HandleDelRequest(
 	c echo.Context,
 	confirmMessage string,
@@ -22,16 +24,25 @@ func HandleDelRequest(
 	successResponse response.SuccessResponse,
 	ctx *core.UiContext,
 ) error {
-	if c.Request().Method == http.MethodGet {
-		dlg := NewDialogDelete(
-			confirmMessage,
-			url.NewUrl(urlPath),
-			nil,
-			nil,
-			nil,
-			nil,
-		)
+	dlg := NewDialogDelete(confirmMessage, url.NewUrl(urlPath), nil, nil, nil, nil)
+	return HandleDelRequestWithDialog(c, dlg, deleteFunc, successResponse, ctx)
+}
 
+// HandleDelRequestWithDialog works like HandleDelRequest, but shows the given dialog on GET.
+//
+// Typically dlg is built with NewDialogDelete or NewDialogWarning and custom okText/closeText.
+// The dialog is built by the caller on every request, POST included, so keep it cheap.
+//
+//   - GET: shows dlg
+//   - POST: executes deleteFunc and returns the success response (500 on error)
+func HandleDelRequestWithDialog(
+	c echo.Context,
+	dlg Dialog,
+	deleteFunc func() error,
+	successResponse response.SuccessResponse,
+	ctx *core.UiContext,
+) error {
+	if c.Request().Method == http.MethodGet {
 		return c.JSON(http.StatusOK, dlg.Print(ctx))
 	}
 
