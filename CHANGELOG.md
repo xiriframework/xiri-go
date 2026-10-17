@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.8.5]
+
 ### Added
 
 - **`dialog.HandleDelRequestWithDialog`.** Wie `HandleDelRequest`, aber mit fertigem Dialog, etwa für eigene
