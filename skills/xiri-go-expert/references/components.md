@@ -1096,7 +1096,7 @@ Ein Icon rendern nur `ButtonTypeIcon`, `IconText`, `Fab` und `MiniFab`. Bei `Rai
 ```go
 btn.WithHint("Details anzeigen")
 btn.WithIcon("edit")                         // Icon (nur Icon/IconText/Fab/MiniFab rendern es, siehe oben)
-btn.WithDisabled(true)
+btn.WithDisabled(true)                       // gesperrt; mit WithHint bleibt er hover-/fokussierbar und zeigt den Hint als Tooltip (xiri-ng ≥ 0.10.0)
 btn.WithData(map[string]any{"_csv": true})  // Custom-Payload an Frontend (siehe unten)
 btn.WithAutoLoad(true)                       // Aktion einmalig automatisch beim Laden auslösen (siehe unten)
 btn.WithTarget("_blank")                     // Link/Href: neuer Tab; ButtonActionDownload: im Tab anzeigen (siehe oben)
@@ -1104,8 +1104,9 @@ btn.WithHide(true)                           // Button gar nicht rendern (siehe 
 // … siehe button.go für weitere Optionen (WithTabIndex, WithDefault, WithOption, …)
 ```
 
-`*TableButton` reicht `WithData`, `WithAutoLoad`, `WithTarget` und `WithHide` an den
-darunterliegenden `*Button` durch; alles andere via `GetButton()`.
+`*TableButton` reicht `WithData`, `WithAutoLoad`, `WithTarget`, `WithHide` und `WithDisabled` an den
+darunterliegenden `*Button` durch, dazu kommt `WithSelectCount(min, max)` für Select-Buttons und Bulk-Actions
+(siehe `tables.md`); alles andere via `GetButton()`.
 
 ### Button ausblenden via `WithHide`
 

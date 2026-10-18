@@ -12,11 +12,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **`field.ChipsField`: Optionen mit String-ID.** `SelectOption{Value: "eth0", …}` gilt jetzt als Option statt als
   Freitext; `StrIDs()` liefert diese Chips. Ein Freitext gleich dem `Value` einer String-Option zählt als Option.
 - **`ChipsField.SetSuggestionsURL(u, searchWith...)`:** Vorschläge beim Tippen wie bei `TextField`, Handler mit
-  `builder.BindSuggest`. Der gewählte Vorschlag wird als Freitext-Chip eingefügt. Braucht die nächste xiri-ng-Version
-  (nach 0.9.1).
+  `builder.BindSuggest`. Der gewählte Vorschlag wird als Freitext-Chip eingefügt. Braucht xiri-ng ≥ 0.10.0.
 - **`TableButton.WithSelectCount(min, max)`:** Select-Buttons und Bulk-Actions sind nur aktiv, solange die Anzahl
   ausgewählter Zeilen passt (0 = keine Grenze), z. B. `WithSelectCount(2, 2)` für „genau zwei Zeilen vergleichen“.
-  Export `selectMin`/`selectMax`. Braucht die nächste xiri-ng-Version (nach 0.9.1).
+  Export `selectMin`/`selectMax`. Braucht xiri-ng ≥ 0.10.0.
 - **`field.SelectField` mit String-Werten:** `SelectOption{Value: "allow", …}` landet nach dem Binden in
   `StrValue` (einfach) bzw. `StrValues` (`SetMultiple(true)`), statt mit „cannot convert string to int32“ zu
   scheitern. Im Filter- und Rows-Pfad liefert eine String-Mehrfachauswahl `[]string`. `Value`/`Values` bleiben für
@@ -24,18 +23,24 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **`TableBuilder.SetReorderURL(u)`: Zeilen per Drag&Drop umsortieren.** Das Frontend schickt nach dem Drop
   `{id, before}` (`table.ReorderRequest`, `before: null` = ans Ende der ganzen Liste) und lädt die Tabelle neu.
   Ziehbar nur unsortiert, ohne Suchtext und mit allen Zeilen auf einer Seite; `Build` warnt ohne sichtbares Feld
-  `id` und bei `ServerSide`/`Tree`. Braucht die nächste xiri-ng-Version (nach 0.9.1).
+  `id` und bei `ServerSide`/`Tree`. Braucht xiri-ng ≥ 0.10.0.
 - **`TableButton.WithDisabled(bool)`:** sperrt Select-Buttons, Bulk-Actions und Tabellen-Buttons. An Select-Buttons und
-  Bulk-Actions braucht das die nächste xiri-ng-Version (nach 0.9.1).
+  Bulk-Actions braucht das xiri-ng ≥ 0.10.0.
 
 ### Changed
 
 - **`ChipsField.Texts()` liefert String-Options nicht mehr**, nur noch echten Freitext. Wer sie dort gelesen hat,
   wechselt auf `StrIDs()`.
 - **`ChipsField.SetFreeText(false)` wirkt:** `Validate` lehnt Strings ohne passende Option mit `not_allowed` ab, der
-  Export enthält `freeText: false`. Bisher war die Einstellung wirkungslos. Das Frontend sperrt Freitext erst ab der
-  nächsten xiri-ng-Version (nach 0.9.1).
-- **`SetAddURL` an Chips:** `WithCreated` darf auch eine String-ID liefern (ebenfalls ab der nächsten xiri-ng-Version).
+  Export enthält `freeText: false`. Bisher war die Einstellung wirkungslos. Das Frontend sperrt Freitext erst ab
+  xiri-ng 0.10.0.
+- **`SetAddURL` an Chips:** `WithCreated` darf auch eine String-ID liefern (ebenfalls ab xiri-ng 0.10.0).
+
+### Documentation
+
+- **Skill-Doku `xiri-go-expert`:** neue APIs beschrieben (`ChipsField.StrIDs`/`SetFreeText`/`SetSuggestionsURL`,
+  `SelectField.StrValue`/`StrValues`, `TableBuilder.SetReorderURL`, `TableButton.WithSelectCount`/`WithDisabled`);
+  `components.md` nennt den Hint als Tooltip am gesperrten Button (xiri-ng ≥ 0.10.0).
 
 ## [0.8.5]
 

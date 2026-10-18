@@ -455,6 +455,9 @@ b.AddSelectButton(button.NewTableButton(core.ButtonActionDialog, "compare_arrows
     "Genau zwei Zeilen vergleichen", core.ColorPrimary, false, nil).WithSelectCount(2, 2))
 ```
 
+`WithDisabled(true)` sperrt einen Select-Button bzw. eine Bulk-Action unabhängig von der Auswahl (braucht xiri-ng
+≥ 0.10.0; vorher wurden sie trotzdem aktiv, sobald Zeilen ausgewählt waren).
+
 ### Standard-Kombis (Convenience-Methoden)
 
 ```go
@@ -709,7 +712,7 @@ func (ctrl *Controller) Reorder(c echo.Context) error {
 - **Filter-Formular sperrt nicht:** `before` bleibt eindeutig, nur `before: null` heißt „ans absolute
   Ende“, nicht „hinter die letzte sichtbare Zeile“.
 - **Antwort:** nur Meldung oder Fehlerstatus; `refresh`/`goto` wertet die Tabelle hier nicht aus.
-- Nie mit `SetServerSide` oder `Tree` (Warnung bei `Build`), nur Int64-IDs. Braucht xiri-ng nach 0.9.1.
+- Nie mit `SetServerSide` oder `Tree` (Warnung bei `Build`), nur Int64-IDs. Braucht xiri-ng ≥ 0.10.0.
 
 ## Handler-Flow (Complete)
 
