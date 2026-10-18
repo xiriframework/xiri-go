@@ -14,6 +14,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **`ChipsField.SetSuggestionsURL(u, searchWith...)`:** Vorschläge beim Tippen wie bei `TextField`, Handler mit
   `builder.BindSuggest`. Der gewählte Vorschlag wird als Freitext-Chip eingefügt. Braucht die nächste xiri-ng-Version
   (nach 0.9.1).
+- **`TableButton.WithSelectCount(min, max)`:** Select-Buttons und Bulk-Actions sind nur aktiv, solange die Anzahl
+  ausgewählter Zeilen passt (0 = keine Grenze), z. B. `WithSelectCount(2, 2)` für „genau zwei Zeilen vergleichen“.
+  Export `selectMin`/`selectMax`. Braucht die nächste xiri-ng-Version (nach 0.9.1).
 
 ### Changed
 

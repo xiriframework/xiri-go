@@ -344,3 +344,27 @@ func TestTableButtonWithoutHint_WarningNamesIcon(t *testing.T) {
 		t.Errorf("expected icon=edit in the warning, got %q", buf.String())
 	}
 }
+
+func TestTableButton_WithSelectCount_PrintsBothLimits(t *testing.T) {
+	newTB := func() *button.TableButton {
+		return button.NewTableButton(core.ButtonActionApi, "compare_arrows", url.NewUrl("/x"), "Vergleichen",
+			core.ColorPrimary, false, nil)
+	}
+
+	out := newTB().WithSelectCount(2, 2).Print(nil)
+	if out["selectMin"] != 2 || out["selectMax"] != 2 {
+		t.Errorf("selectMin/selectMax = %v/%v, want 2/2", out["selectMin"], out["selectMax"])
+	}
+
+	out = newTB().WithSelectCount(2, 2).WithSelectCount(2, 0).Print(nil)
+	if out["selectMin"] != 2 || out["selectMax"] != 0 {
+		t.Errorf("after reset: selectMin/selectMax = %v/%v, want 2/0", out["selectMin"], out["selectMax"])
+	}
+
+	out = newTB().Print(nil)
+	for _, k := range []string{"selectMin", "selectMax"} {
+		if v, ok := out[k]; ok {
+			t.Errorf("expected no %q key without WithSelectCount, got %v", k, v)
+		}
+	}
+}

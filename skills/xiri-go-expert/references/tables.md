@@ -444,6 +444,17 @@ b.SetSelectButtons([]*button.TableButton{
 })
 ```
 
+### Anzahl begrenzen: `WithSelectCount(min, max)`
+
+Ein Button ist nur aktiv, solange die Anzahl ausgewählter Zeilen zwischen `min` und `max` liegt; `0` = keine Grenze auf
+dieser Seite, leere Auswahl sperrt immer. Den Grund für die Sperre erklärt der Hint (er erscheint auch am gesperrten
+Button). Wirkt bei `SetSelectButtons`/`AddSelectButton` und `BulkActions`, nicht bei Top- und Zeilen-Buttons.
+
+```go
+b.AddSelectButton(button.NewTableButton(core.ButtonActionDialog, "compare_arrows", c.apiUrl("compare"),
+    "Genau zwei Zeilen vergleichen", core.ColorPrimary, false, nil).WithSelectCount(2, 2))
+```
+
 ### Standard-Kombis (Convenience-Methoden)
 
 ```go
@@ -491,7 +502,7 @@ b.StickyBulkBar()     // Leiste bleibt beim Scrollen oben stehen
 
 Payload: `{"ids": [...], "mode": "page"|"allResults", "count": n}`; bei `mode: "allResults"` zusätzlich
 `"filter": <aktueller Filter-Body oder null>`. Buttons mit `core.ColorWarning` bestätigt das Frontend mit der
-exakten Anzahl.
+exakten Anzahl. `WithSelectCount` zählt hier `count`, also bei „Alle Ergebnisse“ die ganze gefilterte Menge.
 
 ```go
 // BulkActions-Handler: Frontend postet {"ids": [...], "mode": "page"|"allResults", "count": n}
