@@ -254,18 +254,23 @@ func (f *TextField) SetSuggestions(suggestions ...string) *TextField {
 // builder.BindSuggest in the handler. A nil url disables the feature; the reserved id "search"
 // is dropped from searchWith.
 func (f *TextField) SetSuggestionsURL(u *url.Url, searchWith ...string) *TextField {
+	f.SuggestionsURL, f.SearchWith = suggestionsURL(u, searchWith)
+	return f
+}
+
+// suggestionsURL resolves a suggestion endpoint: nil or empty url disables it, the
+// reserved id "search" is dropped from searchWith.
+func suggestionsURL(u *url.Url, searchWith []string) (string, []string) {
 	if u == nil || u.PrintPrefix() == "" {
-		f.SuggestionsURL, f.SearchWith = "", nil
-		return f
+		return "", nil
 	}
-	f.SuggestionsURL = u.PrintPrefix()
-	f.SearchWith = nil
+	var ids []string
 	for _, id := range searchWith {
 		if id != "search" {
-			f.SearchWith = append(f.SearchWith, id)
+			ids = append(ids, id)
 		}
 	}
-	return f
+	return u.PrintPrefix(), ids
 }
 
 // ============================================================================

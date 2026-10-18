@@ -299,7 +299,7 @@ func (r ReturnDone) WithMessage(text string, msgType MessageType) ReturnDone {
 
 // WithCreated marks the response of a field.SetAddURL dialog: the field that opened the dialog
 // appends {id, name} to its option list and selects it. id must match the JSON type of the
-// field's existing option ids.
+// field's existing option ids (chips accept both numbers and strings).
 func (r ReturnDone) WithCreated(id any, name string) ReturnDone {
 	r.Created = &CreatedOption{ID: id, Name: name}
 	return r

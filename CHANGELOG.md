@@ -7,6 +7,23 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+
+- **`field.ChipsField`: Optionen mit String-ID.** `SelectOption{Value: "eth0", …}` gilt jetzt als Option statt als
+  Freitext; `StrIDs()` liefert diese Chips. Ein Freitext gleich dem `Value` einer String-Option zählt als Option.
+- **`ChipsField.SetSuggestionsURL(u, searchWith...)`:** Vorschläge beim Tippen wie bei `TextField`, Handler mit
+  `builder.BindSuggest`. Der gewählte Vorschlag wird als Freitext-Chip eingefügt. Braucht die nächste xiri-ng-Version
+  (nach 0.9.1).
+
+### Changed
+
+- **`ChipsField.Texts()` liefert String-Options nicht mehr**, nur noch echten Freitext. Wer sie dort gelesen hat,
+  wechselt auf `StrIDs()`.
+- **`ChipsField.SetFreeText(false)` wirkt:** `Validate` lehnt Strings ohne passende Option mit `not_allowed` ab, der
+  Export enthält `freeText: false`. Bisher war die Einstellung wirkungslos. Das Frontend sperrt Freitext erst ab der
+  nächsten xiri-ng-Version (nach 0.9.1).
+- **`SetAddURL` an Chips:** `WithCreated` darf auch eine String-ID liefern (ebenfalls ab der nächsten xiri-ng-Version).
+
 ## [0.8.5]
 
 ### Added

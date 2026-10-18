@@ -3,6 +3,8 @@ package field
 import (
 	"reflect"
 	"testing"
+
+	"github.com/xiriframework/xiri-go/component/url"
 )
 
 func chipsTestOptions() []SelectOption {
@@ -111,5 +113,98 @@ func TestChipsField_Export_DefaultEmpty(t *testing.T) {
 	out := f.ExportForFrontend(ctx, nil)
 	if !reflect.DeepEqual(out["value"], []interface{}{}) {
 		t.Errorf("expected empty default value, got %#v", out["value"])
+	}
+}
+
+func chipsStringOptions() []SelectOption {
+	return []SelectOption{
+		{Value: "eth0", Label: "Ethernet 0"},
+		{Value: "eth1", Label: "Ethernet 1"},
+	}
+}
+
+// Eine String-Option kommt als String zurück und darf nicht als Freitext gelten.
+func TestChipsField_StringOption_NotInTexts(t *testing.T) {
+	f := NewChipsField("ifaces", "Interfaces", false).SetList(chipsStringOptions())
+	if err := f.BindValue([]interface{}{"eth0", "custom"}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !reflect.DeepEqual(f.Texts(), []string{"custom"}) {
+		t.Errorf("expected texts [custom], got %v", f.Texts())
+	}
+}
+
+func TestChipsField_StrIDs_StringOptions(t *testing.T) {
+	list := append(chipsStringOptions(), SelectOption{Value: int64(5), Label: "Fünf"})
+	f := NewChipsField("ifaces", "Interfaces", false).SetList(list)
+	if err := f.BindValue([]interface{}{"eth1", "custom", float64(5), "5", "eth0"}); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !reflect.DeepEqual(f.StrIDs(), []string{"eth1", "eth0"}) {
+		t.Errorf("expected StrIDs [eth1 eth0], got %v", f.StrIDs())
+	}
+	if !reflect.DeepEqual(f.IDs(), []int64{5}) {
+		t.Errorf("expected IDs [5], got %v", f.IDs())
+	}
+	// "5" ist Freitext: die numerische Option 5 hat einen anderen Typ.
+	if !reflect.DeepEqual(f.Texts(), []string{"custom", "5"}) {
+		t.Errorf("expected texts [custom 5], got %v", f.Texts())
+	}
+}
+
+func TestChipsField_FreeTextFalse_RejectsText(t *testing.T) {
+	list := append(chipsStringOptions(), SelectOption{Value: int64(5), Label: "Fünf"})
+	f := NewChipsField("ifaces", "Interfaces", false).SetList(list).SetFreeText(false)
+	if err := f.BindValue([]interface{}{"eth0", float64(5)}); err != nil {
+		t.Fatalf("options only must be valid, got: %v", err)
+	}
+	err := f.Validate([]interface{}{"eth0", "bogus"})
+	if err == nil {
+		t.Fatal("expected not_allowed for free text with FreeText=false")
+	}
+	if c := code(t, err); c != "not_allowed" {
+		t.Errorf("expected code not_allowed, got %s", c)
+	}
+}
+
+// Ohne Request-Wert greift der Default; auch der darf bei FreeText=false keinen Freitext enthalten.
+func TestChipsField_FreeTextFalse_RejectsTextInDefault(t *testing.T) {
+	f := NewChipsField("ifaces", "Interfaces", false).SetList(chipsStringOptions()).SetFreeText(false)
+	f.Default = []string{"bogus"}
+	if err := f.BindValue(nil); err == nil {
+		t.Error("expected error for free-text default with FreeText=false")
+	}
+}
+
+func TestChipsField_Export_FreeText(t *testing.T) {
+	if _, ok := NewChipsField("t", "T", false).ExportForFrontend(nil, nil)["freeText"]; ok {
+		t.Error("freeText must be absent by default (frontend default is true)")
+	}
+	out := NewChipsField("t", "T", false).SetFreeText(false).ExportForFrontend(nil, nil)
+	if got, ok := out["freeText"]; !ok || got != false {
+		t.Errorf("expected freeText false, got %#v (present=%v)", got, ok)
+	}
+}
+
+func TestChipsField_Export_SuggestionsURL(t *testing.T) {
+	u := url.NewUrlPrefix("/Iface/Search", "/api")
+	out := NewChipsField("t", "T", false).SetSuggestionsURL(u, "host", "search").ExportForFrontend(nil, nil)
+	if got := out["url"]; got != u.PrintPrefix() {
+		t.Errorf("expected url %s, got %#v", u.PrintPrefix(), got)
+	}
+	// "search" ist der Suchtext selbst und wird als Kontextfeld ignoriert.
+	if got := out["searchWith"]; !reflect.DeepEqual(got, []string{"host"}) {
+		t.Errorf("expected searchWith [host], got %#v", got)
+	}
+}
+
+func TestChipsField_Export_SuggestionsURL_NilDisables(t *testing.T) {
+	u := url.NewUrlPrefix("/Iface/Search", "/api")
+	f := NewChipsField("t", "T", false).SetSuggestionsURL(u, "host").SetSuggestionsURL(nil)
+	out := f.ExportForFrontend(nil, nil)
+	for _, key := range []string{"url", "searchWith"} {
+		if _, ok := out[key]; ok {
+			t.Errorf("%s must be absent after SetSuggestionsURL(nil)", key)
+		}
 	}
 }

@@ -171,6 +171,9 @@ werden gesendet und gebunden. Kommen die Vorschläge erst per `SetReloadOn`, ini
 (leer → `list: []`) setzen — sonst rendert das Frontend erst ein normales Textfeld und tauscht das
 Element beim Patch aus. Ein Reload-Patch der Liste löscht den getippten Text nie.
 
+`ChipsField.SetSuggestionsURL` funktioniert genauso (gleicher Handler mit `BindSuggest`): der gewählte
+Vorschlag wird als Freitext-Chip eingefügt, daher nur mit `FreeText` (Default) sinnvoll.
+
 ### Neue Option per Dialog anlegen („+“-Button)
 
 `SetAddURL` zeigt neben Select/ModelList/Model/Chips einen „+“-Button; GET liefert den Dialog, der
@@ -184,7 +187,7 @@ tags.BaseField.SetAddURL(xurl.NewUrlPrefix("/Portal/Tag/AddDialog", "/api"))
 return wc.Component(response.NewReturnDone().WithCreated(tag.ID, tag.Name).WithMessage("Angelegt", response.MessageSuccess))
 ```
 
-`id` muss den JSON-Typ der vorhandenen Options-IDs haben (Zahl bei ModelList/Model/Chips). Details in
+`id` muss den JSON-Typ der vorhandenen Options-IDs haben (Zahl bei ModelList/Model, Zahl oder String bei Chips). Details in
 `references/form-fields.md` (Abschnitt `SetAddURL`).
 
 ### FormBuilder
@@ -213,7 +216,7 @@ if err := formbuilder.BindAndValidate(ctx, fg); err != nil {
 | SelectField                     | Option-Value-Typ              |
 | SelectField + `.SetMultiple(true)` | `field.ModelListValue` (`[]int32`) |
 | ModelListField                  | `field.ModelListValue`        |
-| ChipsField                      | `[]interface{}` (int64 IDs + string Freitext) |
+| ChipsField                      | `[]interface{}` (int64-IDs, String-IDs, Freitext); `IDs()`/`StrIDs()`/`Texts()` |
 
 GORM-Integration (mit `, ok` Guards, leere Werte raus) → `references/table-filtering.md`.
 

@@ -4,19 +4,22 @@ import (
 	"fmt"
 
 	"github.com/xiriframework/xiri-go/component/core"
+	"github.com/xiriframework/xiri-go/component/url"
 )
 
 // ChipsField represents a tag/chip input form field.
 //
-// Each chip value is either a numeric option ID (int64, referencing an entry in
-// List) or a free-text string. Chips chosen from List are transmitted and stored
-// as their option ID; free-text input stays a string. The JSON type of each array
-// element carries the distinction: number = option ID, string = free text.
+// Each chip value is either an option ID (referencing an entry in List) or a
+// free-text string. Chips chosen from List are transmitted and stored as their
+// option ID: numeric IDs as int64 (IDs()), string IDs as string (StrIDs()). A
+// string that matches no string option is free text (Texts()).
 type ChipsField struct {
 	*BaseField
-	List     []SelectOption // Available options for autocomplete
-	FreeText bool           // Whether to allow free text input (not just from list)
-	Value    []interface{}  // Parsed and validated values: int64 (option ID) or string (free text)
+	List           []SelectOption // Available options for autocomplete
+	FreeText       bool           // Whether to allow free text input (not just from list)
+	Value          []interface{}  // Parsed and validated values: int64 (option ID) or string (option ID or free text)
+	SuggestionsURL string         // Endpoint for suggestions while typing: POST {search, <SearchWith...>} -> [{id, name}]
+	SearchWith     []string       // IDs of other form fields whose current value is sent with the suggestion request
 }
 
 // optionExists reports whether the given int64 id matches one of the field's
@@ -45,6 +48,16 @@ func (f *ChipsField) optionExists(id int64) bool {
 	return false
 }
 
+// stringOptionExists reports whether s is the value of a string option.
+func (f *ChipsField) stringOptionExists(s string) bool {
+	for _, opt := range f.List {
+		if v, ok := opt.Value.(string); ok && v == s {
+			return true
+		}
+	}
+	return false
+}
+
 // Validate validates the chips field value
 func (f *ChipsField) Validate(value interface{}) error {
 	if value == nil {
@@ -63,11 +76,16 @@ func (f *ChipsField) Validate(value interface{}) error {
 		return invalid("required", nil, "chips field %s is required", f.ID)
 	}
 
-	// Numeric chips must reference a known option ID; strings are free text.
+	// Numeric chips must reference a known option ID; strings are string options or free text.
 	for _, item := range arr {
-		if id, ok := item.(int64); ok {
-			if !f.optionExists(id) {
-				return invalid("not_allowed", nil, "chips field %s has no matching option for id %d", f.ID, id)
+		switch v := item.(type) {
+		case int64:
+			if !f.optionExists(v) {
+				return invalid("not_allowed", nil, "chips field %s has no matching option for id %d", f.ID, v)
+			}
+		case string:
+			if !f.FreeText && !f.stringOptionExists(v) {
+				return invalid("not_allowed", nil, "chips field %s allows no free text: %q", f.ID, v)
 			}
 		}
 	}
@@ -152,15 +170,25 @@ func (f *ChipsField) IDs() []int64 {
 	return ids
 }
 
+// StrIDs returns the string option IDs among the chip values (free text and
+// numeric IDs are excluded).
+func (f *ChipsField) StrIDs() []string {
+	return f.strings(true)
+}
+
 // Texts returns the free-text chip values (option-ID chips are excluded).
 func (f *ChipsField) Texts() []string {
-	texts := make([]string, 0, len(f.Value))
+	return f.strings(false)
+}
+
+func (f *ChipsField) strings(options bool) []string {
+	out := make([]string, 0, len(f.Value))
 	for _, item := range f.Value {
-		if s, ok := item.(string); ok {
-			texts = append(texts, s)
+		if s, ok := item.(string); ok && f.stringOptionExists(s) == options {
+			out = append(out, s)
 		}
 	}
-	return texts
+	return out
 }
 
 // ExportForFrontend exports the field for frontend rendering
@@ -179,6 +207,15 @@ func (f *ChipsField) ExportForFrontend(ctx *core.UiContext, value interface{}) m
 			}
 		}
 		result["list"] = list
+	}
+	if !f.FreeText {
+		result["freeText"] = false
+	}
+	if f.SuggestionsURL != "" {
+		result["url"] = f.SuggestionsURL
+		if len(f.SearchWith) > 0 {
+			result["searchWith"] = f.SearchWith
+		}
 	}
 
 	return result
@@ -208,6 +245,18 @@ func (f *ChipsField) SetList(list []SelectOption) *ChipsField {
 // SetFreeText sets whether free text input is allowed
 func (f *ChipsField) SetFreeText(freeText bool) *ChipsField {
 	f.FreeText = freeText
+	return f
+}
+
+// SetSuggestionsURL enables server-side suggestions while typing, like
+// TextField.SetSuggestionsURL: the frontend posts {search: "<input>", <id>: <value> ...}
+// for every enabled form field named in searchWith and expects [{id, name}]. The
+// chosen suggestion's name is inserted as a free-text chip (unless it equals the
+// name of a List option, then that option's ID), so this is only useful with
+// FreeText=true. Use builder.BindSuggest in the handler. A nil url disables the
+// feature; the reserved id "search" is dropped from searchWith.
+func (f *ChipsField) SetSuggestionsURL(u *url.Url, searchWith ...string) *ChipsField {
+	f.SuggestionsURL, f.SearchWith = suggestionsURL(u, searchWith)
 	return f
 }
 

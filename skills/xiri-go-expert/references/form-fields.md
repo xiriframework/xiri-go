@@ -102,7 +102,8 @@ Struct-Literal gebautes `TextField{}` hat `Trim == false`.
 ### Vorschläge (Autocomplete mit Freitext)
 
 Das Feld bleibt Freitext; die Vorschläge helfen nur. Exportiert werden dieselben Keys wie bei
-Select/Chips (`list: [{id, name}]`, `id == name`) plus `url` und `searchWith`:
+Select/Chips (`list: [{id, name}]`, `id == name`) plus `url` und `searchWith`. `ChipsField.SetSuggestionsURL`
+funktioniert genauso:
 
 ```go
 f := field.NewTextField("city", "CITY", false, "")
@@ -370,30 +371,32 @@ end := f.Value.End      // time.Time
 
 ## ChipsField
 
-Tag/Chip-Eingabe im **gemischten Modus**. Value: `[]interface{}` — jedes Element ist entweder
-ein numerisches Options-`int64` (Chip aus der `List` gewählt → ID) oder ein `string` (frei
-eingegebener Text). Die JSON-/Go-Typunterscheidung trägt die Semantik: `number/int64` = Options-ID,
-`string` = Freitext.
-
-Die `List`-Optionen brauchen **numerische `Value`** (int64), damit sie als IDs funktionieren — die
-exportierte `id` wird im Frontend (`XiriFormFieldSelectOption.id: number | string`; Chips behandeln nur
-`typeof === 'number'` als Option) erkannt und beim Auswählen als ID zurückgesendet. String-Option-Values würden als Freitext interpretiert.
+Tag/Chip-Eingabe im **gemischten Modus**. Value: `[]interface{}`. Jedes Element ist eine Options-ID
+(`int64` bei numerischem `Value`, `string` bei String-`Value`) oder ein `string` mit Freitext. Ein String
+gilt als Option, wenn er dem `Value` einer String-Option entspricht, sonst als Freitext. Im Frontend
+wird Text, der exakt dem Namen einer Option entspricht, beim Bestätigen zur ID.
 
 ```go
-f := field.NewChipsField("tags", "device.tags", false)
+f := field.NewChipsField("ifaces", "device.ifaces", false)
 f.SetList([]field.SelectOption{
-    {Value: int64(1), Label: "Indoor"},
-    {Value: int64(2), Label: "Outdoor"},
+    {Value: "eth0", Label: "Ethernet 0"},  // String-ID
+    {Value: int64(2), Label: "Outdoor"},   // numerische ID
 })
-f.SetFreeText(true)  // erlaubt zusätzlich freie Texteingabe (ohne ID)
+f.SetFreeText(false)  // nur Optionen; Default true (Freitext erlaubt)
 
-// Nach BindAndValidate — bequemer getrennter Zugriff über Helper:
-ids := f.IDs()      // []int64  — aus der Liste gewählte Chips (Options-IDs)
-texts := f.Texts()  // []string — frei eingegebene Chips
-all := f.Value      // []interface{} — int64 + string in Eingabereihenfolge
+// Nach BindAndValidate:
+ids := f.IDs()        // []int64  — numerische Options-IDs
+strIDs := f.StrIDs()  // []string — String-Options-IDs
+texts := f.Texts()    // []string — Freitext (nie String-Options)
+all := f.Value        // []interface{} in Eingabereihenfolge
 ```
 
-Ein ChipsField **ohne `List`** enthält schlicht nur Freitext-Strings (`IDs()` ist leer).
+- Ein ChipsField **ohne `List`** enthält nur Freitext-Strings.
+- `SetFreeText(false)`: `Validate` lehnt Strings ohne passende Option mit `not_allowed` ab, das Frontend
+  übernimmt nur Optionen und lässt anderen Text im Eingabefeld stehen.
+- `SetSuggestionsURL(u, searchWith...)` wie bei `TextField` (Handler mit `builder.BindSuggest`): der gewählte
+  Vorschlag wird als Freitext-Chip eingefügt (heißt er wie eine Option, als deren ID). Nur mit Freitext sinnvoll.
+- Ein Freitext `"5"` neben einer numerischen Option `5` bleibt Freitext: die Typen unterscheiden sich.
 
 ## FileField
 
@@ -772,8 +775,9 @@ func (c *Controller) TagAddDialogSubmit(ctx echo.Context) error {
 Regeln und Grenzen:
 
 - **`id` muss denselben JSON-Typ haben wie die vorhandenen Options-IDs** (Zahl bei `ModelListField`,
-  `ModelField`, `ChipsField`). Chips lösen Labels nur für numerische IDs auf.
-- **`SelectField` und `ChipsField` (numerische IDs) validieren beim Submit gegen ihre Optionsliste.**
+  `ModelField`; Zahl oder String bei `ChipsField`).
+- **`SelectField` und `ChipsField` validieren beim Submit gegen ihre Optionsliste** (Chips: Zahlen immer, Strings bei
+  `SetFreeText(false)`; sonst gilt ein unbekannter String als Freitext).
   Die neue Entität muss dort enthalten sein — bei aus der DB geladenen Listen automatisch, bei
   statischen `SelectOption`-Listen nicht. **`ModelField`/`ModelListField` ebenso** (siehe
   „Serverseitige Prüfung" bei `ModelField`): mit `LoaderFunc` automatisch, mit statischer `List` nicht

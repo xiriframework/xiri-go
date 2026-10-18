@@ -7,7 +7,7 @@ import (
 	"github.com/xiriframework/xiri-go/form/field"
 )
 
-// BindSuggest handles a suggestion request (TextField.SetSuggestionsURL).
+// BindSuggest handles a suggestion request (TextField.SetSuggestionsURL, ChipsField.SetSuggestionsURL).
 //
 // It reads the JSON body once, returns the typed search text and binds ONLY the given context
 // fields leniently: default first, then the posted value if present and usable. Disabled fields

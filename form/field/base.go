@@ -283,7 +283,7 @@ func (f *BaseField) SetReloadOn(reloadURL *url.Url, fields ...string) *BaseField
 // GET addURL must return a dialog.NewDialogForm; POST addURL must answer
 // response.NewReturnDone().WithCreated(id, name). The frontend appends {id, name} to the option
 // list and selects it (multi-value fields: in addition to the current values). The id must have
-// the same JSON type as the existing option ids (chips: numeric).
+// the same JSON type as the existing option ids (chips: number or string).
 //
 // Example:
 //
