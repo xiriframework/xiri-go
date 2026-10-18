@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.0]
+
 ### Added
 
 - **`field.ChipsField`: Optionen mit String-ID.** `SelectOption{Value: "eth0", …}` gilt jetzt als Option statt als
