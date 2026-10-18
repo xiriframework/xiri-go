@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.1]
+
 ### Added
 
 - **`table.ReorderRequest.After`:** Der Drop-Request trägt jetzt auch die ID der sichtbaren Zeile direkt über der
