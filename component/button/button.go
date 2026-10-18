@@ -74,7 +74,7 @@ func (tb *TableButton) WithHide(hide bool) *TableButton {
 // while min <= count <= max. 0 means no limit on that side; an empty selection always
 // disables it. Select buttons (SetSelectButtons/AddSelectButton) count the selected rows,
 // bulk actions (BulkActions) count bulkCount — in "all results" mode the whole filtered
-// result. Ignored on ButtonsTop and row buttons. min > max leaves the button never active.
+// result. Ignored on ButtonsTop and row buttons. min > max > 0 leaves the button never active.
 func (tb *TableButton) WithSelectCount(min, max int) *TableButton {
 	tb.button.WithOption("selectMin", min)
 	tb.button.WithOption("selectMax", max)
