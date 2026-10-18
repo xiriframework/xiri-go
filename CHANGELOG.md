@@ -21,6 +21,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   `StrValue` (einfach) bzw. `StrValues` (`SetMultiple(true)`), statt mit „cannot convert string to int32“ zu
   scheitern. Im Filter- und Rows-Pfad liefert eine String-Mehrfachauswahl `[]string`. `Value`/`Values` bleiben für
   Zahlen-Options unverändert; gemischte Options gehen nur bei Einzelauswahl. Kein xiri-ng-Update nötig.
+- **`TableBuilder.SetReorderURL(u)`: Zeilen per Drag&Drop umsortieren.** Das Frontend schickt nach dem Drop
+  `{id, before}` (`table.ReorderRequest`, `before: null` = ans Ende der ganzen Liste) und lädt die Tabelle neu.
+  Ziehbar nur unsortiert, ohne Suchtext und mit allen Zeilen auf einer Seite; `Build` warnt ohne sichtbares Feld
+  `id` und bei `ServerSide`/`Tree`. Braucht die nächste xiri-ng-Version (nach 0.9.1).
 
 ### Changed
 

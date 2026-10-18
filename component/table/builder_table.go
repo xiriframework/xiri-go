@@ -117,6 +117,31 @@ func (b *TableBuilder[T]) validateFields() {
 		slog.Warn("table.Build: SetSaveState(true) without SetSaveStateId; the state is not saved")
 	}
 	b.validateTree()
+	b.validateReorder()
+}
+
+// validateReorder warns when drag&drop reordering cannot work: the frontend sends the row "id",
+// and silently disables dragging for server-side and tree tables.
+func (b *TableBuilder[T]) validateReorder() {
+	opts := b.table.options
+	if opts.ReorderURL == "" {
+		return
+	}
+	hasID := false
+	for _, f := range b.table.fieldBases {
+		if f.id == "id" && !f.hide {
+			hasID = true
+		}
+	}
+	if !hasID {
+		slog.Warn("table.Build: SetReorderURL needs a visible field with id \"id\" (IdField(\"id\", …)); rows without it cannot be reordered")
+	}
+	if opts.ServerSide != nil && *opts.ServerSide {
+		slog.Warn("table.Build: SetReorderURL has no effect with ServerSide; dragging stays disabled")
+	}
+	if opts.Tree != nil {
+		slog.Warn("table.Build: SetReorderURL has no effect with Tree; dragging stays disabled")
+	}
 }
 
 // validateTree warns about common tree-mode configuration mistakes:

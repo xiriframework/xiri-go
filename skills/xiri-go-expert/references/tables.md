@@ -567,6 +567,9 @@ b.SetPageSizes([]int{10, 25, 50, 100, 500})
 // Inline-Edit
 b.SetEditUrl("/api/devices/inline-edit")
 
+// Drag&Drop-Reihenfolge (siehe "Zeilen per Drag&Drop umsortieren")
+b.SetReorderURL(c.apiUrl("reorder"))
+
 // Zusatz-Inputs
 b.SetSaveInput("note")      // zusätzliches Input-Feld in der Toolbar
 b.SetSaveInputUrl("/api/devices/note")
@@ -675,6 +678,38 @@ tbl.SetData(regions)
 - **Falle:** `ParentIdField` darf **nicht** über `.Hide()` versteckt werden — versteckte
   Felder fallen aus den Row-Daten (`GetData` überspringt sie), und der Baum bricht. Stattdessen
   als `IdField`/Format `id` ausgeben: aus der Anzeige gefiltert, aber in den Daten vorhanden.
+
+## Zeilen per Drag&Drop umsortieren
+
+`b.SetReorderURL(u)` blendet vorne eine Ziehgriff-Spalte ein. Nach dem Drop schickt das Frontend
+`POST {id, before}` an die URL und lädt die Tabelle danach **immer** neu — auch bei einem Fehler,
+dann zeigt der Reload wieder die gespeicherte Reihenfolge. Die App prüft und speichert selbst.
+
+```go
+b.IdField("id", "ID", func(r Rule) int64 { return r.ID })   // Pflicht: Feld "id", nicht per Hide() verstecken
+b.TextField("name", "Regel", func(r Rule) string { return r.Name })
+b.SetReorderURL(c.apiUrl("reorder"))
+b.SetPagination(false)   // lange Listen: alles auf einer Seite (oder großes SetItemsPerPage)
+
+func (ctrl *Controller) Reorder(c echo.Context) error {
+    var req table.ReorderRequest   // {ID int64, Before *int64}
+    if err := c.Bind(&req); err != nil {
+        return err
+    }
+    // req.Before == nil → ans Ende der GANZEN Liste
+    if err := ctrl.rules.Move(req.ID, req.Before); err != nil {
+        return c.JSON(409, response.NewErrorResponse(err.Error()))  // Snackbar, Reload zeigt alte Reihenfolge
+    }
+    return c.JSON(200, response.NewReturnSuccess("Reihenfolge gespeichert"))
+}
+```
+
+- **Ziehbar nur**, solange alle Zeilen unsortiert auf einer Seite stehen und das Suchfeld leer ist.
+  Sonst ist der Griff ausgegraut. Eine Spaltensortierung hebt der dritte Klick auf den Header wieder auf.
+- **Filter-Formular sperrt nicht:** `before` bleibt eindeutig, nur `before: null` heißt „ans absolute
+  Ende“, nicht „hinter die letzte sichtbare Zeile“.
+- **Antwort:** nur Meldung oder Fehlerstatus; `refresh`/`goto` wertet die Tabelle hier nicht aus.
+- Nie mit `SetServerSide` oder `Tree` (Warnung bei `Build`), nur Int64-IDs. Braucht xiri-ng nach 0.9.1.
 
 ## Handler-Flow (Complete)
 

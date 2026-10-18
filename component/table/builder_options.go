@@ -133,6 +133,19 @@ func (b *TableBuilder[T]) SetEditUrl(editUrl string) *TableBuilder[T] {
 	return b
 }
 
+// SetReorderURL lets users reorder rows by drag&drop. After a drop the frontend POSTs
+// { id, before } (see ReorderRequest) to this URL and reloads the table. Dragging is only
+// possible while every row is shown unsorted on one page without search text; it is never
+// possible with SetServerSide or Tree. For lists longer than one page use SetPagination(false)
+// or a large SetItemsPerPage. A nil or empty url turns reordering off.
+func (b *TableBuilder[T]) SetReorderURL(u *xurl.Url) *TableBuilder[T] {
+	b.table.options.ReorderURL = ""
+	if u != nil {
+		b.table.options.ReorderURL = u.PrintPrefix()
+	}
+	return b
+}
+
 // SetServerSide enables/disables server-side pagination.
 // When enabled, pagination, sorting, and search are handled by the server.
 // The frontend will send _page, _pageSize, _sort, _sortDir, _search parameters.

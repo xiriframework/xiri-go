@@ -85,6 +85,7 @@ type TableOptions struct {
 	ServerSide       *bool       // Enable server-side pagination (data fetched page-by-page)
 	ScrollHeight     *string     // Custom scroll height for the table container (e.g., "400px", "80vh")
 	EditUrl          *string     // URL for inline edit save requests (POST { id, field, value })
+	ReorderURL       string      // Drag&drop row reordering: POST { id, before } here; empty = off
 	Tree             *TreeConfig // Opt-in tree mode (indent + expand/collapse per row); nil = flat table
 }
 
@@ -543,6 +544,9 @@ func (tc *tableCore) exportOptions(ctx *core.UiContext) map[string]any {
 	if opts.EditUrl != nil {
 		options["editUrl"] = *opts.EditUrl
 	}
+	if opts.ReorderURL != "" {
+		options["reorderUrl"] = opts.ReorderURL
+	}
 
 	// Tree mode: serialize the nested tree settings object (only when opted in).
 	// Keys must match the frontend XiriTableTreeSettings interface exactly.
@@ -720,6 +724,30 @@ type InlineEditRequest struct {
 	ID    int64  `json:"id"`
 	Field string `json:"field"`
 	Value any    `json:"value"`
+}
+
+// ReorderRequest is the payload the Angular frontend posts to the ReorderURL after a row was
+// dragged: POST { id, before }. ID is the moved row, Before the row it now stands in front of;
+// nil (JSON null) means "to the very end" — of the whole list, not just the rows a filter form
+// currently shows. Rows need an int64 field "id" (IdField("id", …)). The app checks and stores
+// the order itself; the table always reloads afterwards, so the response only needs a message
+// (or an error status, after which the reload shows the stored order again).
+//
+// Example:
+//
+//	func (ctrl *Controller) Reorder(c echo.Context) error {
+//	    var req table.ReorderRequest
+//	    if err := c.Bind(&req); err != nil {
+//	        return err
+//	    }
+//	    if err := ctrl.rules.Move(req.ID, req.Before); err != nil {
+//	        return c.JSON(409, response.NewErrorResponse(err.Error()))
+//	    }
+//	    return c.JSON(200, response.NewReturnSuccess("Reihenfolge gespeichert"))
+//	}
+type ReorderRequest struct {
+	ID     int64  `json:"id"`
+	Before *int64 `json:"before"`
 }
 
 // ParseInlineEdit parses the inline edit request from the Echo context and validates
