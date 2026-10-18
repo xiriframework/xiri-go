@@ -96,7 +96,7 @@ Ablauf intern:
 | `NewSelectField(...)` mit `int`-Options            | `int` (wie Option-Werte)       |
 | `NewSelectField(...)` mit `int32`-Options          | `int32`                        |
 | `NewSelectField(...)` mit `string`-Options         | `string`                       |
-| `NewSelectField(...).SetMultiple(true)`            | `field.ModelListValue` (`[]int32`) |
+| `NewSelectField(...).SetMultiple(true)`            | `field.ModelListValue` (`[]int32`); String-Options: `[]string` |
 | `NewModelField`                                    | `int32`                        |
 | `NewModelListField`                                | `field.ModelListValue`         |
 | `NewChipsField`                                    | `[]interface{}` (int64 Options-IDs + string Freitext) |
@@ -131,6 +131,11 @@ if v, ok := filters["active"].(bool); ok {
 // SelectField.SetMultiple(true) → field.ModelListValue (alias []int32)
 if v, ok := filters["priority"].(field.ModelListValue); ok && len(v) > 0 {
     q = q.Where("priority_id IN ?", []int32(v))
+}
+
+// SelectField.SetMultiple(true) mit String-Options → []string
+if v, ok := filters["action"].([]string); ok && len(v) > 0 {
+    q = q.Where("action IN ?", v)
 }
 
 // ModelListField → field.ModelListValue

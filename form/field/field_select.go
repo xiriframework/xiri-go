@@ -11,12 +11,14 @@ import (
 type SelectField struct {
 	*BaseField
 	Options   []SelectOption
-	Subtype   string  // Select subtype (e.g., "select", "radio", "checkbox")
-	Search    *bool   // Enable search filter (nil = auto based on option count, true/false = force)
-	Multiple  bool    // If true, field allows selecting multiple options (uses Values instead of Value)
-	SelectAll bool    // If true (and Multiple), the frontend shows a "select all / none" toggle
-	Value     int32   // Parsed and validated value (single-select mode)
-	Values    []int32 // Parsed and validated values (multi-select mode)
+	Subtype   string   // Select subtype (e.g., "select", "radio", "checkbox")
+	Search    *bool    // Enable search filter (nil = auto based on option count, true/false = force)
+	Multiple  bool     // If true, field allows selecting multiple options (uses Values instead of Value)
+	SelectAll bool     // If true (and Multiple), the frontend shows a "select all / none" toggle
+	Value     int32    // Parsed and validated value (single-select mode, numeric options)
+	Values    []int32  // Parsed and validated values (multi-select mode, numeric options)
+	StrValue  string   // Parsed and validated value (single-select mode, string options)
+	StrValues []string // Parsed and validated values (multi-select mode, string options)
 
 	warnedSelectAll bool
 }
@@ -41,11 +43,43 @@ func (f *SelectField) optionExists(id int32) bool {
 	return false
 }
 
+// hasStringOptions reports whether a multi-select stores string values (StrValues).
+// ponytail: mixed string/number options are not supported in multi-select mode.
+func (f *SelectField) hasStringOptions() bool {
+	for _, opt := range f.Options {
+		if _, ok := opt.Value.(string); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// stringOptionExists reports whether s is the value of a string option.
+func (f *SelectField) stringOptionExists(s string) bool {
+	for _, opt := range f.Options {
+		if v, ok := opt.Value.(string); ok && v == s {
+			return true
+		}
+	}
+	return false
+}
+
 func (f *SelectField) Validate(value interface{}) error {
 	if f.Multiple {
 		if value == nil {
 			if f.Required {
 				return invalid("required", nil, "select field %s is required", f.ID)
+			}
+			return nil
+		}
+		if strs, ok := value.([]string); ok {
+			if f.Required && len(strs) == 0 {
+				return invalid("required", nil, "select field %s is required", f.ID)
+			}
+			for _, s := range strs {
+				if !f.stringOptionExists(s) {
+					return invalid("not_allowed", nil, "select field %s has invalid value %q", f.ID, s)
+				}
 			}
 			return nil
 		}
@@ -82,6 +116,9 @@ func (f *SelectField) Validate(value interface{}) error {
 }
 
 func (f *SelectField) Parse(raw interface{}) (interface{}, error) {
+	if f.Multiple && f.hasStringOptions() {
+		return f.parseStrings(raw)
+	}
 	if f.Multiple {
 		parsed, err := parseModelListValue(raw, f.GetDefault())
 		if err != nil {
@@ -136,6 +173,49 @@ func (f *SelectField) Parse(raw interface{}) (interface{}, error) {
 	return nil, invalid("not_allowed", nil, "select field %s has no matching option for value %v", f.ID, raw)
 }
 
+// parseStrings parses a multi-select value with string options into []string.
+// A single string is one value: no comma split, an option value may contain a comma.
+func (f *SelectField) parseStrings(raw interface{}) ([]string, error) {
+	var items []interface{}
+	switch v := raw.(type) {
+	case nil:
+		switch d := f.GetDefault().(type) {
+		case nil:
+			return []string{}, nil
+		case ModelListValue: // SetMultiple's default, set before the option type is known
+			if len(d) == 0 {
+				return []string{}, nil
+			}
+		case []string:
+			return f.parseStrings(d)
+		}
+		return nil, fmt.Errorf("select field %s: unsupported default type %T", f.ID, f.GetDefault())
+	case string:
+		if v == "" {
+			return []string{}, nil
+		}
+		items = []interface{}{v}
+	case []string:
+		for _, s := range v {
+			items = append(items, s)
+		}
+	case []interface{}:
+		items = v
+	default:
+		return nil, fmt.Errorf("select field %s: unsupported value type %T", f.ID, raw)
+	}
+
+	result := make([]string, 0, len(items))
+	for _, item := range items {
+		s, ok := item.(string)
+		if !ok || !f.stringOptionExists(s) {
+			return nil, invalid("not_allowed", nil, "select field %s has no matching option for value %v", f.ID, item)
+		}
+		result = append(result, s)
+	}
+	return result, nil
+}
+
 // BindValue parses, validates, and stores the value in the field
 func (f *SelectField) BindValue(raw interface{}) error {
 	parsed, err := f.Parse(raw)
@@ -148,16 +228,21 @@ func (f *SelectField) BindValue(raw interface{}) error {
 	}
 
 	if f.Multiple {
-		if list, ok := parsed.(ModelListValue); ok {
-			f.Values = []int32(list)
-		} else {
-			f.Values = []int32{}
+		f.Values, f.StrValues = []int32{}, []string{}
+		switch v := parsed.(type) {
+		case ModelListValue:
+			f.Values = []int32(v)
+		case []string:
+			f.StrValues = v
 		}
 		return nil
 	}
 
-	// Convert parsed value to int32
+	// The other field is reset: a reload binds the default first, then the request value.
+	f.Value, f.StrValue = 0, ""
 	switch v := parsed.(type) {
+	case string:
+		f.StrValue = v
 	case int32:
 		f.Value = v
 	case int:
@@ -165,12 +250,7 @@ func (f *SelectField) BindValue(raw interface{}) error {
 	case float64:
 		f.Value = int32(v)
 	case nil:
-		// Use default value if nil
-		if defaultVal, ok := f.GetDefault().(int32); ok {
-			f.Value = defaultVal
-		} else {
-			f.Value = 0
-		}
+		// No default: Parse(nil) already resolves a set default.
 	default:
 		return fmt.Errorf("field %s: cannot convert %T to int32", f.ID, parsed)
 	}

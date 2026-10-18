@@ -179,7 +179,7 @@ active := *f.Value  // bool
 
 ## SelectField
 
-Dropdown-Auswahl. Value: `int32`
+Dropdown-Auswahl. Value: `int32`, bei String-Options `StrValue string`
 
 ```go
 options := []field.SelectOption{
@@ -195,7 +195,14 @@ f.Search = boolPtr(true)  // Suchfeld aktivieren (auto bei 20+ Optionen)
 // Nach BindAndValidate:
 status := f.Value  // int32
 
-// Mehrfachauswahl: Option-Values müssen numerisch sein, Ergebnis in Values
+// String-Options: Ergebnis in StrValue (einfach) bzw. StrValues (multiple), Value/Values bleiben leer
+action := field.NewSelectField("action", "rule.action", true, []field.SelectOption{
+    {Value: "allow", Label: "rule.allow"},
+    {Value: "deny", Label: "rule.deny"},
+})
+// nach BindAndValidate: rule.Action = action.StrValue  // "allow"
+
+// Mehrfachauswahl: Ergebnis in Values (Zahlen) bzw. StrValues (Strings; gemischte Options gehen hier nicht)
 multi := field.NewSelectField("tags", "device.tags", false, options).
     SetMultiple(true).
     SetSelectAll(true)  // "Alle / Keine"-Toggle über der Liste (nur mit SetMultiple, sonst slog.Warn;
@@ -481,7 +488,7 @@ for _, row := range items.Value { // []map[string]any
 | `SetColumnWidth(subID, n)` | relative Spaltenbreite (`n fr`) |
 | `SetDefault(rows)` | Zeilen für `nil`/Export ohne Wert; bei einem `SetDisabled(true)`- oder `SetForm(false)`-Feld die aktuellen Zeilen setzen, sonst kommen nach dem Bind keine Zeilen heraus |
 
-Werte und Zahlen: `number`-Zellen kommen als `int`, `select` als Options-Wert (Typ wie in `SelectOption.Value`, typischerweise `int32`), `bool` als `bool`. Der Export trägt je Zeile nur die Schlüssel der exportierten Unterfelder (`Form=false` und fremde Struct-/Map-Schlüssel bleiben draußen).
+Werte und Zahlen: `number`-Zellen kommen als `int`, `select` als Options-Wert (Typ wie in `SelectOption.Value`, typischerweise `int32`; mit `SetMultiple(true)` `field.ModelListValue` bzw. `[]string` bei String-Options), `bool` als `bool`. Der Export trägt je Zeile nur die Schlüssel der exportierten Unterfelder (`Form=false` und fremde Struct-/Map-Schlüssel bleiben draußen).
 
 **Was der Server nicht prüfen kann:** `SetAddable(false)`/`SetRemovable(false)`/`SetSortable(false)` sind reine
 UI-Schalter — ob wirklich nichts hinzugefügt, gelöscht oder umsortiert wurde, prüft die App gegen ihren gespeicherten

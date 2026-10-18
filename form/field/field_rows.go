@@ -213,7 +213,7 @@ func uniqueKey(ids []string, row map[string]any) (string, bool) {
 	parts := make([]string, len(ids))
 	blank := true
 	for i, id := range ids {
-		if v := row[id]; v != nil {
+		if v := row[id]; !isBlank(v) {
 			parts[i] = strings.ToLower(strings.TrimSpace(fmt.Sprint(v)))
 		}
 		if parts[i] != "" {
@@ -250,6 +250,8 @@ func isBlank(v any) bool {
 	case string:
 		return x == ""
 	case ModelListValue:
+		return len(x) == 0
+	case []string:
 		return len(x) == 0
 	}
 	return false

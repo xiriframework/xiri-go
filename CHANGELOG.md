@@ -17,6 +17,10 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 - **`TableButton.WithSelectCount(min, max)`:** Select-Buttons und Bulk-Actions sind nur aktiv, solange die Anzahl
   ausgewählter Zeilen passt (0 = keine Grenze), z. B. `WithSelectCount(2, 2)` für „genau zwei Zeilen vergleichen“.
   Export `selectMin`/`selectMax`. Braucht die nächste xiri-ng-Version (nach 0.9.1).
+- **`field.SelectField` mit String-Werten:** `SelectOption{Value: "allow", …}` landet nach dem Binden in
+  `StrValue` (einfach) bzw. `StrValues` (`SetMultiple(true)`), statt mit „cannot convert string to int32“ zu
+  scheitern. Im Filter- und Rows-Pfad liefert eine String-Mehrfachauswahl `[]string`. `Value`/`Values` bleiben für
+  Zahlen-Options unverändert; gemischte Options gehen nur bei Einzelauswahl. Kein xiri-ng-Update nötig.
 
 ### Changed
 

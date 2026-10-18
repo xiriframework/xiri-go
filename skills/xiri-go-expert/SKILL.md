@@ -117,8 +117,8 @@ field.NewTextField    (id, name, required, "")         // Value: *string
 field.NewIntField     (id, name, required, 0)          // Value: *int32
 field.NewBoolField    (id, name, required, false)      // Value: *bool
 field.NewTimeField    (id, name, required, 0)          // Value: *int64 (Unix)
-field.NewSelectField  (id, name, required, opts)       // Value: int32
-field.NewSelectField  (id, name, required, opts).SetMultiple(true)  // Values: []int32
+field.NewSelectField  (id, name, required, opts)       // Value: int32 (String-Options: StrValue string)
+field.NewSelectField  (id, name, required, opts).SetMultiple(true)  // Values: []int32 (String-Options: StrValues []string)
 field.NewSelectField  (id, name, required, opts).SetMultiple(true).SetSelectAll(true)  // + „Alle / Keine“-Toggle
 field.NewModelField   (id, name, required, "group", 0) // Value: int32
 // Subtypes auf TextField: "email" | "tel" | "url" | "password" | "textarea"
@@ -214,7 +214,7 @@ if err := formbuilder.BindAndValidate(ctx, fg); err != nil {
 | BoolField                       | `bool`                        |
 | TimeField                       | `int64`                       |
 | SelectField                     | Option-Value-Typ              |
-| SelectField + `.SetMultiple(true)` | `field.ModelListValue` (`[]int32`) |
+| SelectField + `.SetMultiple(true)` | `field.ModelListValue` (`[]int32`); bei String-Options `[]string` |
 | ModelListField                  | `field.ModelListValue`        |
 | ChipsField                      | `[]interface{}` (int64-IDs, String-IDs, Freitext); `IDs()`/`StrIDs()`/`Texts()` |
 

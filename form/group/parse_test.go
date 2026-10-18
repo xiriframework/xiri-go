@@ -219,3 +219,16 @@ func TestParseValues_ChipsStringSliceDefault(t *testing.T) {
 		t.Errorf("c = %#v, want []interface{}{\"a\", \"b\"}", got["c"])
 	}
 }
+
+func TestParseAndValidateSparse_StringMultiSelect(t *testing.T) {
+	opts := []field.SelectOption{{Value: "allow", Label: "A"}, {Value: "deny", Label: "D"}}
+	fg := NewFormGroup([]field.FormField{field.NewSelectField("action", "ACTION", false, opts).SetMultiple(true)})
+
+	got, err := fg.ParseAndValidateSparse(map[string]interface{}{"action": []interface{}{"deny"}})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if v, ok := got["action"].([]string); !ok || len(v) != 1 || v[0] != "deny" {
+		t.Errorf("want []string{deny}, got %#v", got["action"])
+	}
+}
