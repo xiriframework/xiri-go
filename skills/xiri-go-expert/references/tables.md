@@ -685,7 +685,7 @@ tbl.SetData(regions)
 ## Zeilen per Drag&Drop umsortieren
 
 `b.SetReorderURL(u)` blendet vorne eine Ziehgriff-Spalte ein. Nach dem Drop schickt das Frontend
-`POST {id, before}` an die URL und lädt die Tabelle danach **immer** neu — auch bei einem Fehler,
+`POST {id, before, after}` an die URL und lädt die Tabelle danach **immer** neu — auch bei einem Fehler,
 dann zeigt der Reload wieder die gespeicherte Reihenfolge. Die App prüft und speichert selbst.
 
 ```go
@@ -695,12 +695,13 @@ b.SetReorderURL(c.apiUrl("reorder"))
 b.SetPagination(false)   // lange Listen: alles auf einer Seite (oder großes SetItemsPerPage)
 
 func (ctrl *Controller) Reorder(c echo.Context) error {
-    var req table.ReorderRequest   // {ID int64, Before *int64}
+    var req table.ReorderRequest   // {ID int64, Before *int64, After *int64}
     if err := c.Bind(&req); err != nil {
         return err
     }
-    // req.Before == nil → ans Ende der GANZEN Liste
-    if err := ctrl.rules.Move(req.ID, req.Before); err != nil {
+    // Before = sichtbare Zeile darunter (nil ganz unten), After = sichtbare Zeile darüber (nil ganz oben).
+    // Before == nil heißt NICHT „ans Ende der ganzen Liste“, wenn ein Filter Zeilen ausblendet → dann After nehmen.
+    if err := ctrl.rules.Move(req.ID, req.Before, req.After); err != nil {
         return c.JSON(409, response.NewErrorResponse(err.Error()))  // Snackbar, Reload zeigt alte Reihenfolge
     }
     return c.JSON(200, response.NewReturnSuccess("Reihenfolge gespeichert"))
@@ -709,8 +710,9 @@ func (ctrl *Controller) Reorder(c echo.Context) error {
 
 - **Ziehbar nur**, solange alle Zeilen unsortiert auf einer Seite stehen und das Suchfeld leer ist.
   Sonst ist der Griff ausgegraut. Eine Spaltensortierung hebt der dritte Klick auf den Header wieder auf.
-- **Filter-Formular sperrt nicht:** `before` bleibt eindeutig, nur `before: null` heißt „ans absolute
-  Ende“, nicht „hinter die letzte sichtbare Zeile“.
+- **Filter-Formular sperrt nicht.** Es zählen nur die sichtbaren Zeilen: unter die letzte abgelegt, ist `before`
+  `null` und `after` die Zeile darüber — dorthin gehört die Zeile, nicht ans Ende der ganzen Liste. Ungefiltert
+  meinen beide dieselbe Lücke. `after` schickt erst xiri-ng ≥ 0.10.1 (älter: fehlt → `nil`).
 - **Antwort:** nur Meldung oder Fehlerstatus; `refresh`/`goto` wertet die Tabelle hier nicht aus.
 - Nie mit `SetServerSide` oder `Tree` (Warnung bei `Build`), nur Int64-IDs. Braucht xiri-ng ≥ 0.10.0.
 

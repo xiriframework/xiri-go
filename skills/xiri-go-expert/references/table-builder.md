@@ -281,7 +281,7 @@ b.Tree(table.TreeConfig{
 })  // Details: references/tables.md → "Tree-Modus"
 b.TreeAddSubWhen(func(r Device) bool { return r.AllowsChildren }) // optional: "+" nur bei passenden Zeilen
 
-// Zeilen per Drag&Drop umsortieren: POST {id, before} → table.ReorderRequest
+// Zeilen per Drag&Drop umsortieren: POST {id, before, after} → table.ReorderRequest
 b.SetReorderURL(xurl.NewUrlPrefix("/devices/reorder", "/api"))  // Details: references/tables.md → "Drag&Drop"
 
 // Select-Buttons (Multi-Select Actions)

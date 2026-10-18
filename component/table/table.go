@@ -85,7 +85,7 @@ type TableOptions struct {
 	ServerSide       *bool       // Enable server-side pagination (data fetched page-by-page)
 	ScrollHeight     *string     // Custom scroll height for the table container (e.g., "400px", "80vh")
 	EditUrl          *string     // URL for inline edit save requests (POST { id, field, value })
-	ReorderURL       string      // Drag&drop row reordering: POST { id, before } here; empty = off
+	ReorderURL       string      // Drag&drop row reordering: POST { id, before, after } here; empty = off
 	Tree             *TreeConfig // Opt-in tree mode (indent + expand/collapse per row); nil = flat table
 }
 
@@ -727,9 +727,12 @@ type InlineEditRequest struct {
 }
 
 // ReorderRequest is the payload the Angular frontend posts to the ReorderURL after a row was
-// dragged: POST { id, before }. ID is the moved row, Before the row it now stands in front of;
-// nil (JSON null) means "to the very end" — of the whole list, not just the rows a filter form
-// currently shows. Rows need an int64 field "id" (IdField("id", …)). The app checks and stores
+// dragged: POST { id, before, after }. ID is the moved row, Before the shown row it now stands in
+// front of (nil at the bottom), After the shown row directly above it (nil at the top). With a
+// filter form only the shown rows count: dropped below the last one, Before is nil and After
+// tells where the row belongs — use After then instead of moving it to the end of the whole list.
+// In an unfiltered list both name the same gap. Frontends before xiri-ng 0.10.1 send no after
+// (nil). Rows need an int64 field "id" (IdField("id", …)). The app checks and stores
 // the order itself; the table always reloads afterwards, so the response only needs a message
 // (or an error status, after which the reload shows the stored order again).
 //
@@ -740,7 +743,7 @@ type InlineEditRequest struct {
 //	    if err := c.Bind(&req); err != nil {
 //	        return err
 //	    }
-//	    if err := ctrl.rules.Move(req.ID, req.Before); err != nil {
+//	    if err := ctrl.rules.Move(req.ID, req.Before, req.After); err != nil {
 //	        return c.JSON(409, response.NewErrorResponse(err.Error()))
 //	    }
 //	    return c.JSON(200, response.NewReturnSuccess("Reihenfolge gespeichert"))
@@ -748,6 +751,7 @@ type InlineEditRequest struct {
 type ReorderRequest struct {
 	ID     int64  `json:"id"`
 	Before *int64 `json:"before"`
+	After  *int64 `json:"after"`
 }
 
 // ParseInlineEdit parses the inline edit request from the Echo context and validates

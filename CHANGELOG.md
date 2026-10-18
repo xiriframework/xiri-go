@@ -7,6 +7,13 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+
+- **`table.ReorderRequest.After`:** Der Drop-Request trägt jetzt auch die ID der sichtbaren Zeile direkt über der
+  Ablagestelle (`nil` ganz oben). Mit Filter-Formular war ein Drop unter die letzte sichtbare Zeile bisher nur als
+  `before: null` erkennbar, also „ans Ende der ganzen Liste“; `After` sagt, wohin die Zeile tatsächlich gehört.
+  Additiv: bestehende Handler laufen weiter. Gesendet wird `after` ab xiri-ng 0.10.1.
+
 ## [0.9.0]
 
 ### Added

@@ -51,6 +51,25 @@ func TestReorderRequest_BindsIdAndBefore(t *testing.T) {
 	}
 }
 
+func TestReorderRequest_BindsAfter(t *testing.T) {
+	var req ReorderRequest
+	if err := json.Unmarshal([]byte(`{"id": 7, "before": null, "after": 5}`), &req); err != nil {
+		t.Fatal(err)
+	}
+	if req.Before != nil || req.After == nil || *req.After != 5 {
+		t.Errorf("after must bind, got %+v", req)
+	}
+
+	// Older frontends send no after: nil, like the top of the list.
+	req = ReorderRequest{}
+	if err := json.Unmarshal([]byte(`{"id": 7, "before": 3}`), &req); err != nil {
+		t.Fatal(err)
+	}
+	if req.After != nil {
+		t.Errorf("missing after must be nil, got %+v", req)
+	}
+}
+
 func captureWarnings(t *testing.T, build func()) string {
 	t.Helper()
 	var buf bytes.Buffer
