@@ -70,6 +70,12 @@ func (tb *TableButton) WithHide(hide bool) *TableButton {
 	return tb
 }
 
+// WithDisabled disables the underlying Button. See Button.WithDisabled.
+func (tb *TableButton) WithDisabled(disabled bool) *TableButton {
+	tb.button.WithDisabled(disabled)
+	return tb
+}
+
 // WithSelectCount limits how many selected rows enable the button: it is active only
 // while min <= count <= max. 0 means no limit on that side; an empty selection always
 // disables it. Select buttons (SetSelectButtons/AddSelectButton) count the selected rows,

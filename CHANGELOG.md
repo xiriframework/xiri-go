@@ -25,6 +25,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   `{id, before}` (`table.ReorderRequest`, `before: null` = ans Ende der ganzen Liste) und lädt die Tabelle neu.
   Ziehbar nur unsortiert, ohne Suchtext und mit allen Zeilen auf einer Seite; `Build` warnt ohne sichtbares Feld
   `id` und bei `ServerSide`/`Tree`. Braucht die nächste xiri-ng-Version (nach 0.9.1).
+- **`TableButton.WithDisabled(bool)`:** sperrt Select-Buttons, Bulk-Actions und Tabellen-Buttons. An Select-Buttons und
+  Bulk-Actions braucht das die nächste xiri-ng-Version (nach 0.9.1).
 
 ### Changed
 

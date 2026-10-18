@@ -368,3 +368,10 @@ func TestTableButton_WithSelectCount_PrintsBothLimits(t *testing.T) {
 		}
 	}
 }
+
+func TestTableButton_WithDisabled_PrintsDisabled(t *testing.T) {
+	tb := button.NewTableButton(core.ButtonActionApi, "send", url.NewUrl("/x"), "Senden", core.ColorPrimary, false, nil)
+	if got := tb.WithDisabled(true).Print(nil)["disabled"]; got != true {
+		t.Errorf("disabled = %v, want true", got)
+	}
+}
