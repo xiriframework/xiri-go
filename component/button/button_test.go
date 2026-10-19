@@ -375,3 +375,31 @@ func TestTableButton_WithDisabled_PrintsDisabled(t *testing.T) {
 		t.Errorf("disabled = %v, want true", got)
 	}
 }
+
+// Without an explicit tabIndex the frontend keeps the button a native tab stop.
+func TestButton_NoTabIndex_OmitsTabIndexKey(t *testing.T) {
+	btn := button.NewApiButton("Go", url.NewUrl("/x"), core.ColorPrimary, core.ButtonTypeRaised, "", false, nil, nil)
+
+	out := btn.Print(nil)
+
+	if v, has := out["tabIndex"]; has {
+		t.Errorf("expected no \"tabIndex\" key, got %v", v)
+	}
+}
+
+func TestButton_WithTabIndex_PrintsInt(t *testing.T) {
+	out := button.NewSimpleApiButton("Go", url.NewUrl("/x"), core.ColorPrimary).WithTabIndex(0).Print(nil)
+
+	if v, ok := out["tabIndex"].(int); !ok || v != 0 {
+		t.Errorf("tabIndex = %#v, want int 0", out["tabIndex"])
+	}
+}
+
+func TestDefaultFormButtons_NoTabIndex(t *testing.T) {
+	for _, b := range button.DefaultFormButtons("Back", "Save", url.NewUrl("/x")) {
+		out := b.Print(nil)
+		if v, has := out["tabIndex"]; has {
+			t.Errorf("%s button: expected no \"tabIndex\" key, got %v", out["action"], v)
+		}
+	}
+}

@@ -7,6 +7,14 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Buttons sind wieder per Tastatur erreichbar.** `NewButton` setzte `tabIndex` ohne Angabe auf `-1`, dazu
+  `form.NewForm` und `DefaultFormButtons` für den Back-Button. Damit waren Api-, Dialog-, Download- und Form-Buttons
+  keine Tab-Stops, und der Hint gesperrter Buttons war nur per Maus erreichbar. Jetzt wird `tabIndex` nur gesendet,
+  wenn er per `WithTabIndex` gesetzt ist; wer `-1` will, setzt `WithTabIndex(-1)`. Nur zusammen mit xiri-ng ≥ 0.10.2
+  ausrollen: ältere Versionen geben Link-Buttons sonst zwei Tab-Stops.
+
 ## [0.9.1]
 
 ### Added

@@ -29,7 +29,6 @@ func NewForm(
 ) *Form {
 	// If no buttons provided, create default Back + Save buttons
 	if buttons == nil {
-		defaultTabIndex := -1
 		buttons = []*button.Button{
 			button.NewBackButton(
 				core.Translate(ctx, "Back"),
@@ -37,7 +36,7 @@ func NewForm(
 				core.ButtonTypeStroked,
 				"",
 				false,
-				&defaultTabIndex,
+				nil,
 				false,
 				nil,
 			),

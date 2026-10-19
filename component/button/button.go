@@ -105,10 +105,6 @@ func NewButton(
 	if options == nil {
 		options = make(map[string]any)
 	}
-	if tabIndex == nil {
-		defaultTabIndex := -1
-		tabIndex = &defaultTabIndex
-	}
 	return &Button{
 		action:     action,
 		text:       text,
@@ -267,7 +263,6 @@ func NewDownloadButton(
 }
 
 // NewFormButton creates a form submit button
-// Note: tabIndex defaults to nil (not -1)
 func NewFormButton(
 	text string,
 	u *url.Url,
@@ -279,7 +274,6 @@ func NewFormButton(
 	isDefault bool,
 	options map[string]any,
 ) *Button {
-	// Don't force default tabIndex like other constructors - pass through as-is
 	return NewButton(
 		core.ButtonActionForm,
 		text,
@@ -289,7 +283,7 @@ func NewFormButton(
 		hint,
 		"",
 		disabled,
-		tabIndex, // Pass through nil if provided
+		tabIndex,
 		isDefault,
 		"_self",
 		options,
@@ -417,9 +411,8 @@ func NewSimpleApiButton(text string, u *url.Url, color core.Color) *Button {
 // DefaultFormButtons creates the standard Back + Save button pair used in forms.
 // backText and saveText are typically translated strings.
 func DefaultFormButtons(backText, saveText string, saveUrl *url.Url) []*Button {
-	defaultTabIndex := -1
 	return []*Button{
-		NewBackButton(backText, core.ColorPrimary, core.ButtonTypeStroked, "", false, &defaultTabIndex, false, nil),
+		NewBackButton(backText, core.ColorPrimary, core.ButtonTypeStroked, "", false, nil, false, nil),
 		NewFormButton(saveText, saveUrl, core.ColorPrimary, core.ButtonTypeRaised, "", false, nil, true, nil),
 	}
 }
@@ -568,7 +561,11 @@ func (b *Button) Print(ctx *core.UiContext) map[string]any {
 		"default":  b.isDefault,
 		"hint":     core.Translate(ctx, b.hint),
 		"target":   b.target,
-		"tabIndex": b.tabIndex,
+	}
+
+	// Emit tabIndex only when set; without it the button stays a native tab stop.
+	if b.tabIndex != nil {
+		data["tabIndex"] = *b.tabIndex
 	}
 
 	// Determine which field to use for text/icon based on button type
