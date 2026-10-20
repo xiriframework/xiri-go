@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.3]
+
 ### Fixed
 
 - **Optionales `IntField` lässt sich leeren.** xiri-ng sendet ein geleertes Zahlenfeld als `""`, `IntField.Parse`
