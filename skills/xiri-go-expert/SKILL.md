@@ -114,7 +114,8 @@ Der Default ist ein **Wert**, kein Pointer — `nil` kompiliert nicht. Ohne Defa
 
 ```go
 field.NewTextField    (id, name, required, "")         // Value: *string
-field.NewIntField     (id, name, required, 0)          // Value: *int32
+field.NewIntField     (id, name, required, 0)          // Value: *int32 (optional + geleert → nil)
+field.NewIntField     (id, name, false, 0).SetDefault(row.X)  // nullable Spalte (*int32): nil → leer
 field.NewBoolField    (id, name, required, false)      // Value: *bool
 field.NewTimeField    (id, name, required, 0)          // Value: *int64 (Unix)
 field.NewSelectField  (id, name, required, opts)       // Value: int32 (String-Options: StrValue string)
@@ -163,7 +164,11 @@ search, err := formbuilder.BindSuggest(c, country)   // bindet NUR die übergebe
 if err != nil {
     return wc.BadRequest(err.Error())
 }
-return c.JSON(http.StatusOK, ctrl.citiesFor(*country.Value, search))   // []map[string]any{"id","name"}
+var countryID int32
+if country.Value != nil {   // geleertes Feld kommt als "" → Value nil
+    countryID = *country.Value
+}
+return c.JSON(http.StatusOK, ctrl.citiesFor(countryID, search))   // []map[string]any{"id","name"}
 ```
 
 Regeln: `search` ist im Body reserviert und wird als Kontext-ID ignoriert. Nur **enabled** Kontextfelder
@@ -210,7 +215,7 @@ if err := formbuilder.BindAndValidate(ctx, fg); err != nil {
 | Field                           | Go-Typ in `filters` map       |
 | ------------------------------- | ----------------------------- |
 | TextField                       | `string`                      |
-| IntField                        | `int` (nicht `int32`; `Value` am Feld ist `*int32`) |
+| IntField                        | `int` (nicht `int32`; `Value` am Feld ist `*int32`); geleert: Key mit `nil` |
 | BoolField                       | `bool`                        |
 | TimeField                       | `int64`                       |
 | SelectField                     | Option-Value-Typ              |

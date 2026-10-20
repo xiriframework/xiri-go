@@ -13,8 +13,9 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   antwortete darauf mit 400 („value "" is not an int32“). Jetzt heißt `""` „kein Wert“: optional → `Value == nil`,
   `required` → Fehler `required`. Bewusst nicht der Default, denn der ist im Edit-Formular der gespeicherte Wert und
   bliebe sonst still erhalten. Gilt auch in Filtern (Key vorhanden, Wert `nil`) und in Rows-Unterfeldern. Achtung:
-  Code, der bei optionalen Feldern `*f.Value` ohne nil-Check liest, panict jetzt beim Leeren. Kein xiri-ng-Update
-  nötig.
+  Code, der bei optionalen Feldern `*f.Value` ohne nil-Check liest, panict jetzt beim Leeren. Das betrifft auch
+  `BindReload`- und `BindSuggest`-Handler: Dort blieb ein geleertes Feld bisher still auf dem Default, jetzt ist
+  `Value == nil` (die Suggest-Beispiele in der Skill-Doku sind entsprechend angepasst). Kein xiri-ng-Update nötig.
 
 ### Added
 

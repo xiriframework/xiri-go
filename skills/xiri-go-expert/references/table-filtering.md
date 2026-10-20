@@ -90,7 +90,7 @@ Ablauf intern:
 | Field-Konstruktor                                  | Go-Typ in parsed map           |
 | -------------------------------------------------- | ------------------------------ |
 | `NewTextField`                                     | `string`                       |
-| `NewIntField`                                      | `int`                          |
+| `NewIntField`                                      | `int`; geleertes Feld: `nil`   |
 | `NewBoolField`                                     | `bool`                         |
 | `NewTimeField`                                     | `int64` (Unix-Seconds)         |
 | `NewSelectField(...)` mit `int`-Options            | `int` (wie Option-Werte)       |
@@ -104,7 +104,7 @@ Ablauf intern:
 | `NewTimeRangeField`                                | `*field.TimeRangeValue` (`.Start`, `.End`; Raw-Keys `start`/`end`) |
 | `NewFileField`                                     | `any` (Raw-Wert unverändert)   |
 
-Fehlende Keys ⇒ fehlen auch in der Map (`LoadFilterData` parst ohne Field-Defaults; „nicht gesendet" heißt „kein Filter"). Formulare (`BindAndValidate`) bekommen weiterhin Defaults. Unbekannte Keys ⇒ bei gesetztem Filter ignoriert.
+Fehlende Keys ⇒ fehlen auch in der Map (`LoadFilterData` parst ohne Field-Defaults; „nicht gesendet" heißt „kein Filter"). Ein geleertes Zahlenfeld (`""`) steht dagegen als Key mit Wert `nil` drin; das `, ok`-Muster unten fängt das ab. Formulare (`BindAndValidate`) bekommen weiterhin Defaults. Unbekannte Keys ⇒ bei gesetztem Filter ignoriert.
 
 ## Safe Type-Assertions (Pattern)
 

@@ -161,7 +161,8 @@ if f.Value != nil { /* optionales Feld: nil = leer */ }
 ```
 
 **Leeren:** Ein geleertes Zahlenfeld kommt von xiri-ng als `""` an und heißt „kein Wert“, nicht „Default
-behalten“. Bei einem optionalen Feld ist danach `Value == nil`, bei `required` gibt es den Fehler `required`. In
+behalten“. Bei einem optionalen Feld ist danach `Value == nil`, bei `required` gibt es den Fehler `required`. Das gilt
+auch in `BindReload`- und `BindSuggest`-Handlern: Kontextfelder dort vor `*f.Value` auf `nil` prüfen. In
 Filtern (`LoadFilterData`, `ParseAndValidateSparse`) ist der Key dann vorhanden, aber `nil`. `null` ergibt dagegen
 weiterhin den Default, ebenso ein fehlender Key – außer im Filterpfad, dort fehlt der Key dann im Ergebnis.
 

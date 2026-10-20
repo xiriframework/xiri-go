@@ -181,7 +181,11 @@ func (ctrl *Controller) CitySuggest(c echo.Context) error {
     if err != nil {
         return wc.BadRequest(err.Error())
     }
-    return c.JSON(http.StatusOK, ctrl.citiesFor(*dept.Value, search))  // []map{"id","name"}
+    var deptID int32
+    if dept.Value != nil {   // geleertes Feld kommt als "" → Value nil
+        deptID = *dept.Value
+    }
+    return c.JSON(http.StatusOK, ctrl.citiesFor(deptID, search))  // []map{"id","name"}
 }
 ```
 
