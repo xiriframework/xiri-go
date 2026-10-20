@@ -66,6 +66,11 @@ func (f *IntField) Parse(raw interface{}) (interface{}, error) {
 	if raw == nil {
 		return f.GetDefault(), nil
 	}
+	// An emptied number input arrives as "" and means "no value". Not the default:
+	// in an edit form that is the stored value, which would silently survive.
+	if s, ok := raw.(string); ok && s == "" {
+		return nil, nil
+	}
 
 	// Value is stored as *int32, so every input must fit losslessly.
 	// Returns int (not int32) for request values; the group paths hand this on to the app.
@@ -200,6 +205,18 @@ func (f *IntField) ExportForFrontend(ctx *core.UiContext, value interface{}) map
 // ============================================================================
 // Chainable Setter Methods
 // ============================================================================
+
+// SetDefault sets the current value from a nullable source (e.g. a NULL column):
+// nil leaves the field empty, otherwise the value is used. The pointer itself is never
+// stored — Parse/Validate only accept plain integers.
+func (f *IntField) SetDefault(v *int32) *IntField {
+	if v == nil {
+		f.Default = nil
+	} else {
+		f.Default = *v
+	}
+	return f
+}
 
 // SetClass sets the CSS class for frontend styling
 func (f *IntField) SetClass(class string) *IntField {

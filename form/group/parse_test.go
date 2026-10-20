@@ -232,3 +232,17 @@ func TestParseAndValidateSparse_StringMultiSelect(t *testing.T) {
 		t.Errorf("want []string{deny}, got %#v", got["action"])
 	}
 }
+
+// Filterpfad: ein geleerter optionaler Int-Filter ist "kein Wert", kein 400.
+func TestParseAndValidateSparse_EmptyIntIsNil(t *testing.T) {
+	n := field.NewIntField("n", "N", false, 7)
+	fg := NewFormGroup([]field.FormField{n})
+
+	got, err := fg.ParseAndValidateSparse(map[string]interface{}{"n": ""})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if v, ok := got["n"]; !ok || v != nil {
+		t.Errorf("n = %#v (present=%v), want present nil", v, ok)
+	}
+}

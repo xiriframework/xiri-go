@@ -481,3 +481,46 @@ func TestBindFromMap_DisabledRowsFieldKeepsDefaultRows(t *testing.T) {
 		t.Fatalf("disabled rows field must keep its rows, got %v", items.Value)
 	}
 }
+
+// Geleertes Feld im Edit-Formular: "" darf nicht still den gespeicherten Wert (Default) behalten.
+func TestBindFromMap_EmptyIntClearsValue(t *testing.T) {
+	n := field.NewIntField("n", "N", false, 7)
+	fg := group.NewFormGroup([]field.FormField{n})
+
+	if err := BindFromMap(map[string]interface{}{"n": ""}, fg); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if n.Value != nil {
+		t.Errorf("expected nil, got %d", *n.Value)
+	}
+}
+
+// SetDefault(*int32): ein gespeichertes NULL wird als leeres Feld angezeigt und bleibt beim Bind leer.
+func TestIntFieldSetDefault(t *testing.T) {
+	exported := func(fg *group.FormGroup) interface{} { return fg.ExportForFrontend()[0]["value"] }
+
+	n := field.NewIntField("n", "N", false, 0).SetDefault(nil)
+	fg := group.NewFormGroup([]field.FormField{n})
+	if v := exported(fg); v != nil {
+		t.Errorf("SetDefault(nil): exported value = %#v, want nil", v)
+	}
+	if err := BindFromMap(map[string]interface{}{}, fg); err != nil || n.Value != nil {
+		t.Errorf("SetDefault(nil): err=%v value=%v, want nil/nil", err, n.Value)
+	}
+
+	req := field.NewIntField("r", "R", true, 0).SetDefault(nil)
+	var fe group.FieldErrors
+	if err := BindFromMap(map[string]interface{}{}, group.NewFormGroup([]field.FormField{req})); !errors.As(err, &fe) || fe["r"] == "" {
+		t.Errorf("SetDefault(nil) required: expected field error, got %v", err)
+	}
+
+	five := int32(5)
+	m := field.NewIntField("m", "M", false, 0).SetDefault(&five)
+	fg = group.NewFormGroup([]field.FormField{m})
+	if v := exported(fg); v != int32(5) {
+		t.Errorf("SetDefault(&5): exported value = %#v, want int32(5)", v)
+	}
+	if err := BindFromMap(map[string]interface{}{}, fg); err != nil || m.Value == nil || *m.Value != 5 {
+		t.Errorf("SetDefault(&5): err=%v value=%v, want 5", err, m.Value)
+	}
+}

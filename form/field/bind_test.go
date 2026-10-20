@@ -1,6 +1,7 @@
 package field
 
 import (
+	"errors"
 	"math"
 	"strconv"
 	"testing"
@@ -491,5 +492,23 @@ func TestTimeFieldBindValueNilUsesDefault(t *testing.T) {
 		if f.Value == nil || *f.Value != 1700000000 {
 			t.Errorf("%s: Value = %v, want 1700000000", name, f.Value)
 		}
+	}
+}
+
+// Ein geleertes Zahlenfeld kommt von xiri-ng als "" an. Es heißt "kein Wert", nicht "Default behalten":
+// im Edit-Formular ist der Default der gespeicherte Wert.
+func TestIntFieldBindValue_EmptyStringIsEmpty(t *testing.T) {
+	f := NewIntField("count", "COUNT", false, 7)
+	if err := f.BindValue(""); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if f.Value != nil {
+		t.Errorf("expected nil, got %d", *f.Value)
+	}
+
+	req := NewIntField("count", "COUNT", true, 7)
+	var ve *ValidationError
+	if err := req.BindValue(""); !errors.As(err, &ve) || ve.Code != "required" {
+		t.Errorf("expected required error, got %v", err)
 	}
 }

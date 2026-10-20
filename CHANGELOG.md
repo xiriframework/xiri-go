@@ -7,6 +7,20 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Optionales `IntField` lässt sich leeren.** xiri-ng sendet ein geleertes Zahlenfeld als `""`, `IntField.Parse`
+  antwortete darauf mit 400 („value "" is not an int32“). Jetzt heißt `""` „kein Wert“: optional → `Value == nil`,
+  `required` → Fehler `required`. Bewusst nicht der Default, denn der ist im Edit-Formular der gespeicherte Wert und
+  bliebe sonst still erhalten. Gilt auch in Filtern (Key vorhanden, Wert `nil`) und in Rows-Unterfeldern. Achtung:
+  Code, der bei optionalen Feldern `*f.Value` ohne nil-Check liest, panict jetzt beim Leeren. Kein xiri-ng-Update
+  nötig.
+
+### Added
+
+- **`IntField.SetDefault(*int32)`:** Wert aus einer nullable Spalte setzen. Bei `nil` wird das Feld leer angezeigt
+  und bleibt beim Speichern leer. Ein Pointer direkt in `Default` scheitert weiterhin beim Validieren.
+
 ## [0.9.2]
 
 ### Fixed
