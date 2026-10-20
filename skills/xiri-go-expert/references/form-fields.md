@@ -149,7 +149,8 @@ f.Subtype = "pint"    // einzig wirksamer Subtype: Werte >= 0, in Export (min) u
 f.TextPrefix = "€"
 f.TextSuffix = "Stück"
 
-// Nullable Spalte (*int32 / sql.NullInt32): nil → Feld wird leer angezeigt
+// Nullable Spalte als *int32: nil → Feld wird leer angezeigt
+// (sql.NullInt32 vorher umwandeln: if n.Valid { p = &n.Int32 })
 f := field.NewIntField("termination", "contract.termination", false, 0).SetDefault(row.Termination)
 // Nie den Pointer selbst als Default zuweisen (f.Default = row.X) — Parse/Validate
 // kennen keine Pointer, das Speichern scheitert dann mit „invalid int value type“.
@@ -161,8 +162,8 @@ if f.Value != nil { /* optionales Feld: nil = leer */ }
 
 **Leeren:** Ein geleertes Zahlenfeld kommt von xiri-ng als `""` an und heißt „kein Wert“, nicht „Default
 behalten“. Bei einem optionalen Feld ist danach `Value == nil`, bei `required` gibt es den Fehler `required`. In
-Filtern (`LoadFilterData`, `ParseAndValidateSparse`) ist der Key dann vorhanden, aber `nil`. `null` und ein fehlender
-Key ergeben dagegen weiterhin den Default.
+Filtern (`LoadFilterData`, `ParseAndValidateSparse`) ist der Key dann vorhanden, aber `nil`. `null` ergibt dagegen
+weiterhin den Default, ebenso ein fehlender Key – außer im Filterpfad, dort fehlt der Key dann im Ergebnis.
 
 Parsing ist verlustfrei: `1.9`, `"1.9"` und `"3000000000"` werden abgelehnt, nicht trunkiert oder
 gewrappt. Gleiches gilt für Model-IDs (`ModelField`, `ModelListField`) und `SelectField`-Optionen.
