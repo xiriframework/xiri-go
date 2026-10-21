@@ -205,7 +205,9 @@ bauen, damit Zellobjekte `{d, v}` stimmen (siehe `tables.md` → Inline-Edit).
 
 ## Error Response
 
-Für HTTP-Fehler (400, 404, 500, etc.).
+Für HTTP-Fehler (400, 404, 409, 500, etc.). xiri-ng (≥ 0.10.3) zeigt `error` bei jedem Status an, auch
+bei Download-Buttons (Blob-Antwort) und `action: 'api'`-Buttons (Snackbar). Davor fehlte die Meldung etwa bei 409/503
+in Dialogen und bei freistehenden Buttons ganz.
 
 ```go
 resp := response.NewErrorResponse("Ungültige Eingabe")
