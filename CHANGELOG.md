@@ -7,6 +7,16 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Icon-Spalten exportieren den Hint statt des Rohwerts.** CSV, Excel und PDF einer `IconFieldFromSet`-Spalte
+  zeigen jetzt den Text, den der Nutzer im Web als Tooltip sieht: den Row-Hint aus `WithRowHint`, sonst den
+  übersetzten Icon-Hint, sonst wie bisher den Wert (also „Storniert“ statt „cancelled“). Das Web-JSON bleibt
+  unverändert. Eigene PDF-Renderer (`GetFieldMetas` + `GetData(ctx, OutputPDF)`) bekommen damit ebenfalls den
+  Hint; wer dort den Wert braucht, setzt `WithPDFFormatter`. Den Rohwert für alle Ausgaben stellt
+  `.WithFormatter(table.FormatterFunc(func(v any, _ table.Row, _ table.OutputType, _ *core.UiContext) any { return fmt.Sprint(v) }))`
+  wieder her. Kein xiri-ng-Update nötig.
+
 ## [0.9.3]
 
 ### Fixed

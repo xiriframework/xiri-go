@@ -407,6 +407,8 @@ func (fb *FieldBuilder) AddMenuItem(action FieldButtonAction, icon string, color
 // WithRowHint sets a per-row hint accessor for icon fields.
 // When set, the hint text is extracted from each row and sent as row[fieldId + "Hint"].
 // In the Angular frontend, this overrides the static per-icon hint.
+// CSV, Excel and PDF exports of an [TableBuilder.IconFieldFromSet] column write a non-empty
+// row hint instead of the icon value.
 func WithRowHint[T any](fb *FieldBuilder, accessor func(T) string) *FieldBuilder {
 	fb.typedField.(*field[T]).hintAccessor = accessor
 	return fb

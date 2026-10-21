@@ -2,6 +2,7 @@ package table_test
 
 import (
 	"bytes"
+	"fmt"
 	"log/slog"
 	"testing"
 
@@ -304,5 +305,125 @@ func TestIconFieldFromSet_BuilderChaining(t *testing.T) {
 	}
 	if field["hint"] != "Status" {
 		t.Errorf("expected hint 'Status', got %v", field["hint"])
+	}
+}
+
+// ============================================================================
+// Export: hint instead of raw value
+// ============================================================================
+
+type iconExportRow struct {
+	Status string // "c" cancelled, "o" open (no hint), "" nil ref
+	Hint   string // per-row hint
+}
+
+var exportOutputs = []table.OutputType{table.OutputCSV, table.OutputExcel, table.OutputPDF}
+
+// buildIconExportTable builds a table with one icon column; withRowHint adds WithRowHint on Hint.
+func buildIconExportTable(withRowHint bool, rows []iconExportRow) (*table.Table[iconExportRow], *table.FieldBuilder) {
+	icons := table.NewIconSet()
+	cancelled := icons.Add("cancelled", "cancel", core.ColorWarning, "status.cancelled")
+	open := icons.Add("open", "circle", core.ColorAccent, "")
+
+	b := table.NewBuilder[iconExportRow]()
+	fb := b.IconFieldFromSet("status", "Status", func(r iconExportRow) *table.IconRef {
+		switch r.Status {
+		case "c":
+			return cancelled
+		case "o":
+			return open
+		}
+		return nil
+	}, icons)
+	if withRowHint {
+		table.WithRowHint(fb, func(r iconExportRow) string { return r.Hint })
+	}
+	tbl := b.Build()
+	tbl.SetData(rows)
+	return tbl, fb
+}
+
+func iconExportCtx() *core.UiContext {
+	return &core.UiContext{Translate: func(k string) string {
+		if k == "status.cancelled" {
+			return "Storniert"
+		}
+		return k
+	}}
+}
+
+func statusColumn(tbl *table.Table[iconExportRow], output table.OutputType) []any {
+	var out []any
+	for _, r := range tbl.GetData(iconExportCtx(), output) {
+		out = append(out, r["status"])
+	}
+	return out
+}
+
+func TestIconFieldFromSet_ExportUsesHint(t *testing.T) {
+	tbl, _ := buildIconExportTable(false, []iconExportRow{{Status: "c"}, {Status: "o"}, {Status: ""}})
+
+	for _, output := range exportOutputs {
+		got := statusColumn(tbl, output)
+		want := []any{"Storniert", "open", ""} // translated hint, empty hint → raw value, nil ref → ""
+		for i := range want {
+			if got[i] != want[i] {
+				t.Errorf("%s row %d = %v, want %v", output, i, got[i], want[i])
+			}
+		}
+	}
+}
+
+func TestIconFieldFromSet_WebKeepsRawValue(t *testing.T) {
+	tbl, _ := buildIconExportTable(true, []iconExportRow{{Status: "c", Hint: "seit 3 Tagen"}})
+
+	row := tbl.GetData(iconExportCtx(), table.OutputWeb)[0]
+	if row["status"] != "cancelled" {
+		t.Errorf("web status = %v, want cancelled", row["status"])
+	}
+	if row["statusHint"] != "seit 3 Tagen" {
+		t.Errorf("web statusHint = %v, want row hint", row["statusHint"])
+	}
+}
+
+func TestIconFieldFromSet_ExportRowHintWins(t *testing.T) {
+	tbl, _ := buildIconExportTable(true, []iconExportRow{
+		{Status: "c", Hint: "seit 3 Tagen"},
+		{Status: "c"},                   // empty row hint → icon hint
+		{Status: "", Hint: "ignoriert"}, // nil ref: no icon in the web, no hint in the export
+	})
+
+	for _, output := range exportOutputs {
+		got := statusColumn(tbl, output)
+		want := []any{"seit 3 Tagen", "Storniert", ""}
+		for i := range want {
+			if got[i] != want[i] {
+				t.Errorf("%s row %d = %v, want %v", output, i, got[i], want[i])
+			}
+		}
+	}
+}
+
+func TestIconFieldFromSet_ExportFormatterOverride(t *testing.T) {
+	raw := table.FormatterFunc(func(v any, _ table.Row, _ table.OutputType, _ *core.UiContext) any { return fmt.Sprint(v) })
+	rows := []iconExportRow{{Status: "c", Hint: "seit 3 Tagen"}}
+
+	// Per-output override: only CSV gets the raw value.
+	tbl, fb := buildIconExportTable(false, rows)
+	fb.WithCSVFormatter(raw)
+	if got := statusColumn(tbl, table.OutputCSV)[0]; got != "cancelled" {
+		t.Errorf("CSV with WithCSVFormatter = %v, want cancelled", got)
+	}
+	if got := statusColumn(tbl, table.OutputExcel)[0]; got != "Storniert" {
+		t.Errorf("Excel with WithCSVFormatter = %v, want Storniert", got)
+	}
+
+	// Default override: raw value everywhere, also against WithRowHint.
+	tbl, fb = buildIconExportTable(true, rows)
+	fb.WithFormatter(raw)
+	for _, output := range append(exportOutputs, table.OutputWeb) {
+		if got := statusColumn(tbl, output)[0]; got != "cancelled" {
+			t.Errorf("%s with WithFormatter = %v, want cancelled", output, got)
+		}
 	}
 }

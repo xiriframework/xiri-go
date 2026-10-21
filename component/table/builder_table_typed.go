@@ -1,6 +1,11 @@
 package table
 
-import "time"
+import (
+	"fmt"
+	"time"
+
+	"github.com/xiriframework/xiri-go/component/core"
+)
 
 // ============================================================================
 // Type-Safe Field Methods
@@ -520,6 +525,15 @@ func (b *TableBuilder[T]) ButtonsField(id, name string, accessor func(T) map[str
 // When the accessor returns nil (e.g., from [IconSet.Resolve] for unknown values),
 // an empty string is written to the row data.
 //
+// Web output carries the icon value; the frontend shows the icon and its hint as tooltip.
+// CSV, Excel and PDF exports write the text of that tooltip instead: the per-row hint from
+// [WithRowHint] if non-empty, else the translated icon hint, else the raw value. To export the
+// raw value, set a formatter, e.g. for all outputs:
+//
+//	fb.WithFormatter(table.FormatterFunc(func(v any, _ table.Row, _ table.OutputType, _ *core.UiContext) any {
+//	    return fmt.Sprint(v)
+//	}))
+//
 // Example:
 //
 //	statusIcons := table.NewIconSet()
@@ -553,6 +567,25 @@ func (b *TableBuilder[T]) IconFieldFromSet(id, name string, accessor func(T) *Ic
 			fb.base.icons[value].options[k] = v
 		}
 	}
+
+	// Exports show the tooltip text instead of the icon value (see doc comment).
+	f := fb.typedField.(*field[T])
+	fb.base.defaultFormatter = FormatterFunc(func(value any, row Row, output OutputType, ctx *core.UiContext) any {
+		key, _ := value.(string)
+		def, known := fb.base.icons[key]
+		if output == OutputWeb || !known {
+			return fmt.Sprint(value) // web needs the key; unknown values (e.g. footer counts) stay raw
+		}
+		if tr, ok := row.(*typedRow[T]); ok && f.hintAccessor != nil {
+			if h := f.hintAccessor(tr.data); h != "" {
+				return h
+			}
+		}
+		if def.hint != "" {
+			return core.Translate(ctx, def.hint)
+		}
+		return key
+	})
 
 	return fb
 }

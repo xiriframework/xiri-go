@@ -120,6 +120,17 @@ b.IconFieldFromSet("status", "Status", func(r Device) *table.IconRef {
 
 Der Icon-Set wird einmal gebaut, die Zeilen referenzieren die Icons per Pointer → kompaktere JSON, weniger Duplizierung.
 
+**Export:** CSV, Excel und PDF schreiben statt des Werts den Tooltip-Text: Row-Hint (`WithRowHint`), sonst den
+übersetzten Icon-Hint, sonst den Wert. Rohwert erzwingen, für alle Ausgaben (Web bleibt gleich):
+
+```go
+fb.WithFormatter(table.FormatterFunc(func(v any, _ table.Row, _ table.OutputType, _ *core.UiContext) any {
+    return fmt.Sprint(v)
+}))
+```
+
+Nur für eine Ausgabe: `WithCSVFormatter` / `WithExcelFormatter` / `WithPDFFormatter` mit demselben Formatter.
+
 #### `ButtonsField` — Row-Action-Buttons (siehe Abschnitt „Row Buttons")
 
 ## FieldBuilder-Modifier (für jede Spalte verfügbar)
@@ -303,8 +314,8 @@ Für Table-Top-/Bulk-Buttons heißt das Pendant `TableButton.WithTarget("_blank"
 ### Mit Row-Hint (Tooltip pro Zeile) — nur Icon-Felder
 
 Go emittiert `<fieldId>Hint` in den Row-Daten; xiri-ng zeigt ihn ab 0.4.14 als Tooltip der Icon-Zelle
-(Vorrang vor dem statischen IconSet-Hint). Für Buttons-Felder gibt es keinen Row-Hint, dort gilt der
-Button-Hint aus `AddButton`.
+(Vorrang vor dem statischen IconSet-Hint). Auch CSV, Excel und PDF schreiben einen nicht-leeren Row-Hint statt
+des Icon-Werts. Für Buttons-Felder gibt es keinen Row-Hint, dort gilt der Button-Hint aus `AddButton`.
 
 ```go
 fb := b.IconFieldFromSet("status", "Status", func(r Device) *table.IconRef {
