@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.4]
+
 ### Changed
 
 - **Icon-Spalten exportieren den Hint statt des Rohwerts.** CSV, Excel und PDF einer `IconFieldFromSet`-Spalte
