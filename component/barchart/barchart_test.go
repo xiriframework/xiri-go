@@ -300,3 +300,13 @@ func TestBarChart_XLabelRotate(t *testing.T) {
 		t.Errorf("xLabelRotate key should be absent by default")
 	}
 }
+
+func TestBarChart_Horizontal(t *testing.T) {
+	data := New("rank").Horizontal().Bar("Wien", 3).Print(ctxDe())["data"].(map[string]any)
+	if data["horizontal"] != true {
+		t.Errorf("horizontal=%v", data["horizontal"])
+	}
+	if _, has := New("x").Bar("A", 1).Print(ctxDe())["data"].(map[string]any)["horizontal"]; has {
+		t.Errorf("default chart should not have horizontal")
+	}
+}

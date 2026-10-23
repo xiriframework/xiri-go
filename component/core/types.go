@@ -9,8 +9,8 @@ var componentTypes = []string{
 	"barchart", "bulletchart", "buttonline", "calendar", "callout", "card", "chat", "container",
 	"description-list", "divider", "empty-state", "expansion", "form", "gantt", "gaugechart",
 	"header", "heatmap", "html", "imagetext", "infopoint", "infotext", "linechart", "links", "list",
-	"multi-stat", "multiprogress", "page-header", "piechart", "progress", "query", "sankey", "section",
-	"spacer", "stat", "stat-grid", "status", "stepper", "table", "tabs", "tachotime",
+	"markdown", "multi-stat", "multiprogress", "page-header", "piechart", "progress", "query", "radarchart",
+	"sankey", "scatterchart", "section", "spacer", "stat", "stat-grid", "status", "stepper", "table", "tabs", "tachotime",
 	"timeline", "toolbar", "tree",
 }
 

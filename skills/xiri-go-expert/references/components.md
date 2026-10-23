@@ -663,6 +663,15 @@ bc := barchart.New("weekly").
 
 Dieselbe Methode gibt es auf `linechart.LineChart` (auch via `LineBuilder`) und `heatmap.Heatmap` (dreht dort die X-/Spalten-Labels).
 
+### Liegende Balken
+
+`Horizontal()` legt die Balken quer: Kategorien auf der y-Achse, erster Balken oben, Wert-Labels rechts. Die Höhe wächst mit der Zahl der Balken. Gut für lange Beschriftungen und Ranglisten. Gilt für `ModeSimple` und `ModeStacked`.
+
+```go
+bc := barchart.New("ranking").Horizontal().ShowValues().
+    Bar("Wien", 42).Bar("Graz", 31).Bar("Linz", 18)
+```
+
 ### Optionen / AJAX
 
 ```go
@@ -738,6 +747,42 @@ rose := piechart.New("severity").
     Slice("Medium",   41, core.ColorYellow).
     Slice("Low",      73, core.ColorGreen)
 ```
+
+## RadarChart (`component/radarchart`)
+
+Netzdiagramm: mehrere Serien über dieselben Kriterien vergleichen. Ein Wert je Indikator, in Indikator-Reihenfolge.
+
+```go
+import "github.com/xiriframework/xiri-go/component/radarchart"
+
+rc := radarchart.New("products").
+    Title("Produktvergleich").
+    Indicator("Tempo", 10).          // max 0 = Achse skaliert selbst
+    Indicator("Preis", 10).
+    Indicator("Qualität", 10).
+    Series("Modell A", core.ColorBlue, 8, 4, 7).
+    Series("Modell B", "", 5, 8, 6). // ohne Farbe: Standard-Rotation
+    Area()                           // Flächen füllen
+```
+
+Weiter: `Compact()`, `WithDisplay(d)`. Kein AJAX-Modus.
+
+## ScatterChart (`component/scatterchart`)
+
+Streudiagramm: Zusammenhang zweier Größen, Punkte in Serien gruppiert. Achsen skalieren auf den Datenbereich, nicht ab 0.
+
+```go
+import "github.com/xiriframework/xiri-go/component/scatterchart"
+
+sc := scatterchart.New("shops").
+    Title("Fläche und Umsatz").
+    Axes("Fläche (m²)", "Umsatz (Mio. €)").   // Übersetzungsschlüssel, "" = ohne Titel
+    Series("Filialen", core.ColorBlue,
+        scatterchart.P(120, 4.2, "Wien"),     // Name im Tooltip, "" = ohne
+        scatterchart.P(80, 2.5, "Graz"))
+```
+
+Weiter: `Compact()`, `WithDisplay(d)`. Kein AJAX-Modus.
 
 ## GaugeChart (`component/gaugechart`)
 
@@ -1235,6 +1280,17 @@ info.NewInfoText("Hinweis: <b>Beta</b>", nil).WithHtml()  // Text als HTML rende
 ```
 
 Mit `WithHtml()` sind Text und Subtext rohes HTML: Nutzerdaten mit `html.EscapeString` escapen. xiri-ng sanitisiert (ab der nächsten Version), `style`, `id` und `data-*` werden dabei entfernt.
+
+## Markdown (`component/markdown`)
+
+Formatierter Text als Markdown (Überschriften, Listen, Tabellen, Code). xiri-ng rendert mit `marked` und Angulars Sanitizer: Skripte, Event-Handler und `javascript:`-Links fallen weg. Damit passt es für Text von Nutzern oder einem LLM, ohne Escapen. Der Text wird nicht übersetzt. In der App muss `marked` installiert sein (optionale peerDependency von xiri-ng).
+
+```go
+import "github.com/xiriframework/xiri-go/component/markdown"
+
+md := markdown.New("## Ergebnis\n\n- **42** offene Tickets\n- SLA eingehalten").
+    WithDisplay("xcol-md-6")   // optional, Default volle Breite
+```
 
 ## TachoTime (`component/tachotime`)
 

@@ -106,6 +106,7 @@ type BarChart struct {
 	labelPos   LabelPosition
 
 	xLabelRotate *int
+	horizontal   bool
 }
 
 // New creates a new BarChart with the given id. Default mode is ModeSimple.
@@ -218,6 +219,13 @@ func (b *BarChart) LabelText(s string) *BarChart {
 	return b
 }
 
+// Horizontal lays the bars on their side: categories on the y axis, first bar on top.
+// Good for long labels and rankings. Applies to ModeSimple and ModeStacked.
+func (b *BarChart) Horizontal() *BarChart {
+	b.horizontal = true
+	return b
+}
+
 // YAxis sets the Y-axis range.
 func (b *BarChart) YAxis(min, max float64) *BarChart {
 	b.yMin = &min
@@ -323,6 +331,9 @@ func (b *BarChart) printData(ctx *core.UiContext) map[string]any {
 	}
 	if b.xLabelRotate != nil {
 		data["xLabelRotate"] = *b.xLabelRotate
+	}
+	if b.horizontal {
+		data["horizontal"] = true
 	}
 
 	switch b.mode {
