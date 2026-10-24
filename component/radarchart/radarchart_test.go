@@ -1,7 +1,9 @@
 package radarchart
 
 import (
+	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/xiriframework/xiri-go/component/core"
@@ -36,5 +38,13 @@ func TestRadarChart(t *testing.T) {
 	}
 	if !reflect.DeepEqual(data, want) {
 		t.Errorf("data=%#v", data)
+	}
+}
+
+// Angular erwartet values als Array, auch ohne Werte.
+func TestRadarChartEmptySeries(t *testing.T) {
+	b, _ := json.Marshal(New("x").Series("A", "").Print(ctx())["data"])
+	if !strings.Contains(string(b), `"values":[]`) {
+		t.Errorf("json=%s", b)
 	}
 }

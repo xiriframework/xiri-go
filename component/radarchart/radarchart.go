@@ -42,7 +42,7 @@ func (rc *RadarChart) Indicator(name string, max float64) *RadarChart {
 
 // Series adds a series with one value per indicator, in indicator order. color may be "".
 func (rc *RadarChart) Series(name string, color core.Color, values ...float64) *RadarChart {
-	rc.series = append(rc.series, series{name: name, color: color, values: values})
+	rc.series = append(rc.series, series{name: name, color: color, values: append([]float64{}, values...)})
 	return rc
 }
 
