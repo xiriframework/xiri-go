@@ -15,6 +15,17 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
   und `Stream.Send`. Bei SSE muss die App deshalb auch beim Ende der Arbeit ein Event senden. Das SSE-Beispiel in
   der Doku sendet jetzt direkt nach `NewStream` den aktuellen Stand. Braucht xiri-ng >= 0.10.5; ältere Clients
   ignorieren das Feld.
+- **Chat: Nachrichten als Markdown.** `chat.Message.Markdown()` setzt `"format": "markdown"`, der Client rendert den
+  Text dann wie die Markdown-Komponente. Gedacht für Antworten eines Agenten, Nutzertext bleibt Klartext. Braucht
+  xiri-ng >= 0.10.5 und `marked` in der App, sonst erscheint der Text als Klartext.
+- **Markdown-Komponente** (`component/markdown`): `markdown.New(text)` zeigt Überschriften, Listen, Tabellen und Code.
+  Roh-HTML im Text erscheint als Text (nur ein nacktes `<br>` bricht um), das Ergebnis läuft zusätzlich durch Angulars
+  Sanitizer. Passt damit für Text von Nutzern oder einem LLM. Der Text wird nicht übersetzt.
+- **Radar-Diagramm** (`component/radarchart`): `radarchart.New(id).Indicator(name, max).Series(name, color, values...)`,
+  `Area()` füllt die Flächen.
+- **Streudiagramm** (`component/scatterchart`): `scatterchart.New(id).Axes(x, y).Series(name, color, scatterchart.P(x, y, name)...)`.
+- **Liegende Balken:** `barchart.Horizontal()` für die Modi simple und stacked.
+- Die neuen Komponenten brauchen xiri-ng >= 0.10.5; Markdown zusätzlich `marked`, die Diagramme `echarts`.
 
 ## [0.9.4]
 

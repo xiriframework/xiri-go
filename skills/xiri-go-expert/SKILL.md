@@ -57,7 +57,7 @@ u.PrintPrefix()  // mit Prefix — das geben ALLE Komponenten aus (auch Link-But
 | **Response-Typen** (Refresh, Goto, DataResult, DataResponse) | `references/responses.md`                   |
 | **Locale-Formatter** (Datum, Zahlen, Distanz, Pressure)  | `references/formatter.md`                   |
 | **UiContext / Translator / Locale-Setup**                | `references/uicontext.md`                   |
-| Eine nicht-tabellen Komponente (Tabs, Timeline, BarChart …) | `references/components.md`                  |
+| Eine nicht-tabellen Komponente (Tabs, Timeline, BarChart, Markdown, Chat mit Aktivität/Markdown …) | `references/components.md`                  |
 | Accordion/Expansion-Panel mit Buttons im Header, Card oder Tabelle ohne Schatten (`WithFlat` / `SetFlat`) | `references/components.md` (Expansion, Card), `references/tables.md` |
 | **Nachladbares Panel** — Card oder Expansion-Panel mit eigener URL (`SetURL` + `DataResponse`), Aktion lädt nur dieses Panel neu (`NewReturnRefreshPanel`) | `references/patterns.md` §6b/§7c, `references/responses.md` (ReturnRefreshPanel) |
 | TachoTime (Fahrtenschreiber)                             | `references/tachotime.md`                   |
