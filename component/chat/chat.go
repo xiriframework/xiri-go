@@ -75,9 +75,11 @@ func SendResult(m *Message) map[string]any {
 // Page ist eine Antwort der Chat-Endpunkte (Startseite, ?cursor=, ?before=, SSE-Event).
 // cursor ist für den Client undurchsichtig; er schickt ihn beim nächsten Abruf zurück.
 type Page struct {
-	messages []*Message
-	cursor   string
-	hasOlder bool
+	messages      []*Message
+	cursor        string
+	hasOlder      bool
+	activity      string
+	activitySince time.Time
 }
 
 // NewPage erzeugt eine Seite mit dem Cursor, ab dem der nächste Abruf Änderungen liefern soll.
@@ -86,6 +88,14 @@ func NewPage(cursor string) *Page { return &Page{cursor: cursor} }
 // HasOlder meldet, dass es vor der ältesten Nachricht dieser Seite weitere gibt.
 func (p *Page) HasOlder(v bool) *Page { p.hasOlder = v; return p }
 
+// Activity zeigt über der Eingabe an, dass die Gegenseite arbeitet (z. B. "Agent arbeitet … (Bash)"); der Client
+// hängt die Dauer seit since an (Zero-Time = ohne Dauer). Leerer Text = keine Anzeige. Der Text wird nicht übersetzt.
+// Jede Seite (Startseite, Poll, SSE-Event) ersetzt den Stand: Fehlt die Aktivität, blendet der Client sie aus.
+func (p *Page) Activity(text string, since time.Time) *Page {
+	p.activity, p.activitySince = text, since
+	return p
+}
+
 // Add hängt eine Nachricht an und liefert sie zum Weiterkonfigurieren.
 func (p *Page) Add(id, text string, t time.Time) *Message {
 	m := NewMessage(id, text, t)
@@ -93,13 +103,21 @@ func (p *Page) Add(id, text string, t time.Time) *Message {
 	return m
 }
 
-// Print liefert {"messages": [...], "cursor": "...", "hasOlder": bool}.
+// Print liefert {"messages": [...], "cursor": "...", "hasOlder": bool, "activity"?: {"text": "...", "since"?: unix}}.
 func (p *Page) Print() map[string]any {
 	msgs := make([]map[string]any, len(p.messages))
 	for i, m := range p.messages {
 		msgs[i] = m.print()
 	}
-	return map[string]any{"messages": msgs, "cursor": p.cursor, "hasOlder": p.hasOlder}
+	out := map[string]any{"messages": msgs, "cursor": p.cursor, "hasOlder": p.hasOlder}
+	if p.activity != "" {
+		a := map[string]any{"text": p.activity}
+		if !p.activitySince.IsZero() {
+			a["since"] = p.activitySince.Unix()
+		}
+		out["activity"] = a
+	}
+	return out
 }
 
 // Chat ist die Komponente. Ohne WithStream und WithPoll aktualisiert sie sich nur nach dem eigenen Senden.

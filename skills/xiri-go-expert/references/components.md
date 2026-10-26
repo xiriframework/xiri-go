@@ -526,6 +526,9 @@ e.POST("/api/Ticket/:id/Chat", func(ec echo.Context) error {
 
 func toPage(msgs []Msg, cursor string, more bool) *chat.Page {
 	p := chat.NewPage(cursor).HasOlder(more)
+	if job := agent.Running(ticketID); job != nil {   // eigener Zustand der App
+		p.Activity("Agent arbeitet … ("+job.Tool+")", job.Started)
+	}
 	for _, m := range msgs {
 		msg := p.Add(m.ID, m.Text, m.Time)
 		if m.UserID == user.ID {
@@ -538,6 +541,19 @@ func toPage(msgs []Msg, cursor string, more bool) *chat.Page {
 }
 ```
 
+**Aktivität** („Agent arbeitet …“): `Page.Activity(text, since)` zeigt über der Eingabe eine Zeile mit animierten
+Punkten; bei `since` hängt der Client die mitlaufende Dauer an („· 0:42“, ab 1 h „1:02:05“). Text also ohne Dauer und
+fertig formuliert schicken, er wird nicht übersetzt. Zero-Time = ohne Dauer, leerer Text oder kein Aufruf = kein Feld.
+JSON: `"activity": {"text": "…", "since": 1793000000}`. Jede Startseite, Poll-Antwort und jedes SSE-Event **ersetzt**
+den Stand, fehlt das Feld, blendet der Client die Zeile aus; Seiten für `?before=` ignoriert er. Daraus folgt:
+
+- Poll: jede Antwort auf `?cursor=` bringt den aktuellen Stand mit, auch ohne neue Nachrichten.
+- SSE: jedes Event bringt `activity` mit, solange gearbeitet wird. Endet die Arbeit, muss ein Event kommen (auch ohne
+  neue Nachrichten), sonst bleibt die Zeile stehen. Direkt nach `NewStream` einmal den Stand senden, sonst sieht der
+  Client nach einem Reconnect bis zur nächsten Änderung eine veraltete Aktivität und Nachrichten aus der Lücke nicht.
+
+Braucht xiri-ng >= 0.10.5.
+
 SSE (Cookie-Auth, `EventSource` sendet keine Header):
 
 ```go
@@ -547,6 +563,14 @@ e.GET("/api/Ticket/:id/Chat/Stream", func(ec echo.Context) error {
 		return err
 	}
 	cur := chat.Cursor(ec.Request())
+	send := func() error {                          // Änderungen seit cur samt aktueller Aktivität
+		msgs, next, _ := store.Since(cur)
+		cur = next
+		return s.Send(toPage(msgs, cur, false))
+	}
+	if send() != nil {                              // sofort: Stand nach (Re-)Connect
+		return nil
+	}
 	tick := time.NewTicker(25 * time.Second)
 	defer tick.Stop()
 	for {
@@ -557,10 +581,8 @@ e.GET("/api/Ticket/:id/Chat/Stream", func(ec echo.Context) error {
 			if s.Ping() != nil {
 				return nil
 			}
-		case <-hub.Changed(ticketID):               // eigener Pub/Sub der App
-			msgs, next, _ := store.Since(cur)
-			cur = next
-			if s.Send(toPage(msgs, cur, false)) != nil {
+		case <-hub.Changed(ticketID):               // eigener Pub/Sub der App, auch bei Start/Ende der Aktivität
+			if send() != nil {
 				return nil
 			}
 		}

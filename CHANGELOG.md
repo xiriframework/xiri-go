@@ -7,6 +7,15 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Added
+
+- **Chat: Aktivitätsanzeige.** `chat.Page.Activity(text, since)` gibt `activity: {text, since?}` aus, z. B. „Agent
+  arbeitet … (Bash)“. Der Client zeigt die Zeile über der Eingabe und zählt die Dauer ab `since` selbst hoch.
+  Jede Seite ersetzt den Stand, ohne Aufruf (oder mit leerem Text) wird ausgeblendet; das gilt auch für `WithPage`
+  und `Stream.Send`. Bei SSE muss die App deshalb auch beim Ende der Arbeit ein Event senden. Das SSE-Beispiel in
+  der Doku sendet jetzt direkt nach `NewStream` den aktuellen Stand. Braucht xiri-ng >= 0.10.5; ältere Clients
+  ignorieren das Feld.
+
 ## [0.9.4]
 
 ### Changed

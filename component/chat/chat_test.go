@@ -120,3 +120,28 @@ func TestSendResult(t *testing.T) {
 		t.Errorf("message = %v", m)
 	}
 }
+
+func TestPageActivity(t *testing.T) {
+	started := time.Unix(1793000000, 0)
+	got := NewPage("c").Activity("Agent arbeitet … (Bash)", started).Print()["activity"]
+	want := map[string]any{"text": "Agent arbeitet … (Bash)", "since": int64(1793000000)}
+	if a, ok := got.(map[string]any); !ok || len(a) != 2 || a["text"] != want["text"] || a["since"] != want["since"] {
+		t.Errorf("activity = %v, want %v", got, want)
+	}
+
+	got = NewPage("c").Activity("Agent arbeitet …", time.Time{}).Print()["activity"]
+	if a, ok := got.(map[string]any); !ok || len(a) != 1 || a["text"] != "Agent arbeitet …" {
+		t.Errorf("zero since: activity = %v, want only text", got)
+	}
+
+	for name, p := range map[string]*Page{"ohne Aufruf": NewPage("c"), "leerer Text": NewPage("c").Activity("", started)} {
+		if a, ok := p.Print()["activity"]; ok {
+			t.Errorf("%s: activity = %v, want absent", name, a)
+		}
+	}
+
+	d := data(t, New("C").WithPage(NewPage("c").Activity("läuft", started)).Print(nil))
+	if a, ok := d["activity"].(map[string]any); !ok || a["text"] != "läuft" {
+		t.Errorf("WithPage: activity = %v", d["activity"])
+	}
+}
