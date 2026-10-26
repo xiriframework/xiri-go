@@ -22,7 +22,7 @@ const (
 type Message struct {
 	id, text, from, avatar, clientID string
 	time                             time.Time
-	own                              bool
+	own, markdown                    bool
 	status                           Status
 }
 
@@ -46,8 +46,15 @@ func (m *Message) Status(s Status) *Message { m.status = s; return m }
 // ClientID gibt die clientId des Sende-Requests zurück, damit der Client seine optimistische Nachricht ersetzt.
 func (m *Message) ClientID(id string) *Message { m.clientID = id; return m }
 
+// Markdown lässt den Client den Text als Markdown rendern (z. B. Agent-Antworten). Roh-HTML erscheint als Text,
+// nur ein nacktes <br> bricht um. In der App muss `marked` installiert sein, sonst zeigt xiri-ng Klartext.
+func (m *Message) Markdown() *Message { m.markdown = true; return m }
+
 func (m *Message) print() map[string]any {
 	out := map[string]any{"id": m.id, "text": m.text, "time": m.time.Unix()}
+	if m.markdown {
+		out["format"] = "markdown"
+	}
 	if m.own {
 		out["own"] = true
 		if m.status != "" {

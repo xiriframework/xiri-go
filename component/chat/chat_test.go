@@ -145,3 +145,16 @@ func TestPageActivity(t *testing.T) {
 		t.Errorf("WithPage: activity = %v", d["activity"])
 	}
 }
+
+func TestMessageMarkdown(t *testing.T) {
+	p := NewPage("c")
+	p.Add("m1", "| A |\n|---|", time.Unix(100, 0)).From("Agent").Markdown()
+	p.Add("m2", "plain", time.Unix(200, 0))
+	msgs := p.Print()["messages"].([]map[string]any)
+	if msgs[0]["format"] != "markdown" {
+		t.Errorf("format = %v, want markdown", msgs[0]["format"])
+	}
+	if _, ok := msgs[1]["format"]; ok {
+		t.Error("format must be absent without Markdown()")
+	}
+}

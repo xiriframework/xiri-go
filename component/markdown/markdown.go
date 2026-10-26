@@ -1,5 +1,6 @@
 // Package markdown provides a Markdown text block for the Angular frontend. xiri-ng renders it with
-// `marked` and Angular's sanitizer, so the text may come from users or an LLM. For trusted raw HTML use
+// `marked`; raw HTML in the text is shown as text (only a bare <br> stays a line break) and the result goes
+// through Angular's sanitizer, so the text may come from users or an LLM. For trusted raw HTML use
 // info.NewInfoText(...).WithHtml().
 package markdown
 

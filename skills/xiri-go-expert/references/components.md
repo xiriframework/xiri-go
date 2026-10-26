@@ -535,11 +535,19 @@ func toPage(msgs []Msg, cursor string, more bool) *chat.Page {
 			msg.Own().Status(m.Status).ClientID(m.ClientID)
 		} else {
 			msg.From(m.UserName).Avatar(m.AvatarURL)
+			if m.IsAgent {
+				msg.Markdown() // Agent-Antwort als Markdown, Nutzertext bleibt Klartext
+			}
 		}
 	}
 	return p
 }
 ```
+
+**Markdown pro Nachricht:** `Message.Markdown()` setzt `"format": "markdown"`, der Client rendert den Text dann wie
+die Markdown-Komponente (Tabellen, Listen, Code; Roh-HTML erscheint als Text, nur ein nacktes `<br>` bricht um).
+Gedacht für Antworten eines Agenten; eigene Nachrichten der Nutzer ohne `Markdown()` lassen. Die App braucht
+`marked` (optionale peerDependency von xiri-ng), sonst zeigt der Chat den Text als Klartext.
 
 **Aktivität** („Agent arbeitet …“): `Page.Activity(text, since)` zeigt über der Eingabe eine Zeile mit animierten
 Punkten; bei `since` hängt der Client die mitlaufende Dauer an („· 0:42“, ab 1 h „1:02:05“). Text also ohne Dauer und
@@ -1305,7 +1313,7 @@ Mit `WithHtml()` sind Text und Subtext rohes HTML: Nutzerdaten mit `html.EscapeS
 
 ## Markdown (`component/markdown`)
 
-Formatierter Text als Markdown (Überschriften, Listen, Tabellen, Code). xiri-ng rendert mit `marked` und Angulars Sanitizer: Skripte, Event-Handler und `javascript:`-Links fallen weg. Damit passt es für Text von Nutzern oder einem LLM, ohne Escapen. Der Text wird nicht übersetzt. In der App muss `marked` installiert sein (optionale peerDependency von xiri-ng).
+Formatierter Text als Markdown (Überschriften, Listen, Tabellen, Code). xiri-ng rendert mit `marked`: Roh-HTML im Text erscheint als Text, nur ein nacktes `<br>` (etwa in Tabellenzellen) bricht um. Zusätzlich läuft das Ergebnis durch Angulars Sanitizer, `javascript:`-Links fallen weg. Damit passt es für Text von Nutzern oder einem LLM, ohne Escapen. Für vertrauenswürdiges HTML: `info.NewInfoText(...).WithHtml()`. Der Text wird nicht übersetzt. In der App muss `marked` installiert sein (optionale peerDependency von xiri-ng).
 
 ```go
 import "github.com/xiriframework/xiri-go/component/markdown"
