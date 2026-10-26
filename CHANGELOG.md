@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.9.5]
+
 ### Added
 
 - **Chat: Aktivitätsanzeige.** `chat.Page.Activity(text, since)` gibt `activity: {text, since?}` aus, z. B. „Agent
