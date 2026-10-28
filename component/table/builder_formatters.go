@@ -149,12 +149,8 @@ func createText2IntFormatter() OutputFormatter {
 				formatter.FormatInteger(int64(arr[1]), ctx),
 			}
 		case OutputCSV, OutputExcel:
-			primary := fmt.Sprint(arr[0])
-			secondary := fmt.Sprint(arr[1])
-			if secondary == "" || secondary == "0" {
-				return primary
-			}
-			return primary + " - " + secondary
+			// Two number columns ("Name", "Name 2") via expandNFieldColumns.
+			return []ExportNumber{{Value: float64(arr[0])}, {Value: float64(arr[1])}}
 		}
 		return [2]string{fmt.Sprint(arr[0]), fmt.Sprint(arr[1])}
 	})
@@ -179,12 +175,8 @@ func createText2FloatFormatter(decimals int) OutputFormatter {
 				formatter.FormatNumberLocale(arr[1], decimals, ctx.SafeLocale()),
 			}
 		case OutputCSV, OutputExcel:
-			primary := fmt.Sprintf(format, arr[0])
-			secondary := fmt.Sprintf(format, arr[1])
-			if secondary == "" {
-				return primary
-			}
-			return primary + " - " + secondary
+			// Two number columns ("Name", "Name 2") via expandNFieldColumns.
+			return exportNumbers(arr[:], decimals, func(v float64) float64 { return v })
 		}
 		return [2]string{
 			fmt.Sprintf(format, arr[0]),
@@ -503,9 +495,10 @@ func createIntegerNFormatter() OutputFormatter {
 			}
 			return result
 		}
-		result := make([]string, len(arr))
+		// ponytail: float64 rounds beyond ±2^53, unlike the single Integer field; fine for multi-line counters.
+		result := make([]ExportNumber, len(arr))
 		for i, v := range arr {
-			result[i] = fmt.Sprint(v)
+			result[i] = ExportNumber{Value: float64(v)}
 		}
 		return result
 	})
@@ -522,7 +515,6 @@ func createFloatNFormatter(decimals int) OutputFormatter {
 		if !ok {
 			return []string{}
 		}
-		format := "%." + strconv.Itoa(decimals) + "f"
 		if output == OutputWeb || output == OutputPDF {
 			result := make([]string, len(arr))
 			for i, v := range arr {
@@ -530,11 +522,7 @@ func createFloatNFormatter(decimals int) OutputFormatter {
 			}
 			return result
 		}
-		result := make([]string, len(arr))
-		for i, v := range arr {
-			result[i] = fmt.Sprintf(format, v)
-		}
-		return result
+		return exportNumbers(arr, decimals, func(v float64) float64 { return v })
 	})
 }
 
@@ -631,12 +619,7 @@ func createDistanceNFormatter(decimals int) OutputFormatter {
 			}
 			return result
 		}
-		format := "%." + strconv.Itoa(decimals) + "f"
-		result := make([]string, len(arr))
-		for i, v := range arr {
-			result[i] = fmt.Sprintf(format, convertDistanceValue(v, distanceUnit))
-		}
-		return result
+		return exportNumbers(arr, decimals, func(v float64) float64 { return convertDistanceValue(v, distanceUnit) })
 	})
 }
 
@@ -669,12 +652,7 @@ func createSpeedNFormatter(decimals int) OutputFormatter {
 			}
 			return result
 		}
-		format := "%." + strconv.Itoa(decimals) + "f"
-		result := make([]string, len(arr))
-		for i, v := range arr {
-			result[i] = fmt.Sprintf(format, convertDistanceValue(v, distanceUnit))
-		}
-		return result
+		return exportNumbers(arr, decimals, func(v float64) float64 { return convertDistanceValue(v, distanceUnit) })
 	})
 }
 
@@ -877,6 +855,15 @@ func createSpeedFormatter(decimals int) OutputFormatter {
 // ============================================================================
 // Helper Functions
 // ============================================================================
+
+// exportNumbers converts the values of a multi-line field for CSV/Excel.
+func exportNumbers(arr []float64, decimals int, convert func(float64) float64) []ExportNumber {
+	result := make([]ExportNumber, len(arr))
+	for i, v := range arr {
+		result[i] = ExportNumber{Value: convert(v), Decimals: decimals}
+	}
+	return result
+}
 
 // exportNumber wraps a converted numeric value for CSV/Excel; nil stays an empty cell.
 func exportNumber(raw any, v float64, decimals int) any {

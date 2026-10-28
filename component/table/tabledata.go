@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -249,8 +250,28 @@ func (td *TableDataResponse) DataResponse(ctx *core.UiContext) response.DataResu
 	return response.DataResult{Type: response.ResponseJSON, Body: printed}
 }
 
-// expandNFieldColumns expands []string values from N-field formatters into separate columns.
-// For each field where any row contains a []string value, it determines the maximum slice length
+// nValues returns the per-line values of an N-field export value ([]string or []ExportNumber).
+func nValues(v any) ([]any, bool) {
+	switch s := v.(type) {
+	case []string:
+		out := make([]any, len(s))
+		for i, x := range s {
+			out[i] = x
+		}
+		return out, true
+	case []ExportNumber:
+		out := make([]any, len(s))
+		for i, x := range s {
+			out[i] = x
+		}
+		return out, true
+	}
+	return nil, false
+}
+
+// expandNFieldColumns expands []string/[]ExportNumber values from N-field formatters into separate columns.
+// Missing values become nil (empty cell).
+// For each field where any row contains such a value, it determines the maximum slice length
 // and creates that many individual columns. The first column keeps the original field ID/name,
 // subsequent columns get "_2", "_3" suffixes (e.g., "distance", "distance_2", "distance_3").
 // expandNFieldColumns is a pure function: it never mutates the input data or
@@ -261,14 +282,12 @@ func expandNFieldColumns(data []map[string]any, fields []map[string]any) ([]map[
 		return data, fields
 	}
 
-	// Pass 1: Find maximum N for each field that has []string values
+	// Pass 1: Find maximum N for each field that has N-field values
 	maxN := make(map[string]int)
 	for _, row := range data {
 		for key, val := range row {
-			if strs, ok := val.([]string); ok {
-				if len(strs) > maxN[key] {
-					maxN[key] = len(strs)
-				}
+			if vals, ok := nValues(val); ok && len(vals) >= maxN[key] {
+				maxN[key] = len(vals)
 			}
 		}
 	}
@@ -313,23 +332,18 @@ func expandNFieldColumns(data []map[string]any, fields []map[string]any) ([]map[
 			if !exists {
 				continue
 			}
-			strs, ok := val.([]string)
+			vals, ok := nValues(val)
 			if !ok {
 				continue
 			}
-			// Set first value
-			if len(strs) > 0 {
-				newRow[fieldID] = strs[0]
-			} else {
-				newRow[fieldID] = ""
-			}
-			// Set subsequent values
-			for i := 1; i < n; i++ {
-				expandedID := fmt.Sprintf("%s_%d", fieldID, i+1)
-				if i < len(strs) {
-					newRow[expandedID] = strs[i]
-				} else {
-					newRow[expandedID] = ""
+			for i := range max(n, 1) {
+				expandedID := fieldID
+				if i > 0 {
+					expandedID = fmt.Sprintf("%s_%d", fieldID, i+1)
+				}
+				newRow[expandedID] = nil
+				if i < len(vals) {
+					newRow[expandedID] = vals[i]
 				}
 			}
 		}
@@ -339,10 +353,18 @@ func expandNFieldColumns(data []map[string]any, fields []map[string]any) ([]map[
 	return expandedData, expandedFields
 }
 
-// sanitizeExportValue prevents formula injection in CSV/Excel exports.
+// plainNumber matches text that is just a number ("-12,50", "-1.234,56"): no formula, so no guard needed.
+// Keep in sync with protect() in xiri-ng table/export.ts.
+var plainNumber = regexp.MustCompile(`^[+-]?[0-9][0-9.,]*$`)
+
+// sanitizeExportValue prevents formula injection in CSV exports.
 // Prefixes values starting with dangerous characters (=, +, -, @, \t, \r, \n)
 // with a single quote to prevent formula execution in spreadsheet applications.
+// Plain numbers stay as they are.
 func sanitizeExportValue(s string) string {
+	if plainNumber.MatchString(s) {
+		return s
+	}
 	if len(s) > 0 && (s[0] == '=' || s[0] == '+' || s[0] == '-' || s[0] == '@' || s[0] == '\t' || s[0] == '\r' || s[0] == '\n') {
 		return "'" + s
 	}
@@ -545,7 +567,8 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 		}
 	}
 
-	// Write header row with field names, sanitized against formula injection
+	// Write header row with field names. No formula guard: an xlsx string cell is never a formula,
+	// a "'" prefix would only show up in the value.
 	for colIdx, fieldID := range fieldIDsOrdered {
 		cellName, err := excelize.CoordinatesToCellName(colIdx+1, 1)
 		if err != nil {
@@ -555,7 +578,7 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 		if name == "" {
 			name = fieldID
 		}
-		if err := f.SetCellValue(sheetName, cellName, sanitizeExportValue(name)); err != nil {
+		if err := f.SetCellValue(sheetName, cellName, name); err != nil {
 			return nil, fmt.Errorf("error writing header cell: %w", err)
 		}
 	}
@@ -611,12 +634,7 @@ func (td *TableDataResponse) generateExcel(ctx *core.UiContext) ([]byte, error) 
 				continue
 			}
 
-			// Sanitize string values to prevent formula injection
-			if strVal, ok := value.(string); ok {
-				value = sanitizeExportValue(strVal)
-			}
-
-			// Write cell value
+			// Write cell value (strings stay string cells, never formulas)
 			if err := f.SetCellValue(sheetName, cellName, value); err != nil {
 				return nil, fmt.Errorf("error writing data cell: %w", err)
 			}

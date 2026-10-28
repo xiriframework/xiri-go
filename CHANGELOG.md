@@ -7,6 +7,21 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Excel-Export ohne Apostroph.** Text, der mit `=`, `+`, `-` oder `@` beginnt, bekam auch im Excel-Export (Daten
+  und Kopfzeile) ein `'` vorangestellt, das dort sichtbar im Wert stand (`'-12,50`). Eine xlsx-Textzelle ist nie eine
+  Formel, der Schutz entfällt dort. Im CSV bleibt er, lässt aber reine Zahlen durch (`-12,50`, `-1.234,56`, `+1234`).
+
+### Changed
+
+- **Mehrfach- und Text2-Zahlenfelder exportieren Zahlen.** `IntNField`, `FloatNField`, `DistanceNField` und
+  `SpeedNField` liefern für CSV/Excel `[]table.ExportNumber` statt `[]string`: im CSV mit Dezimalzeichen des Locale,
+  im Excel als Zahlenzellen mit Zahlformat. `Text2IntField` und `Text2FloatField` werden nicht mehr zu `"a - b"`
+  verbunden, sondern wie die N-Felder auf zwei Spalten „Name“ und „Name 2“ aufgeteilt, immer beide, auch wenn der
+  zweite Wert 0 ist. Wer den Export nach Spaltenposition einliest oder `GetData(ctx, OutputCSV/OutputExcel)` für
+  diese Felder auswertet, muss nachziehen. Kein xiri-ng-Update nötig.
+
 ## [0.9.5]
 
 ### Added

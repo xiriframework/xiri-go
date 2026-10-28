@@ -890,10 +890,10 @@ func TestExample17_Text2IntField(t *testing.T) {
 	fmt.Printf("Today vs Total Trips: [%s, %s]\n", trips[0], trips[1])
 	// Output: ["5", "1.234"] (German locale uses dot for thousands)
 
-	// CSV output: combined with " - " separator
+	// CSV output: two numbers, exported as two columns ("device.trips", "device.trips 2")
 	csvData := tbl.GetData(ctx, table.OutputCSV)
-	fmt.Printf("CSV Trips: %s\n", csvData[0]["trips"])
-	// Output: "5 - 1234"
+	fmt.Printf("CSV Trips: %v\n", csvData[0]["trips"])
+	// Output: [{5 0} {1234 0}]
 }
 
 // TestExample18_Text2FloatField demonstrates two-line float field
@@ -2053,17 +2053,17 @@ func TestExample_IntNField(t *testing.T) {
 	}
 
 	csvData := tbl.GetData(ctx, table.OutputCSV)
-	csvStats := csvData[0]["stats"].([]string)
+	csvStats := csvData[0]["stats"].([]table.ExportNumber)
 	fmt.Printf("IntNField CSV: %v\n", csvStats)
-	// Output: ["5", "1234", "0"]
+	// Output: [{5 0} {1234 0} {0 0}] (numbers, one export column each)
 	if len(csvStats) != 3 {
 		t.Errorf("expected 3 values, got %d", len(csvStats))
 	}
-	if csvStats[0] != "5" {
-		t.Errorf("expected '5', got %q", csvStats[0])
+	if csvStats[0].Value != 5 {
+		t.Errorf("expected 5, got %v", csvStats[0].Value)
 	}
-	if csvStats[1] != "1234" {
-		t.Errorf("expected '1234', got %q", csvStats[1])
+	if csvStats[1].Value != 1234 {
+		t.Errorf("expected 1234, got %v", csvStats[1].Value)
 	}
 }
 
@@ -2093,13 +2093,13 @@ func TestExample_FloatNField(t *testing.T) {
 	}
 
 	csvData := tbl.GetData(ctx, table.OutputCSV)
-	csvFuel := csvData[0]["fuel"].([]string)
+	csvFuel := csvData[0]["fuel"].([]table.ExportNumber)
 	fmt.Printf("FloatNField CSV: %v\n", csvFuel)
 	if len(csvFuel) != 2 {
 		t.Errorf("expected 2 values, got %d", len(csvFuel))
 	}
-	if csvFuel[0] != "45.5" {
-		t.Errorf("expected '45.5', got %q", csvFuel[0])
+	if csvFuel[0] != (table.ExportNumber{Value: 45.5, Decimals: 1}) {
+		t.Errorf("expected {45.5 1}, got %v", csvFuel[0])
 	}
 }
 
@@ -2193,7 +2193,7 @@ func TestExample_DistanceNField(t *testing.T) {
 	}
 
 	csvData := tbl.GetData(ctx, table.OutputCSV)
-	csvDistances := csvData[0]["distances"].([]string)
+	csvDistances := csvData[0]["distances"].([]table.ExportNumber)
 	fmt.Printf("DistanceNField CSV: %v\n", csvDistances)
 	if len(csvDistances) != 3 {
 		t.Errorf("expected 3 values, got %d", len(csvDistances))
@@ -2226,7 +2226,7 @@ func TestExample_SpeedNField(t *testing.T) {
 	}
 
 	csvData := tbl.GetData(ctx, table.OutputCSV)
-	csvSpeeds := csvData[0]["speeds"].([]string)
+	csvSpeeds := csvData[0]["speeds"].([]table.ExportNumber)
 	fmt.Printf("SpeedNField CSV: %v\n", csvSpeeds)
 	if len(csvSpeeds) != 2 {
 		t.Errorf("expected 2 values, got %d", len(csvSpeeds))

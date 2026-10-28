@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/xiriframework/xiri-go/component/core"
+	"github.com/xiriframework/xiri-go/types/distance"
 	"github.com/xiriframework/xiri-go/types/locale"
 	"github.com/xuri/excelize/v2"
 )
@@ -107,8 +108,12 @@ func TestExportExcel_NumbersAreNumericCells(t *testing.T) {
 		}
 	}
 
-	if v, _ := f.GetCellValue("Sheet1", "C2"); v != "'=SUM(A1)" {
-		t.Errorf("text must stay formula-protected, got %q", v)
+	// xlsx string cells are never formulas: the text goes out unchanged, without a "'" prefix.
+	if v, _ := f.GetCellValue("Sheet1", "C2"); v != "=SUM(A1)" {
+		t.Errorf("text must stay unchanged, got %q", v)
+	}
+	if formula, _ := f.GetCellFormula("Sheet1", "C2"); formula != "" {
+		t.Errorf("text must not become a formula, got %q", formula)
 	}
 }
 
@@ -165,7 +170,106 @@ func TestExport_IntegerPrecisionAndNonFinite(t *testing.T) {
 	}
 	f, _ := excelize.OpenReader(bytes.NewReader(data))
 	defer f.Close()
-	if v, _ := f.GetCellValue("Sheet1", "B2"); v != "'+Inf" {
-		t.Errorf("Excel +Inf must be formula-protected text, got %q", v)
+	if v, _ := f.GetCellValue("Sheet1", "B2"); v != "+Inf" {
+		t.Errorf("Excel +Inf must be plain text, got %q", v)
+	}
+}
+
+type multiRow struct {
+	FN  []float64
+	IN  []int
+	T2F [2]float64
+	T2I [2]int
+	Txt string
+}
+
+func multiTable(output OutputType, ctx *core.UiContext) *TableDataResponse {
+	b := NewBuilder[multiRow]()
+	b.FloatNField("fn", "FN", func(r multiRow) []float64 { return r.FN }).WithDecimals(2)
+	b.IntNField("in", "IN", func(r multiRow) []int { return r.IN })
+	b.Text2FloatField("t2f", "T2F", func(r multiRow) [2]float64 { return r.T2F }).WithDecimals(2)
+	b.Text2IntField("t2i", "T2I", func(r multiRow) [2]int { return r.T2I })
+	b.TextField("txt", "Txt", func(r multiRow) string { return r.Txt })
+	tbl := b.Build()
+	tbl.SetData([]multiRow{
+		{FN: []float64{-6.5, 1.25}, IN: []int{-3, 4}, T2F: [2]float64{-12.5, 3}, T2I: [2]int{-5, 0}, Txt: "-12,50"},
+		{FN: []float64{7}},
+	})
+	tbl.SetOutputType(output)
+	return tbl.ToTableDataResponse(ctx)
+}
+
+// Negative numbers must not get a visible "'": N and Text2 fields become numeric cells, one per value.
+func TestExportExcel_MultiValueNumbersWithoutApostrophe(t *testing.T) {
+	ctx := &core.UiContext{Locale: locale.De}
+	data, err := multiTable(OutputExcel, ctx).generateExcel(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := excelize.OpenReader(bytes.NewReader(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	header, _ := f.GetRows("Sheet1")
+	if got := strings.Join(header[0], ";"); got != "FN;FN 2;IN;IN 2;T2F;T2F 2;T2I;T2I 2;Txt" {
+		t.Errorf("header = %q", got)
+	}
+
+	for _, c := range []struct{ cell, raw, numFmt string }{
+		{"A2", "-6.5", "#,##0.00"}, {"B2", "1.25", "#,##0.00"},
+		{"C2", "-3", "#,##0"}, {"D2", "4", "#,##0"},
+		{"E2", "-12.5", "#,##0.00"}, {"F2", "3", "#,##0.00"},
+		{"G2", "-5", "#,##0"}, {"H2", "0", "#,##0"},
+		{"A3", "7", "#,##0.00"},
+	} {
+		typ, _ := f.GetCellType("Sheet1", c.cell)
+		raw, _ := f.GetCellValue("Sheet1", c.cell, excelize.Options{RawCellValue: true})
+		if typ == excelize.CellTypeSharedString || typ == excelize.CellTypeInlineString || raw != c.raw {
+			t.Errorf("%s: type %v raw %q, want numeric %q", c.cell, typ, raw, c.raw)
+			continue
+		}
+		styleID, _ := f.GetCellStyle("Sheet1", c.cell)
+		if style, err := f.GetStyle(styleID); err != nil || style.CustomNumFmt == nil || *style.CustomNumFmt != c.numFmt {
+			t.Errorf("%s: number format %v, want %q", c.cell, style, c.numFmt)
+		}
+	}
+	for _, cell := range []string{"B3", "C3", "D3"} {
+		if v, _ := f.GetCellValue("Sheet1", cell); v != "" {
+			t.Errorf("%s: missing value must stay empty, got %q", cell, v)
+		}
+	}
+	if v, _ := f.GetCellValue("Sheet1", "I2"); v != "-12,50" {
+		t.Errorf("text cell = %q, want -12,50 without apostrophe", v)
+	}
+}
+
+func TestExportCSV_MultiValueNumbersFollowLocale(t *testing.T) {
+	de := csvLines(t, multiTable(OutputCSV, &core.UiContext{Locale: locale.De}), locale.De)
+	want := "FN;FN 2;IN;IN 2;T2F;T2F 2;T2I;T2I 2;Txt\n" +
+		"-6,50;1,25;-3;4;-12,50;3,00;-5;0;-12,50\n" +
+		"7,00;;;;0,00;0,00;0;0;"
+	if got := strings.Join(de, "\n"); got != want {
+		t.Errorf("CSV de:\n%s\nwant:\n%s", got, want)
+	}
+	en := csvLines(t, multiTable(OutputCSV, &core.UiContext{Locale: locale.EnUS}), locale.EnUS)
+	if en[1] != "-6.50;1.25;-3;4;-12.50;3.00;-5;0;-12,50" {
+		t.Errorf("CSV en row = %q", en[1])
+	}
+}
+
+func TestExportCSV_DistanceSpeedNConverted(t *testing.T) {
+	type r struct{ D, S []float64 }
+	b := NewBuilder[r]()
+	b.DistanceNField("d", "D", func(x r) []float64 { return x.D }).WithDecimals(1)
+	b.SpeedNField("s", "S", func(x r) []float64 { return x.S }).WithDecimals(1)
+	tbl := b.Build()
+	tbl.SetData([]r{{D: []float64{-10, 100}, S: []float64{-50}}})
+	tbl.SetOutputType(OutputCSV)
+	ctx := &core.UiContext{Locale: locale.De, Distance: distance.Miles}
+	lines := csvLines(t, tbl.ToTableDataResponse(ctx), locale.De)
+	if lines[1] != "-6,2;62,1;-31,1" {
+		t.Errorf("row = %q, want %q", lines[1], "-6,2;62,1;-31,1")
 	}
 }
