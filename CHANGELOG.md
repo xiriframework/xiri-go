@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.10.0]
+
 ### Fixed
 
 - **Excel-Export ohne Apostroph.** Text, der mit `=`, `+`, `-` oder `@` beginnt, bekam auch im Excel-Export (Daten
