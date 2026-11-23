@@ -7,6 +7,8 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+## [0.10.1]
+
 ### Changed
 
 - **Abhängigkeiten aktualisiert.** `labstack/echo/v4` 4.16.5 und `xuri/excelize/v2` 2.11.1 (Patch-Releases), dazu
