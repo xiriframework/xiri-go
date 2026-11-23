@@ -7,6 +7,11 @@ Versionierung nach [Semantic Versioning](https://semver.org/lang/de/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Abhängigkeiten aktualisiert.** `labstack/echo/v4` 4.16.5 und `xuri/excelize/v2` 2.11.1 (Patch-Releases), dazu
+  indirekt `golang.org/x/net` 0.62.0. Keine API-Änderung.
+
 ## [0.10.0]
 
 ### Fixed
